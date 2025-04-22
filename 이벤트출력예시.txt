@@ -1,0 +1,104 @@
+[요청 형식]  
+타이틀 : 해당 이벤트의 제목
+deleteEmotion : emotion 이미지를 제거
+deleteAll : bg과 emotion 모두 제거(검정색 화면이 될 것임, 보통 bg 전환에 많이 쓰일 예정)
+waitSecond : 다음 장면으로 자동으로 넘어가는 시간
+endEvent : 이벤트를 종료함
+
+[참고]
+대화 뒤에 emotion, bg에 대한 정보가 없을 시 이전 emotion, bg이 그대로 유지되는 것임을 참고
+
+
+[사용 가능한 bg 목록]  
+※ 다음 bg 이름만 사용할 수 있습니다.  
+(중복 생성 방지 및 오류 방지를 위해 반드시 이 중에서만 골라주세요.)
+
+- BG_AbydosCouncilRoom.jpg       // 아비도스 대책위원회 회의실
+- BG_AbydosResidence.jpg         // 아비도스 주거 지역 거리
+- BG_AbydosRuinArea.jpg          // 아비도스 폐허 지역
+- BG_AbydosTrainStation.jpg      // 아비도스 역
+- BG_AronaRoom.jpg               // 아로나의 방
+- BG_BambooForest.jpg            // 대나무 숲
+- BG_Bank.jpg                    // 은행 내부
+- BG_BeachFrontSide.jpg          // 해변 바다 앞
+
+[사용 가능한 표정(emotion) 목록]  
+※ 반드시 아래 emotion 중 하나만 사용할 수 있습니다.
+
+- hoshino_angry.png             // 화난 표정  
+- hoshino_bigLaugh.png         // 활짝 웃는 표정  
+- hoshino_dontknowAnything.png // 멍한 표정  
+- hoshino_feelGood.png         // 기분 좋은 표정  
+- hoshino_makebigEye.png       // 크게 뜬 눈  
+- hoshino_serious.png          // 진지한 표정  
+- hoshino_strongSurprised.png  // 깜짝 놀람 (강하게)  
+- hoshino_surprised.png        // 일반 놀람  
+- hoshino_suspicious.png       // 수상쩍은 눈초리  
+- hoshino_weakLaugh.png        // 약간 웃는 듯한 표정  
+- hoshino_yawn.png             // 하품하는 얼굴  
+- hoshino_yawn2.png            // 졸린 표정
+
+[이벤트 생성 예시]
+
+타이틀 : 잠자는 고래
+
+호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. 굉장하지 않아? [emotion : hoshino_bigLaugh.png, bg : BG_AbydosCouncilRoom.jpg]
+selection : (1)"갑자기 웬 고래 얘기?" (2)"도움이 필요하다는 건 뭐야?"
+호시노(대책위원회) : 아아. 낭만이 없구만, 선생도. [emotion : hoshino_dontknowAnything.png]
+호시노(대책위원회) : 으헤~ 사실은 힘쓰는 일이 필요해서 말이지. 도저히 혼자서는 옮길 수가 없는 물건이 있어서. [emotion : hoshino_serious.png]
+호시노(대책위원회) : 역시 한가해 보이는 선생말고는 부탁할 사람도 딱히 없었고, 뭐 그렇게 된 거야.
+호시노(대책위원회) : 그래도 와주다니 역시 선생밖에 없다니까. [emotion : hoshino_bigLaugh.png]
+selection : (1)"힘을 쓰는 거라면 다른 부원들을 부르는게‧‧‧‧‧?"
+호시노(대책위원회) : 섭섭한 소리 하지 말라고. 이 일은 다른 부원들에게는 비밀로 해야 한단 말야. [emotion : hoshino_weakLaugh.png]
+호시노(대책위원회) : 자, 그럼 가보자고. 학교가 비어있는 지금이 기회야. [emotion : hoshino_bigLaugh.png]
+deleteAll
+waitSecond = 2
+narration : (드르르륵-) [bg : BG_AbydosResidence.jpg]
+호시노(대책위원회) : 콜록, 콜록. 자, 여기야. 먼지가 엄청‧‧‧‧‧. [emotion : hoshino_strongSurprised.png]
+호시노(대책위원회) : 아, 거기 조심해, 선생. 발 밑을 잘 봐야 해. [emotion : hoshino_yawn2.png]
+selection : (1)"여기는‧‧‧‧‧?" (2)"‧‧‧‧‧창고?"
+호시노(대책위원회) : 응. 사용하지 않고 방치된 자재 창고야. 우리 학교엔 이런 게 몇 개나 있거든. [emotion : hoshino_dontknowAnything.png]
+호시노(대책위원회) : 뭐, 이미 쓸만한 물건들은 전부 내다 팔아서 대부분은 잡동사니밖엔 없지만. [emotion : hoshino_serious.png]
+호시노(대책위원회) : 그래도 가끔씩은 뒤져보면‧‧‧‧‧ 이렇게‧‧‧‧‧. 
+호시노(대책위원회) : 콜록, 콜록. 짜안! [emotion : hoshino_yawn2.png]
+호시노(대책위원회) : 이렇게 굉장한 물건이 발굴되기도 한다니까. 어때, 굉장하지? [emotion : hoshino_bigLaugh.png]
+selection : (1)"체육 매트‧‧‧‧‧?" (2)"이걸로 뭘 하게?"
+호시노(대책위원회) : 어허. 그냥 체육 매트가 아냐. 이거야말로 우리 학교의 과거의 영광, 돈이 풍족할 때의 상징 같은 물건! [emotion : hoshino_angry.png]
+호시노(대책위원회) : 무려, 오리털 매트! [emotion : hoshino_bigLaugh.png]
+호시노(대책위원회) : 부직포 같은 싸구려 충전재가 아닌 진짜 오리털을 꽉 채운 사치스러운 물건이지! [emotion : hoshino_weakLaugh.png]
+호시노(대책위원회) : 덮고 자는 이불도 아니고 학생들이 밟고 다니는 체육 매트에 오리털이라니 무슨 질나쁜 농담도 아니고 말야. [emotion : hoshino_suspicious.png]
+호시노(대책위원회) : 으헤, 하지만 세상에는 별별 일이 다 있는 법이니까, 이런 괴상한 물건도 존재할 수도 있는 법이지. [emotion : hoshino_yawn2.png]
+호시노(대책위원회) : 깊이 생각하면 지는 거라고? [emotion : hoshino_weakLaugh.png]
+호시노(대책위원회) : 뭐, 이제부터 이 아저씨가 잘 써줄 거니까~ [emotion : hoshino_bigLaugh.png]
+호시노(대책위원회) : 자, 선생. 그쪽 좀 잡아줘. [emotion : hoshino_serious.png]
+호시노(대책위원회) : 영차~ ‧‧‧‧‧그럼 가자고.
+deleteAll
+waitSecond = 2
+narration : (드르르륵-) [bg : BG_AbydosRuinArea.jpg]
+호시노(대책위원회) : 자, 여기쯤이면 됐어. 놔줘 [emotion : hoshino_serious.png]
+narration : (풀썩-) 
+호시노(대책위원회) : 음, 각도가 조금 애매한데‧‧‧‧‧ 조금만 더 이렇게‧‧‧‧‧. 
+호시노(대책위원회) : ‧‧‧‧‧됐다. 딱 좋아. 완벽해! [emotion : hoshino_bigLaugh.png]
+selection : (1)"여기로 매트를 옮겨서 뭐하려고?"
+호시노(대책위원회) : 으헤. 선생은 당연한 걸 묻고 그래. [emotion : hoshino_weakLaugh.png]
+deleteEmotion
+호시노(대책위원회) : (폴짝)
+narration : (풀썩) 
+selection : (1)"누워버렸다?!" (2)"편안한 취침 모드?!"
+호시노(대책위원회) : 이걸로 낮잠자기 딱 좋은 비밀 기지 완성!
+호시노(대책위원회) : 아무도 알아차릴 수 없는 나만의 비밀 휴식 핫스팟이 완성된 거지. 아, 선생 설마 이 장소를 다른 애들한테 밀고할 생각은 아니겠지?
+selection : (1)"먼지는 좀 털고 쓰는게 좋을 거 같은데." (2)"이대로 잠들면 감기 걸려."
+호시노(대책위원회) : 자아, 잔소리는 됐고. 그럼 땡큐 땡큐. 으헤~ 덕분에 엄청 좋은 잠자리가 생겼다니까.
+호시노(대책위원회) : 으헤‧‧‧‧‧ 푹신푹신‧‧‧‧‧. 이것이 오리털의 감촉인가아‧‧‧‧‧.
+호시노(대책위원회) : 아아‧‧‧‧‧ 잠이 그냥 막 쏟아지는 거 같아‧‧‧‧‧ 선생‧‧‧‧‧.
+호시노(대책위원회) : 후아아암~ 그럼 안녕히 주무세요‧‧‧‧‧.
+호시노(대책위원회) : 고래가 아니라서 다행‧‧‧‧‧.
+호시노(대책위원회) : ‧‧‧‧쿨.
+selection : (1)"‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧‧" (2)"‧‧‧‧진짜 잠들어버렸네."
+narration : (잠들어 있는 호시노를 잠깐 구경하다가, 다음 스케쥴이 생각나 슬슬 돌아가기로 했다.)
+deleteAll
+waitSecond = 2
+narration : (조심히 교실을 빠져나왔다.)
+endEvent
+
+
