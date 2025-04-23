@@ -1,5 +1,4 @@
-// components/event/EventDialogue.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface Props {
@@ -17,11 +16,29 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
 
   const { name, affiliation } = parseCharacterName(character);
 
+  const [displayedText, setDisplayedText] = useState('');
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setIndex(0);
+  }, [text]);
+
+  useEffect(() => {
+    if (index < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText((prev) => prev + text.charAt(index));
+        setIndex(index + 1);
+      }, 30); // 글자 간 간격(ms)
+      return () => clearTimeout(timeout);
+    }
+  }, [index, text]);
+
   return (
     <View>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.affiliation}>{affiliation}</Text>
-      <Text style={styles.text}>{text}</Text>
+      <Text style={styles.text}>{displayedText}</Text>
     </View>
   );
 };

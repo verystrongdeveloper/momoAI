@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';   // ★ useEffect 추가
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TextInput as RNTextInput } from 'react-native';
 
 interface CharacterChatProps {
     characterName: string;
@@ -24,14 +25,36 @@ interface Chat {
     showImage?: boolean;
 }
 
-const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterImage, setGlobalLoading, }) => {
+const CharacterChat: React.FC<CharacterChatProps> = ({
+    characterName,
+    characterImage,
+    setGlobalLoading,
+}) => {
     const [messages, setMessages] = useState<Chat[]>([]);
     const [input, setInput] = useState('');
-    const [eventReady, setEventReady] = useState(false); // ✅ 인연 이벤트 조건
-    const [loadingEvent, setLoadingEvent] = useState(false); // ▶ 로딩 상태
+    const [eventReady, setEventReady] = useState(false);
+    const [loadingEvent, setLoadingEvent] = useState(false);
     const router = useRouter();
 
-    const sendToGemini = async (msg: string): Promise<{ reply: string; eventReady: boolean }> => {
+    const inputRef = useRef<RNTextInput>(null);
+    const listRef = useRef<FlatList<Chat>>(null);           // ★ 리스트 ref
+
+    /* ------------------------------------------------------------------ */
+    /* 1. 메시지가 바뀔 때마다 리스트의 끝으로 스크롤 -------------------- */
+    /* ------------------------------------------------------------------ */
+    useEffect(() => {
+        // setState가 반영된 뒤 한 프레임 정도 늦게 스크롤해야
+        // 아이템 생성 → 레이아웃 계산 → 스크롤 순서가 꼬이지 않습니다.
+        const timeout = setTimeout(() => {
+            listRef.current?.scrollToEnd({ animated: true });
+        }, 50);                                             // ★ 50ms 딜레이
+        return () => clearTimeout(timeout);
+    }, [messages]);
+    /* ------------------------------------------------------------------ */
+
+    const sendToGemini = async (
+        msg: string,
+    ): Promise<{ reply: string; eventReady: boolean }> => {
         const res = await fetch('http://localhost:3000/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -50,9 +73,6 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
 
         try {
             const { reply, eventReady: isEventReady } = await sendToGemini(userInput);
-            if (isEventReady) {
-                console.log(`🎉 ${characterName} 인연 이벤트 조건 충족 (3쌍 대화 완료됨)`);
-            }
 
             const sentences = reply
                 .split(/(?<=[.!?])\s+(?=\S)/g)
@@ -69,15 +89,13 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
                     setMessages(prev => [...prev, { sender: 'typing', text: '···' }]);
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     setMessages(prev =>
-                        prev.filter(m => m.sender !== 'typing').concat({
-                            sender: 'character',
-                            text: sentences[i],
-                        })
+                        prev
+                            .filter(m => m.sender !== 'typing')
+                            .concat({ sender: 'character', text: sentences[i] }),
                     );
                 }
 
-                setEventReady(isEventReady); // ✅ 인연 이벤트 조건 업데이트
-
+                setEventReady(isEventReady);
             }
         } catch (err) {
             console.error('[CharacterChat] fetch error:', err);
@@ -98,15 +116,14 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
             });
             const data = await res.json();
 
-            console.log('🎬 이벤트 스크립트:', data.eventScript);
             router.push({
                 pathname: '/event-screen',
-                params: { script: data.eventScript },                       // ✅ 그냥 넘겨준다
+                params: { script: data.eventScript },
             });
         } catch (e) {
             console.error('이벤트 로딩 실패:', e);
         } finally {
-            setGlobalLoading?.(false); // ▶ 로딩 끝
+            setGlobalLoading?.(false);
         }
     };
 
@@ -124,7 +141,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
             }
         }
 
-        return history.slice(-3); // 마지막 3쌍만 보냄
+        return history.slice(-3);
     };
 
     const renderItem = ({ item }: { item: Chat }) => {
@@ -146,8 +163,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
                             isUser ? styles.userBubble : styles.charBubble,
                             isTyping && styles.typingBubble,
                             !isUser && !item.showImage && styles.followupBubble,
-                        ]}
-                    >
+                        ]}>
                         {item.text}
                     </Text>
                 </View>
@@ -158,23 +174,25 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
     return (
         <View style={styles.chatContainer}>
             <FlatList
+                ref={listRef}                               // ★ ref 연결
                 data={messages}
                 keyExtractor={(_, i) => i.toString()}
                 renderItem={renderItem}
                 style={styles.chatList}
+                scrollEventThrottle={16}
             />
 
-            {/* ✅ 인연 이벤트 버튼 */}
             {eventReady && (
                 <View style={styles.eventContainer}>
                     <Text style={styles.eventLabel}>| 인연 이벤트 |</Text>
                     <TouchableOpacity style={styles.eventButton} onPress={handleEventStart}>
-                        <Text style={styles.eventButtonText}>{characterName}의 인연 스토리로.</Text>
+                        <Text style={styles.eventButtonText}>
+                            {characterName}의 인연 스토리로.
+                        </Text>
                     </TouchableOpacity>
                 </View>
             )}
 
-            {/* ▶ 로딩 오버레이 */}
             {loadingEvent && (
                 <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color="#ffffff" />
@@ -183,10 +201,15 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
 
             <View style={styles.inputArea}>
                 <TextInput
+                    ref={inputRef}                           // ★ 포커스 유지용 ref
                     style={styles.input}
                     placeholder="메시지를 입력하세요"
                     value={input}
                     onChangeText={setInput}
+                    onSubmitEditing={() => {
+                        handleSend();
+                        setTimeout(() => inputRef.current?.focus(), 100);
+                    }}
                 />
                 <Button title="보내기" onPress={handleSend} />
             </View>
@@ -196,6 +219,9 @@ const CharacterChat: React.FC<CharacterChatProps> = ({ characterName, characterI
 
 export default CharacterChat;
 
+/* ------------------------------------------------------------------ */
+/*                              스타일 시트                           */
+/* ------------------------------------------------------------------ */
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
@@ -266,8 +292,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 2,
     },
-
-    // ✅ 인연 이벤트 스타일
     eventContainer: {
         alignItems: 'center',
         marginBottom: 10,
@@ -287,7 +311,6 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
     },
-    // ▶ 로딩 오버레이 스타일
     loadingOverlay: {
         position: 'absolute',
         top: 0,

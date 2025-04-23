@@ -1,305 +1,312 @@
 // EventPlayer.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import EventDialogue from './event/EventDialogue';
 import EventSelection from './event/EventSelection';
 import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
 
-
+/* ---------- 타입 ---------- */
 interface EventLine {
-    type: 'dialogue' | 'selection' | 'narration' | 'command';
-    character?: string;
-    text: string;
-    emotion?: string;
-    bg?: string;
-    options?: string[];
-    commandType?: string;
-    waitSecond?: number;
-    soundFile?: string;
+  type: 'dialogue' | 'selection' | 'narration' | 'command';
+  character?: string;
+  text: string;
+  emotion?: string;
+  bg?: string;
+  options?: string[];
+  commandType?: string;
+  waitSecond?: number;
+  soundFile?: string;
 }
-
 interface EventPlayerProps {
-    script: string;
+  script: string;
 }
 
+/* ---------- 리소스 ---------- */
 const bgMap: Record<string, any> = {
-    'BG_AbydosCouncilRoom.jpg': require('../assets/images/background/BG_AbydosCouncilRoom.jpg'),
-    'BG_AbydosResidence.jpg': require('../assets/images/background/BG_AbydosResidence.jpg'),
-    'BG_AbydosRuinArea.jpg': require('../assets/images/background/BG_AbydosRuinArea.jpg'),
-    'BG_AbydosTrainStation.jpg': require('../assets/images/background/BG_AbydosTrainStation.jpg'),
-    'BG_AronaRoom.jpg': require('../assets/images/background/BG_AronaRoom.jpg'),
-    'BG_BambooForest.jpg': require('../assets/images/background/BG_BambooForest.jpg'),
-    'BG_Bank.jpg': require('../assets/images/background/BG_Bank.jpg'),
-    'BG_BeachFrontSide.jpg': require('../assets/images/background/BG_BeachFrontSide.jpg'),
+  BG_AbydosCouncilRoom: require('../assets/images/background/BG_AbydosCouncilRoom.jpg'),
+  BG_AbydosResidence: require('../assets/images/background/BG_AbydosResidence.jpg'),
+  BG_AbydosRuinArea: require('../assets/images/background/BG_AbydosRuinArea.jpg'),
+  BG_AbydosTrainStation: require('../assets/images/background/BG_AbydosTrainStation.jpg'),
+  BG_AronaRoom: require('../assets/images/background/BG_AronaRoom.jpg'),
+  BG_BambooForest: require('../assets/images/background/BG_BambooForest.jpg'),
+  BG_Bank: require('../assets/images/background/BG_Bank.jpg'),
+  BG_BeachFrontSide: require('../assets/images/background/BG_BeachFrontSide.jpg'),
 };
-
 const emotionMap: Record<string, any> = {
-    'hoshino_angry.png': require('../assets/images/hoshino/hoshino_angry.png'),
-    'hoshino_bigLaugh.png': require('../assets/images/hoshino/hoshino_bigLaugh.png'),
-    'hoshino_dontknowAnything.png': require('../assets/images/hoshino/hoshino_dontknowAnything.png'),
-    'hoshino_feelGood.png': require('../assets/images/hoshino/hoshino_feelGood.png'),
-    'hoshino_makebigEye.png': require('../assets/images/hoshino/hoshino_makebigEye.png'),
-    'hoshino_serious.png': require('../assets/images/hoshino/hoshino_serious.png'),
-    'hoshino_strongSurprised.png': require('../assets/images/hoshino/hoshino_strongSurprised.png'),
-    'hoshino_surprised.png': require('../assets/images/hoshino/hoshino_surprised.png'),
-    'hoshino_suspicious.png': require('../assets/images/hoshino/hoshino_suspicious.png'),
-    'hoshino_weakLaugh.png': require('../assets/images/hoshino/hoshino_weakLaugh.png'),
-    'hoshino_yawn.png': require('../assets/images/hoshino/hoshino_yawn.png'),
-    'hoshino_yawn2.png': require('../assets/images/hoshino/hoshino_yawn2.png'),
+  hoshino_angry: require('../assets/images/hoshino/hoshino_angry.png'),
+  hoshino_bigLaugh: require('../assets/images/hoshino/hoshino_bigLaugh.png'),
+  hoshino_dontknowAnything: require('../assets/images/hoshino/hoshino_dontknowAnything.png'),
+  hoshino_feelGood: require('../assets/images/hoshino/hoshino_feelGood.png'),
+  hoshino_makebigEye: require('../assets/images/hoshino/hoshino_makebigEye.png'),
+  hoshino_serious: require('../assets/images/hoshino/hoshino_serious.png'),
+  hoshino_strongSurprised: require('../assets/images/hoshino/hoshino_strongSurprised.png'),
+  hoshino_surprised: require('../assets/images/hoshino/hoshino_surprised.png'),
+  hoshino_suspicious: require('../assets/images/hoshino/hoshino_suspicious.png'),
+  hoshino_weakLaugh: require('../assets/images/hoshino/hoshino_weakLaugh.png'),
+  hoshino_yawn: require('../assets/images/hoshino/hoshino_yawn.png'),
+  hoshino_yawn2: require('../assets/images/hoshino/hoshino_yawn2.png'),
 };
-
 const soundMap: Record<string, any> = {
-    'aint_it_nice.mp3': require('../assets/sound/hoshino/aint_it_nice.mp3'),
-    'might_not_be_too_bad.mp3': require('../assets/sound/hoshino/might_not_be_too_bad.mp3'),
-    'sensei_you\'re_weird_why_me.mp3': require('../assets/sound/hoshino/sensei_you\'re_weird_why_me.mp3'),
-    'surprised_1.mp3': require('../assets/sound/hoshino/surprised_1.mp3'),
-    'surprised_2.mp3': require('../assets/sound/hoshino/surprised_2.mp3'),
-    'take_it_easy.mp3': require('../assets/sound/hoshino/take_it_easy.mp3'),
-    'ugh_cant_be_bothered.mp3': require('../assets/sound/hoshino/ugh_cant_be_bothered.mp3'),
-    'yo.mp3': require('../assets/sound/hoshino/yo.mp3'),
+  'aint_it_nice.mp3': require('../assets/sound/hoshino/aint_it_nice.mp3'),
+  'might_not_be_too_bad.mp3': require('../assets/sound/hoshino/might_not_be_too_bad.mp3'),
+  "sensei_you're_weird_why_me.mp3": require('../assets/sound/hoshino/sensei_you\'re_weird_why_me.mp3'),
+  'surprised_1.mp3': require('../assets/sound/hoshino/surprised_1.mp3'),
+  'surprised_2.mp3': require('../assets/sound/hoshino/surprised_2.mp3'),
+  'take_it_easy.mp3': require('../assets/sound/hoshino/take_it_easy.mp3'),
+  'ugh_cant_be_bothered.mp3': require('../assets/sound/hoshino/ugh_cant_be_bothered.mp3'),
+  'yo.mp3': require('../assets/sound/hoshino/yo.mp3'),
 };
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+/* ---------- 크기 ---------- */
+const { width: W, height: H } = Dimensions.get('window');
 
+/* ====================================================================== */
 const EventPlayer: React.FC<EventPlayerProps> = ({ script }) => {
-    const [lines, setLines] = useState<EventLine[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [currentLine, setCurrentLine] = useState<EventLine | null>(null);
-    const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
-    const [lastDialogue, setLastDialogue] = useState<EventLine | null>(null);
-    const [currentBg, setCurrentBg] = useState<string | null>(null);
+  /* 상태 */
+  const [lines, setLines] = useState<EventLine[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [line, setLine] = useState<EventLine | null>(null);
+  const [last, setLast] = useState<EventLine | null>(null);   // 직전 대사·나레이션
+  const [bg, setBg] = useState<string | null>(null);
+  const [emo, setEmo] = useState<string | null>(null);
 
-    useEffect(() => {
-        const parsed = parseScript(script);
-        setLines(parsed);
-        setCurrentLine(parsed[0]);
-    }, [script]);
+  /* 이전 키 기억 */
+  const prevBg = useRef<string | null>(null);
+  const prevEmo = useRef<string | null>(null);
 
-    useEffect(() => {
-        const assets = [
-            ...Object.values(bgMap),
-            ...Object.values(emotionMap),
-            ...Object.values(soundMap),
-        ];
-        Asset.loadAsync(assets);
-    }, []);
+  /* 애니메이션 값 */
+  const bgOpacity = useRef(new Animated.Value(1)).current;
+  const emoOpacity = useRef(new Animated.Value(1)).current; // 표정 하나만 제어
 
-    useEffect(() => {
-        if (!currentLine) return;
+  /* 파싱 */
+  useEffect(() => {
+    const parsed = parse(script);
+    setLines(parsed);
+    setLine(parsed[0]);
+  }, [script]);
 
+  /* 프리로드 */
+  useEffect(() => {
+    Asset.loadAsync([
+      ...Object.values(bgMap),
+      ...Object.values(emotionMap),
+      ...Object.values(soundMap),
+    ]);
+  }, []);
 
+  /* 라인 반응 */
+  useEffect(() => {
+    if (!line) return;
 
-        // ◼︎ dialogue일 때만 lastDialogue 업데이트
-        if (currentLine.type === 'dialogue') {
-            setLastDialogue(currentLine);
+    /* 대사·나레이션 → 마지막 대화 저장 & 효과음 */
+    // 🔄 FIX: 나레이션도 last 로 저장해 selection 직전 텍스트 박스를 교체
+    if (line.type === 'dialogue' || line.type === 'narration') {
+      setLast(line);
+      if (line.type === 'dialogue' && line.soundFile) play(line.soundFile);
+    }
 
-            if (currentLine.soundFile) {
-                (async () => {
-                    const sound = new Audio.Sound();
-                    await sound.loadAsync(soundMap[currentLine.soundFile!]);
-                    await sound.playAsync();
-                })();
-            }
+    /* 배경/표정 */
+    if (line.bg) setNewBg(line.bg);
+    if (line.emotion) setNewEmo(line.emotion);
+
+    /* 명령 */
+    if (line.type === 'command') {
+      switch (line.commandType) {
+        case 'waitSecond':
+          setTimeout(next, (line.waitSecond || 1) * 1000);
+          return;
+        case 'deleteEmotion':
+          Animated.timing(emoOpacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            setEmo(null);
+            prevEmo.current = null;
+            next();
+          });
+          return;
+        case 'deleteAll':
+          Animated.parallel([
+            fadeOut(bgOpacity),
+            fadeOut(emoOpacity),
+          ]).start(() => {
+            setBg(null);
+            setEmo(null);
+            prevBg.current = null;
+            prevEmo.current = null;
+            setLast(null);
+            bgOpacity.setValue(1);
+            emoOpacity.setValue(1);
+            next();
+          });
+          return;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line]);
+
+  /* ───────── helpers ───────── */
+  const play = async (key: string) => {
+    const snd = new Audio.Sound();
+    await snd.loadAsync(soundMap[key]);
+    await snd.playAsync();
+  };
+
+  const fadeOut = (value: Animated.Value, d = 300) =>
+    Animated.timing(value, { toValue: 0, duration: d, useNativeDriver: true });
+
+  const setNewBg = (key: string) => {
+    if (prevBg.current === key) return;
+    setBg(key);
+    prevBg.current = key;
+    bgOpacity.setValue(1); // 바로 표시
+  };
+
+  const setNewEmo = (key: string) => {
+    if (prevEmo.current === key) return;
+    setEmo(key);
+    prevEmo.current = key;
+    emoOpacity.setValue(1); // 깜빡임 방지
+  };
+
+  const next = () => {
+    if (idx + 1 < lines.length) {
+      setIdx((i) => i + 1);
+      setLine(lines[idx + 1]);
+    }
+  };
+
+  const parse = (raw: string): EventLine[] => {
+    const out: EventLine[] = [];
+    raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .forEach((l) => {
+        if (l.startsWith('타이틀')) return;
+        if (l.startsWith('selection')) {
+          const opts = [...l.matchAll(/\(\d+\)"(.*?)"/g)].map((m) => m[1]);
+          out.push({ type: 'selection', text: '', options: opts });
+          return;
         }
-
-        // background / emotion 처리
-        if (currentLine.emotion) setCurrentEmotion(currentLine.emotion);
-        if (currentLine.bg) setCurrentBg(currentLine.bg);
-
-        // command 처리 (waitSecond / deleteAll)
-        if (currentLine.type === 'command' && currentLine.commandType === 'waitSecond') {
-            const delay = (currentLine.waitSecond || 1) * 1000;
-            const timeout = setTimeout(() => handleNext(), delay);
-            return () => clearTimeout(timeout);
+        if (l.startsWith('narration')) {
+          const txt = l.match(/narration\s*:\s*(.+?)(?:\[|$)/)?.[1].trim() || '';
+          const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
+          out.push({ type: 'narration', character: '', text: txt, bg });
+          return;
         }
-        if (currentLine.type === 'command' && currentLine.commandType === 'deleteAll') {
-            setCurrentEmotion(null);
-            setCurrentBg(null);
-            setLastDialogue(null);
-            handleNext();
+        if (/^(deleteAll|deleteEmotion|endEvent)/.test(l)) {
+          out.push({ type: 'command', commandType: l.trim(), text: '' });
+          return;
         }
-    }, [currentLine]);
-
-    const parseScript = (raw: string): EventLine[] => {
-        const parsed: EventLine[] = [];
-        const rawLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-
-        for (const line of rawLines) {
-            if (line.startsWith('타이틀')) continue;
-
-            if (line.startsWith('selection')) {
-                const opts = [...line.matchAll(/\(\d+\)"(.*?)"/g)].map(m => m[1]);
-                parsed.push({ type: 'selection', text: '', options: opts });
-                continue;
-            }
-
-            if (line.startsWith('narration')) {
-                const text = (line.match(/narration\s*:\s*(.+?)(?:\[|$)/)?.[1] || '').trim();
-                const bg = line.match(/bg\s*:\s*([\w\-.]+\.(?:jpg|png))/)?.[1];
-                parsed.push({ type: 'narration', character: '', text, bg });
-                continue;
-            }
-
-            if (/^(deleteAll|deleteEmotion|endEvent)/.test(line)) {
-                parsed.push({ type: 'command', text: '', commandType: line.trim() });
-                continue;
-            }
-
-            if (line.startsWith('waitSecond')) {
-                const sec = Number(line.replace(/[^\d]/g, '')) || 1;
-                parsed.push({ type: 'command', text: '', commandType: 'waitSecond', waitSecond: sec });
-                continue;
-            }
-
-            const firstColon = line.indexOf(':');
-            if (firstColon === -1) continue;
-
-            const speaker = line.slice(0, firstColon).trim();
-            const rest = line.slice(firstColon + 1).trim();
-
-            const emotion = rest.match(/emotion\s*:\s*([\w\-.]+\.(?:png|jpg))/)?.[1];
-            const bg = rest.match(/bg\s*:\s*([\w\-.]+\.(?:jpg|png))/)?.[1];
-            const clean = rest.replace(/\[.*?\]/g, '').trim();
-
-            const soundMatch = rest.match(/sound\s*:\s*([\w\-.]+\.mp3)/);
-            const soundFile = soundMatch ? soundMatch[1] : undefined;
-
-            parsed.push({
-                type: 'dialogue',
-                character: speaker,
-                text: clean,
-                emotion,
-                bg,
-                soundFile,
-            });
+        if (l.startsWith('waitSecond')) {
+          const s = Number(l.replace(/[^\d]/g, '')) || 1;
+          out.push({ type: 'command', commandType: 'waitSecond', waitSecond: s, text: '' });
+          return;
         }
-        return parsed;
-    };
+        const i = l.indexOf(':');
+        if (i === -1) return;
+        const spk = l.slice(0, i).trim();
+        const rest = l.slice(i + 1).trim();
+        const emo = rest.match(/emotion\s*:\s*([\w_]+\.png)/)?.[1]?.replace('.png', '');
+        const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
+        const snd = rest.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
+        const txt = rest.replace(/\[.*?]/g, '').trim();
+        out.push({ type: 'dialogue', character: spk, text: txt, emotion: emo, bg, soundFile: snd });
+      });
+    return out;
+  };
 
-    const handleNext = () => {
-        if (currentIndex + 1 < lines.length) {
-            setCurrentIndex(currentIndex + 1);
-            setCurrentLine(lines[currentIndex + 1]);
-        }
-    };
+  /* ───────── render ───────── */
+  return (
+    <View style={styles.full}>
+      {/* 배경 */}
+      {bg && (
+        <Animated.Image
+          source={bgMap[bg]}
+          style={[styles.bg, { opacity: bgOpacity }]}
+        />
+      )}
 
-    return (
-        <View style={styles.fullScreen}>
-            {currentBg && <Image source={bgMap[currentBg]} style={styles.bgImage} />}
-            {Object.entries(emotionMap).map(([key, src]) => (
-                <Image
-                    key={key}
-                    source={src}
-                    fadeDuration={0}
-                    style={[
-                        styles.characterImage,
-                        { opacity: key === currentEmotion ? 1 : 0 }, // 현재 표정만 보이게
-                    ]}
-                />
-            ))}
+      {/* 표정(모든 이미지 유지) */}
+      {Object.entries(emotionMap).map(([key, src]) => (
+        <Animated.Image
+          key={key}
+          source={src}
+          style={[
+            styles.char,
+            { opacity: key === emo ? emoOpacity : 0 },
+          ]}
+          fadeDuration={0}
+        />
+      ))}
 
+      {/* 텍스트 박스 */}
+      <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.txtBox}>
+        {line?.type === 'narration' ? (
+          <EventDialogue character={line.character!} text={line.text} />
+        ) : (
+          last && <EventDialogue character={last.character!} text={last.text} />
+        )}
+      </LinearGradient>
 
-            {/* ◼︎ 하단 텍스트 박스: dialogue 또는 selection 시에도 lastDialogue를 계속 보여줌 */}
-            <LinearGradient
-                colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.0)']}
-                style={styles.textBox}
-            >
-                {currentLine?.type === 'narration' ? (
-                    // 나레이션일 땐 parseScript에서 넣어준 character ("나레이션")를 함께 넘깁니다.
-                    <EventDialogue
-                        character={currentLine.character!}
-                        text={currentLine.text}
-                    />
-                ) : (
-                    // 일반 대화일 땐 마지막 대화(lastDialogue) 보여주기
-                    lastDialogue &&
-                    lastDialogue.character && (
-                        <EventDialogue
-                            character={lastDialogue.character}
-                            text={lastDialogue.text}
-                        />
-                    )
-                )}
-            </LinearGradient>
-
-
-            {/* ◼︎ selection일 때만 화면 중앙에 오버레이 */}
-            {currentLine?.type === 'selection' && (
-                <View style={styles.selectionOverlay}>
-                    <EventSelection
-                        options={currentLine.options || []}
-                        onSelect={handleNext}
-                    />
-                </View>
-            )}
-
-            {/* ◼︎ 전체 터치 영역은 뒤로 빼두어야 선택지 버튼이 눌림 */}
-            <TouchableOpacity style={styles.nextArea} onPress={handleNext} />
+      {/* 선택지 */}
+      {line?.type === 'selection' && (
+        <View style={styles.sel}>
+          <EventSelection options={line.options || []} onSelect={next} />
         </View>
-    );
+      )}
+
+      {/* 터치 영역 */}
+      <TouchableOpacity style={styles.touch} onPress={next} />
+    </View>
+  );
 };
+
+/* ───────── style ───────── */
+const styles = StyleSheet.create({
+  full: { flex: 1, backgroundColor: '#000' },
+  bg: { position: 'absolute', width: '100%', height: '100%' },
+  char: {
+    position: 'absolute',
+    bottom: H * -0.15,
+    left: W * 0.48,
+    width: W * 0.7,
+    height: H * 0.9,
+    transform: [{ translateX: -(W * 0.7) / 2 }],
+    resizeMode: 'contain',
+    pointerEvents: 'none',
+  },
+  txtBox: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: H / 3,
+    paddingHorizontal: 30,
+    paddingTop: 32,
+    paddingBottom: 12,
+    paddingLeft: 100,
+    paddingRight: 100,
+  },
+  sel: {
+    position: 'absolute',
+    top: H * 0.4,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  touch: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+});
 
 export default EventPlayer;
-
-const styles = StyleSheet.create({
-    fullScreen: {
-        flex: 1,
-        backgroundColor: '#000',
-        position: 'relative',
-    },
-    bgImage: {
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-    },
-    characterImage: {
-        position: 'absolute',
-        bottom: SCREEN_H * -0.15,
-        left: SCREEN_W * 0.48,
-        width: SCREEN_W * 0.7,
-        height: SCREEN_H * 0.9,
-        transform: [{ translateX: -(SCREEN_W * 0.7) / 2 }],
-        resizeMode: 'contain',
-        pointerEvents: 'none',
-    },
-    textBox: {
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        height: SCREEN_H / 3,
-        paddingHorizontal: 30,
-        paddingTop: 32,
-        paddingBottom: 12,
-        justifyContent: 'flex-start',
-        paddingLeft: 100,
-        paddingRight: 100,
-    },
-    // ◼︎ 선택지 중앙 오버레이 스타일
-    selectionOverlay: {
-        position: 'absolute',
-        top: SCREEN_H * 0.4,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        zIndex: 10,
-    },
-    narrationText: {
-        fontSize: 25,
-        color: '#cccccc',
-        fontStyle: 'italic',
-    },
-    dialogueText: {
-        fontSize: 18,
-        color: '#ffffff',
-        lineHeight: 28,
-    },
-    nextArea: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-});
