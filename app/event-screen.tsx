@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import EventPlayer from '../components/EventPlayer';   // ← 경로는 프로젝트 구조에 맞게 조정
+import EventPlayer from '../components/event/EventPlayer';   // ← 경로는 프로젝트 구조에 맞게 조정
 
 export default function EventScreen() {
   const { script } = useLocalSearchParams();
