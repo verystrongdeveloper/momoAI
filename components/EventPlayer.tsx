@@ -186,11 +186,11 @@ const EventPlayer: React.FC<EventPlayerProps> = ({ script }) => {
 
     /* 컴포넌트 unmount 시 음악 정리 */
     useEffect(() => {
-        stopMusic(); // async지만 그냥 호출만 함 (await 불필요)
         return () => {
-            stopMusic(); // 🔧 여기서도 async 함수지만 클린업에서 Promise 반환하면 안 되니까 그냥 호출
+            stopMusic();
         };
     }, []);
+
 
 
     /* ───────── helpers ───────── */
@@ -249,8 +249,12 @@ const EventPlayer: React.FC<EventPlayerProps> = ({ script }) => {
 
     const next = () => {
         if (idx + 1 < lines.length) {
-            setIdx(i => i + 1);
-            setLine(lines[idx + 1]);
+            setIdx(i => {
+                const nextIdx = i + 1;
+                setLine(lines[nextIdx]);
+                return nextIdx;
+            });
+
         }
     };
 

@@ -1,17 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';   // ★ useEffect 추가
-import {
-    View,
-    Text,
-    TextInput,
-    Button,
-    FlatList,
-    StyleSheet,
-    Image,
-    ActivityIndicator,
-} from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';  
+import { TextInput as RNTextInput, View, Text, Button, FlatList, StyleSheet, Image } from 'react-native';
+
 import { useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { TextInput as RNTextInput } from 'react-native';
 
 interface CharacterChatProps {
     characterName: string;
@@ -33,7 +24,6 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     const [messages, setMessages] = useState<Chat[]>([]);
     const [input, setInput] = useState('');
     const [eventReady, setEventReady] = useState(false);
-    const [loadingEvent, setLoadingEvent] = useState(false);
     const router = useRouter();
 
     const inputRef = useRef<RNTextInput>(null);
@@ -193,14 +183,10 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
                 </View>
             )}
 
-            {loadingEvent && (
-                <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color="#ffffff" />
-                </View>
-            )}
+
 
             <View style={styles.inputArea}>
-                <TextInput
+                <RNTextInput 
                     ref={inputRef}                           // ★ 포커스 유지용 ref
                     style={styles.input}
                     placeholder="메시지를 입력하세요"
@@ -250,7 +236,6 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
-        textAlign: 'left',
     },
     followupBubble: {
         marginLeft: 42,
@@ -311,15 +296,5 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
     },
-    loadingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 999,
-    },
+
 });
