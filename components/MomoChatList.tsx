@@ -8,18 +8,19 @@ interface Character {
 }
 
 const MomoChatList: React.FC<{ selectedCharacter: Character | null; setGlobalLoading?: (value: boolean) => void; }> = ({ selectedCharacter, setGlobalLoading }) => {
-  if (!selectedCharacter) {
-    return <Text style={styles.notice}>👈 채팅할 캐릭터를 선택해주세요.</Text>;
-  }
-
   return (
     <View style={styles.chatContainer}>
-      <Text style={styles.title}>{selectedCharacter.name}와의 대화</Text>
-      <CharacterChat
-        characterName={selectedCharacter.name}
-        characterImage={selectedCharacter.image}
-        setGlobalLoading={setGlobalLoading}
-      />
+      {selectedCharacter ? (
+        <>
+          <CharacterChat
+            characterName={selectedCharacter.name}
+            characterImage={selectedCharacter.image}
+            setGlobalLoading={setGlobalLoading}
+          />
+        </>
+      ) : (
+        <></> // 선택 안 했을 때는 그냥 빈 상태로
+      )}
     </View>
   );
 };

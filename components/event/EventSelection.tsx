@@ -32,13 +32,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   btn: {
-    backgroundColor: 'rgba(255,255,255,0.8)',  // 반투명 흰색
+    backgroundColor: 'rgba(255,255,255,0.8)', // 반투명 흰색
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     marginVertical: 6,
     borderWidth: 1,
     borderColor: '#fff',
+    transform: [{ skewX: '-15deg' }], // ✅ 평행사변형 효과 추가
   },
   text: {
     color: '#000',    // 검정 텍스트

@@ -38,6 +38,11 @@ const characters = [
     status: '상식이 존중받는 동아리, 대책...',
     image: require('../assets/images/ayane.jpg'),
   },
+  {
+    name: '히나',
+    status: '',
+    image: require('../assets/images/hina.jpg'), // 이미지 경로 추가 필요
+  },
 ];
 
 

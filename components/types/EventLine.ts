@@ -1,7 +1,7 @@
 export interface EventLine {
-    type: 'dialogue' | 'selection' | 'narration' | 'command';
+    type: 'dialogue' | 'selection' | 'narration' | 'command' | 'animation';
     character?: string;
-    text: string;
+    text?: string;
     emotion?: string;
     bg?: string;
     music?: string;
@@ -9,5 +9,7 @@ export interface EventLine {
     commandType?: string;
     waitSecond?: number;
     soundFile?: string;
+    expression?: string;
+    animationType?: string;
   }
   

@@ -30,6 +30,14 @@ export default function useEventParser(script: string) {
           return;
         }
 
+        if (l.startsWith('animation')) {
+          const anim = l.match(/animation\s*:\s*(\w+)/)?.[1];
+          if (anim) {
+            out.push({ type: 'animation', animationType: anim });
+          }
+          return;
+        }
+
         if (/^(deleteAll|deleteEmotion|endEvent)/.test(l)) {
           out.push({ type: 'command', commandType: l.trim(), text: '' });
           return;
@@ -50,8 +58,10 @@ export default function useEventParser(script: string) {
         const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
         const mus = rest.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
         const snd = rest.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
+        const exp = rest.match(/expression\s*:\s*([\w_.-]+\.png)/)?.[1];
+        const anim = rest.match(/animation\s*:\s*(\w+)/)?.[1];
         const txt = rest.replace(/\[.*?]/g, '').trim();
-        out.push({ type: 'dialogue', character: spk, text: txt, emotion: emo, bg, music: mus, soundFile: snd });
+        out.push({ type: 'dialogue', character: spk, text: txt, emotion: emo, bg, music: mus, soundFile: snd, expression: exp, animationType: anim });
       });
 
     return out;

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, TouchableOpacity, Dimensions } from 'react-native';
 import { Asset } from 'expo-asset';
-import { voiceMap, bgMap, emotionMap } from '../constants/eventAssets';
+import { sfxMap, bgMap, emotionMap, expressionMap } from '../constants/eventAssets';
 import useEventParser from '../hooks/useEventParser';
 import useBGM from '../hooks/useBGM';
 import { EventLine } from '../types/EventLine';
@@ -16,6 +16,7 @@ const { width: W, height: H } = Dimensions.get('window');
 interface Props { script: string; }
 
 const EventPlayer: React.FC<Props> = ({ script }) => {
+  console.log(script);
   /* ───────── 데이터 ───────── */
   const lines = useEventParser(script);
   const [idx, setIdx] = useState(0);
@@ -25,16 +26,30 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   /* ───────── 비주얼 상태 ───────── */
   const [bg, setBg] = useState<string | null>(null);
   const [emo, setEmo] = useState<string | null>(null);
+  const [animation, setAnimation] = useState<{
+    type: 'shake' | 'slide';
+    axis: 'x' | 'y';
+    distance: number;
+    duration: number;
+    iterations?: number;
+  } | null>(null);
   const bgOpacity = useRef(new Animated.Value(1)).current;
   const emoOpacity = useRef(new Animated.Value(1)).current;
 
   /* ───────── BGM ───────── */
   const { setMusic, stop } = useBGM();
 
+  /* ───────── 표현 ───────── */
+  const [expression, setExpression] = useState<{
+    image: any;
+    visible: boolean;
+    fadeAnim: Animated.Value;
+  } | null>(null);
+
   /* ───────── 보이스 ───────── */
-  const playVoice = async (key: string) => {
+  const playSFX = async (key: string) => {
     const snd = new Audio.Sound();
-    await snd.loadAsync(voiceMap[key]);
+    await snd.loadAsync(sfxMap[key]);
     await snd.playAsync();
   };
 
@@ -43,7 +58,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     Asset.loadAsync([
       ...Object.values(bgMap),
       ...Object.values(emotionMap),
-      ...Object.values(voiceMap),
+      ...Object.values(expressionMap),
+      ...Object.values(sfxMap),
     ]);
   }, []);
 
@@ -54,13 +70,70 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     // 대사·나레이션
     if (line.type === 'dialogue' || line.type === 'narration') {
       setLast(line);
-      if (line.type === 'dialogue' && line.soundFile) playVoice(line.soundFile);
+      if (line.soundFile) playSFX(line.soundFile);
     }
 
     // 비주얼
     if (line.bg) setBg(line.bg);
     if (line.emotion) setEmo(line.emotion);
     if (line.music !== undefined) setMusic(line.music);
+    if (line.expression) {
+      const expFadeAnim = new Animated.Value(0);
+
+      const image = expressionMap[line.expression];
+
+      if (image) {
+        setExpression({ image, visible: true, fadeAnim: expFadeAnim });
+
+        Animated.timing(expFadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+
+        setTimeout(() => {
+          Animated.timing(expFadeAnim, {
+            toValue: 0,
+            duration: 300, //변경 가능
+            useNativeDriver: true,
+          }).start(() => {
+            setExpression(null);
+          });
+        }, 2000);
+      } else {
+        console.warn('Expression 이미지 매핑 없음:', line.expression);
+      }
+    }
+
+    // 애니메이션 처리
+    if (line.type === 'animation' || (line.type === 'dialogue' && line.animationType)) {
+      const animTypeRaw = line.animationType || '';
+    
+      const type = animTypeRaw.toLowerCase().includes('slide') ? 'slide' : 'shake';
+      const axis = animTypeRaw.toLowerCase().includes('x') ? 'x' : 'y';
+    
+      console.log(`🎯 애니메이션 파싱됨: type=${type}, axis=${axis}`);
+    
+      const animation = {
+        type,
+        axis,
+        distance: 15,
+        duration: 80,
+        iterations: 3,
+      } as const;
+    
+      setAnimation(animation);
+    
+      setTimeout(() => {
+        setAnimation(null);
+      }, (animation.duration * (animation.iterations || 1) * 2) + 100);
+    
+      return;
+    }
+    
+    
+    
+
 
     // 명령
     const finish = () => nextLine();
@@ -107,7 +180,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   return (
     <View style={styles.full}>
       <EventBackground bgKey={bg} fadeAnim={bgOpacity} />
-      <CharacterSprite current={emo} fadeAnim={emoOpacity} />
+      <CharacterSprite
+        current={emo}
+        fadeAnim={emoOpacity}
+        expression={expression}
+        animation={animation}
+      />
       <TextBox currentLine={line} lastSpoken={last} />
 
       {line?.type === 'selection' && (
@@ -119,6 +197,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
       <TouchableOpacity style={styles.touch} onPress={nextLine} />
     </View>
   );
+
 };
 
 export default EventPlayer;
