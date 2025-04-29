@@ -32,9 +32,7 @@ export default function useBGM() {
       try {
         // ↓ 방법 A : musicMap 을 Record<string, any> 로 바꿨다면 그대로 사용
         await sound.loadAsync(musicMap[key]);
-        // ↓ 방법 B : 엄격타입 유지 시
-        // await sound.loadAsync(musicMap[key as keyof typeof musicMap]);
-
+        await sound.setVolumeAsync(0.5);          // 🔥 볼륨 50%로 설정 추가
         await sound.setIsLoopingAsync(true);
         await sound.playAsync();
         bgmRef.current = sound;
@@ -48,9 +46,7 @@ export default function useBGM() {
 
   /* 언마운트 시 BGM 정리 */
   useEffect(() => {
-    // ① clean-up 래퍼로 감싸서 void 반환
-    return () => { stop(); };   // ← 여기만 변경
-    // 또는: return () => { void stop(); };
+    return () => { stop(); };
   }, [stop]);
 
   return { setMusic, stop };

@@ -110,6 +110,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           useNativeDriver: true,
         }).start();
 
+
         setTimeout(() => {
           Animated.timing(expFadeAnim, {
             toValue: 0,

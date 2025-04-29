@@ -53,6 +53,7 @@ export default function useEventParser(script: string) {
           return;
         }
 
+        
         /* 일반 대사 */
         const i = l.indexOf(':');
         if (i === -1) return;
