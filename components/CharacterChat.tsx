@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';  
+import React, { useState, useRef, useEffect } from 'react';
 import { TextInput as RNTextInput, View, Text, Button, FlatList, StyleSheet, Image } from 'react-native';
 
 import { useRouter } from 'expo-router';
@@ -41,6 +41,52 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
         return () => clearTimeout(timeout);
     }, [messages]);
     /* ------------------------------------------------------------------ */
+
+    useEffect(() => {
+        const tryTrigger = async () => {
+            if (Math.random() < 0.5) {
+                try {
+                    const res = await fetch('http://localhost:3000/api/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ character: characterName }),
+                    });
+                    const data = await res.json();
+
+                    if (data.triggerLine) {
+                        const sentences = (data.triggerLine as string)
+                            .split(/(?<=[.!?])\s+(?=\S)/g)
+                            .map((s: string) => s.replace(/\n/g, ' ').trim())
+                            .filter((s: string) => s !== '' && !/^(\.){2,}$/.test(s));
+
+
+                        if (sentences.length > 0) {
+                            setMessages(prev => [
+                                ...prev,
+                                { sender: 'character', text: sentences[0], showImage: true },
+                            ]);
+
+                            for (let i = 1; i < sentences.length; i++) {
+                                setMessages(prev => [...prev, { sender: 'typing', text: '···' }]);
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+                                setMessages(prev =>
+                                    prev
+                                        .filter(m => m.sender !== 'typing')
+                                        .concat({ sender: 'character', text: sentences[i] }),
+                                );
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('트리거 대사 로딩 실패:', e);
+                }
+            }
+        };
+
+        tryTrigger();
+    }, []);
+
+
 
     const sendToGemini = async (
         msg: string,
@@ -119,20 +165,36 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
 
     const extractDialogHistory = (allMsgs: Chat[]) => {
         const history: { user: string; ai: string }[] = [];
+        let lastSender: 'user' | 'character' | null = null;
         let currentPair: Partial<{ user: string; ai: string }> = {};
 
         for (const msg of allMsgs) {
             if (msg.sender === 'user') {
-                currentPair = { user: msg.text };
-            } else if (msg.sender === 'character' && currentPair.user) {
-                currentPair.ai = msg.text;
-                history.push(currentPair as { user: string; ai: string });
-                currentPair = {};
+                if (lastSender === 'character' && currentPair.ai) {
+                    // 캐릭터가 먼저 보낸 경우
+                    currentPair.user = msg.text;
+                    history.push(currentPair as { user: string; ai: string });
+                    currentPair = {};
+                } else {
+                    currentPair = { user: msg.text };
+                }
+                lastSender = 'user';
+            } else if (msg.sender === 'character') {
+                if (lastSender === 'user' && currentPair.user) {
+                    // 유저가 먼저 보낸 경우
+                    currentPair.ai = msg.text;
+                    history.push(currentPair as { user: string; ai: string });
+                    currentPair = {};
+                } else {
+                    currentPair = { ai: msg.text };
+                }
+                lastSender = 'character';
             }
         }
 
         return history.slice(-3);
     };
+
 
     const renderItem = ({ item }: { item: Chat }) => {
         const isUser = item.sender === 'user';
@@ -186,7 +248,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
 
 
             <View style={styles.inputArea}>
-                <RNTextInput 
+                <RNTextInput
                     ref={inputRef}                           // ★ 포커스 유지용 ref
                     style={styles.input}
                     placeholder="메시지를 입력하세요"

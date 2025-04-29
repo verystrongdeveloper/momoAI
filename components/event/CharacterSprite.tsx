@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Dimensions } from 'react-native';
 import { emotionMap } from '../constants/eventAssets';
 
@@ -137,12 +137,16 @@ const styles = StyleSheet.create({
   },
   /* 각 emotion PNG */
   char: {
-    left: 50,
-    width: 2000,
-    height: 1200,
-    resizeMode: 'contain',
     position: 'absolute',
+    bottom: 0,
+    left: '35%',
+    transform: [{ translateX: -W * 0.35 }],
+    width: W * 0.99,
+    height: H * 1,
+    resizeMode: 'contain',
+    pointerEvents: 'none',
   },
+  
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',

@@ -3,7 +3,7 @@
 ## 📄 `components/CharacterChat.tsx`
 
 ```tsx
-import React, { useState, useRef, useEffect } from 'react';  
+import React, { useState, useRef, useEffect } from 'react';
 import { TextInput as RNTextInput, View, Text, Button, FlatList, StyleSheet, Image } from 'react-native';
 
 import { useRouter } from 'expo-router';
@@ -46,6 +46,52 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
         return () => clearTimeout(timeout);
     }, [messages]);
     /* ------------------------------------------------------------------ */
+
+    useEffect(() => {
+        const tryTrigger = async () => {
+            if (Math.random() < 0.5) {
+                try {
+                    const res = await fetch('http://localhost:3000/api/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ character: characterName }),
+                    });
+                    const data = await res.json();
+
+                    if (data.triggerLine) {
+                        const sentences = (data.triggerLine as string)
+                            .split(/(?<=[.!?])\s+(?=\S)/g)
+                            .map((s: string) => s.replace(/\n/g, ' ').trim())
+                            .filter((s: string) => s !== '' && !/^(\.){2,}$/.test(s));
+
+
+                        if (sentences.length > 0) {
+                            setMessages(prev => [
+                                ...prev,
+                                { sender: 'character', text: sentences[0], showImage: true },
+                            ]);
+
+                            for (let i = 1; i < sentences.length; i++) {
+                                setMessages(prev => [...prev, { sender: 'typing', text: '···' }]);
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+                                setMessages(prev =>
+                                    prev
+                                        .filter(m => m.sender !== 'typing')
+                                        .concat({ sender: 'character', text: sentences[i] }),
+                                );
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('트리거 대사 로딩 실패:', e);
+                }
+            }
+        };
+
+        tryTrigger();
+    }, []);
+
+
 
     const sendToGemini = async (
         msg: string,
@@ -124,20 +170,36 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
 
     const extractDialogHistory = (allMsgs: Chat[]) => {
         const history: { user: string; ai: string }[] = [];
+        let lastSender: 'user' | 'character' | null = null;
         let currentPair: Partial<{ user: string; ai: string }> = {};
 
         for (const msg of allMsgs) {
             if (msg.sender === 'user') {
-                currentPair = { user: msg.text };
-            } else if (msg.sender === 'character' && currentPair.user) {
-                currentPair.ai = msg.text;
-                history.push(currentPair as { user: string; ai: string });
-                currentPair = {};
+                if (lastSender === 'character' && currentPair.ai) {
+                    // 캐릭터가 먼저 보낸 경우
+                    currentPair.user = msg.text;
+                    history.push(currentPair as { user: string; ai: string });
+                    currentPair = {};
+                } else {
+                    currentPair = { user: msg.text };
+                }
+                lastSender = 'user';
+            } else if (msg.sender === 'character') {
+                if (lastSender === 'user' && currentPair.user) {
+                    // 유저가 먼저 보낸 경우
+                    currentPair.ai = msg.text;
+                    history.push(currentPair as { user: string; ai: string });
+                    currentPair = {};
+                } else {
+                    currentPair = { ai: msg.text };
+                }
+                lastSender = 'character';
             }
         }
 
         return history.slice(-3);
     };
+
 
     const renderItem = ({ item }: { item: Chat }) => {
         const isUser = item.sender === 'user';
@@ -191,7 +253,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
 
 
             <View style={styles.inputArea}>
-                <RNTextInput 
+                <RNTextInput
                     ref={inputRef}                           // ★ 포커스 유지용 ref
                     style={styles.input}
                     placeholder="메시지를 입력하세요"
@@ -406,23 +468,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
-```
-
-## 📄 `components/EventScreen.tsx`
-
-```tsx
-import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import EventPlayer from '../components/event/EventPlayer'; // 경로는 프로젝트 구조에 따라 조정해줘
-
-export default function EventScreen() {
-    // ② AFTER
-    const { script } = useLocalSearchParams();
-    if (typeof script !== 'string') return null;   // 안전 가드
-    return <EventPlayer script={script} />;        // ✅ 그대로 전달
-
-}
 
 ```
 
@@ -701,92 +746,120 @@ const styles = StyleSheet.create({
 ## 📄 `components/event/CharacterSprite.tsx`
 
 ```tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Dimensions } from 'react-native';
 import { emotionMap } from '../constants/eventAssets';
 
 const { width: W, height: H } = Dimensions.get('window');
 
 interface Props {
-  current: string | null;         // 현재 캐릭터 emotion 키
-  fadeAnim: Animated.Value;       // 캐릭터 opacity
-  expression?: {                  // expression 버블
+  /** 현재 표시할 emotion 키(
+   *  ex. 'hina_surprised.png') – 없으면 null */
+  current: string | null;
+  /** 페이드 인·아웃용 opacity */
+  fadeAnim: Animated.Value;
+  /** 캐릭터 위 이모션 버블 */
+  expression?: {
     image: any;
     visible: boolean;
     fadeAnim: Animated.Value;
   } | null;
+  /** shake / slide 애니메이션 정보  */
   animation?: {
-    type: 'shake' | 'slide';      // 애니메이션 타입
-    axis: 'x' | 'y';              // 이동 축
-    distance: number;             // 픽셀 이동량
-    duration: number;             // 한 사이클 시간(ms)
-    iterations?: number;          // shake 반복 횟수
+    type: 'shake' | 'slide'; // 흔들기 or 미끄러지기
+    axis: 'x' | 'y';         // 움직일 축
+    distance: number;        // 한 번 이동 픽셀
+    duration: number;        // 한 번에 걸릴 시간(ms)
+    iterations?: number;     // shake 반복 횟수
   } | null;
 }
 
-export default function CharacterSprite({ current, fadeAnim, expression, animation }: Props) {
-  // translate 애니메이션값
-  const translateAnim = useRef(new Animated.Value(0)).current;
+/*  ──────────────────────────────────────────
+    ■ 변경 핵심
+    1) translateAnim → Animated.ValueXY 로 변경
+    2) 모든 emotion·expression 을 감싸는
+       Animated.View 를 만든 뒤 거기에 transform 적용
+    이렇게 하면 “스프라이트 전체” 가 통째로 이동합니다.
+   ────────────────────────────────────────── */
+export default function CharacterSprite({
+  current,
+  fadeAnim,
+  expression,
+  animation,
+}: Props) {
+  // XY 좌표를 동시에 다루기 위해 ValueXY 사용
+  const translate = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
 
-  // animation prop 변경 시 실행
+  /* animation prop 이 바뀔 때마다 실행 */
   useEffect(() => {
     if (!animation) {
-      // 애니 없으면 위치 초기화
-      translateAnim.setValue(0);
+      // 애니메이션이 끝나면 위치 초기화
+      translate.setValue({ x: 0, y: 0 });
       return;
     }
 
     const { type, axis, distance, duration, iterations = 1 } = animation;
-    const moves: Animated.CompositeAnimation[] = [];
+
+    /** 특정 축만 왕복 이동하는 helper */
+    const oneCycle = (dist: number) =>
+      Animated.timing(translate, {
+        toValue: axis === 'x' ? { x: dist, y: 0 } : { x: 0, y: dist },
+        duration,
+        useNativeDriver: true,
+      });
+
+    const backToZero = Animated.timing(translate, {
+      toValue: { x: 0, y: 0 },
+      duration,
+      useNativeDriver: true,
+    });
+
+    const seq: Animated.CompositeAnimation[] = [];
 
     if (type === 'shake') {
-      // shake: 좌우/상하 반복
+      // shake: ( +dist → -dist ) n회
       for (let i = 0; i < iterations; i++) {
-        moves.push(
-          Animated.timing(translateAnim, { toValue: distance, duration, useNativeDriver: true }),
-          Animated.timing(translateAnim, { toValue: -distance, duration, useNativeDriver: true })
-        );
+        seq.push(oneCycle(distance), oneCycle(-distance));
       }
-      // 마지막에 제자리 복귀
-      moves.push(
-        Animated.timing(translateAnim, { toValue: 0, duration, useNativeDriver: true })
-      );
+      seq.push(backToZero);
     } else if (type === 'slide') {
-      // slide: 이동 후 복귀
-      moves.push(
-        Animated.timing(translateAnim, { toValue: distance, duration, useNativeDriver: true }),
-        Animated.timing(translateAnim, { toValue: 0, duration, useNativeDriver: true })
-      );
+      // slide: ( +dist → 0 ) 1회
+      seq.push(oneCycle(distance), backToZero);
     }
 
-    Animated.sequence(moves).start();
-  }, [animation, translateAnim]);
+    Animated.sequence(seq).start();
+  }, [animation, translate]);
 
-  // 스타일 계산
-  const getCharacterStyle = (key: string) => [
+  /* ───────── style helpers ───────── */
+  const charStyle = (key: string) => [
     styles.char,
     { opacity: key === current ? fadeAnim : 0 },
+  ];
+
+  const containerStyle = [
+    styles.container,
     {
       transform: [
-        { translateX: animation?.axis === 'x' ? translateAnim : 0 },
-        { translateY: animation?.axis === 'y' ? translateAnim : 0 },
+        { translateX: translate.x },
+        { translateY: translate.y },
       ],
     },
   ];
 
+  /* ───────── render ───────── */
   return (
-    <>
-      {/* 감정 스프라이트 */}
+    <Animated.View style={containerStyle} pointerEvents="none">
+      {/* 감정 스프라이트들 (opacity 로 토글) */}
       {Object.entries(emotionMap).map(([key, src]) => (
         <Animated.Image
           key={key}
           source={src}
-          style={getCharacterStyle(key)}
+          style={charStyle(key)}
           fadeDuration={0}
         />
       ))}
 
-      {/* expression 버블 */}
+      {/* 이모션 버블 */}
       {expression && (
         <Animated.Image
           source={expression.image}
@@ -794,28 +867,42 @@ export default function CharacterSprite({ current, fadeAnim, expression, animati
           fadeDuration={0}
         />
       )}
-    </>
+    </Animated.View>
   );
 }
 
+/* ───────── style ───────── */
 const styles = StyleSheet.create({
+  /* 스프라이트 전체 컨테이너 */
+  container: {
+    position: 'absolute',
+    bottom: -200,       // 원본 위치 (필요하면 조절)
+    left: '10%',
+    width: W * 0.7,
+    aspectRatio: 2000 / 1200,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  /* 각 emotion PNG */
   char: {
     position: 'absolute',
-    bottom: -200,               // 화면 아래에 고정
-    left: '10%',
-    width: W * 0.7,          // 화면 폭의 60%
-    aspectRatio: 2000 / 1200, // 원본 비율 유지
+    bottom: 0,
+    left: '35%',
+    transform: [{ translateX: -W * 0.35 }],
+    width: W * 0.99,
+    height: H * 1,
     resizeMode: 'contain',
     pointerEvents: 'none',
   },
+  
+  /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',
     bottom: H * 0.58,
-    left: W * 0.40,
+    left: W * 0.38,
     width: 40,
     height: 40,
     resizeMode: 'contain',
-    pointerEvents: 'none',
   },
 });
 
@@ -1033,11 +1120,13 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     }
 
     // 애니메이션 처리
-    if (line.type === 'animation') {
+    if (line.type === 'animation' || (line.type === 'dialogue' && line.animationType)) {
       const animTypeRaw = line.animationType || '';
     
       const type = animTypeRaw.toLowerCase().includes('slide') ? 'slide' : 'shake';
       const axis = animTypeRaw.toLowerCase().includes('x') ? 'x' : 'y';
+    
+      console.log(`🎯 애니메이션 파싱됨: type=${type}, axis=${axis}`);
     
       const animation = {
         type,
@@ -1051,7 +1140,6 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     
       setTimeout(() => {
         setAnimation(null);
-        nextLine();
       }, (animation.duration * (animation.iterations || 1) * 2) + 100);
     
       return;
@@ -1222,8 +1310,8 @@ export default function TextBox({ currentLine, lastSpoken }: Props) {
   return (
     <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.box}>
       {currentLine?.type === 'narration'
-        ? <EventDialogue character={currentLine.character!} text={currentLine.text} />
-        : lastSpoken && <EventDialogue character={lastSpoken.character!} text={lastSpoken.text} />
+        ? <EventDialogue character={currentLine.character!} text={currentLine.text ?? ''} />
+        : lastSpoken && <EventDialogue character={lastSpoken.character!} text={lastSpoken.text ?? ''} />
       }
     </LinearGradient>
   );
@@ -1234,7 +1322,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: H / 3,
+    height: H / 2.4,
     paddingHorizontal: 30,
     paddingTop: 32,
     paddingBottom: 12,
@@ -1418,7 +1506,7 @@ const styles = StyleSheet.create({
 ## 📄 `app/event-screen.tsx`
 
 ```tsx
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import EventPlayer from '../components/event/EventPlayer';   // ← 경로는 프로젝트 구조에 맞게 조정
 
@@ -1431,7 +1519,12 @@ export default function EventScreen() {
   /*  ✅  decodeURIComponent 필요 없음
       CharacterChat에서 encodeURIComponent를 이미 제거했으므로
       expo‑router가 한 번만 자동 인코딩/디코딩해 줍니다. */
-  return <EventPlayer script={script} />;
+      return (
+        <>
+          <Stack.Screen options={{ headerShown: false }} />  {/* ✨ 이거 추가 */}
+          <EventPlayer script={script} />
+        </>
+      );
 }
 
 ```

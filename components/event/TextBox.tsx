@@ -18,8 +18,8 @@ export default function TextBox({ currentLine, lastSpoken }: Props) {
   return (
     <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.box}>
       {currentLine?.type === 'narration'
-        ? <EventDialogue character={currentLine.character!} text={currentLine.text} />
-        : lastSpoken && <EventDialogue character={lastSpoken.character!} text={lastSpoken.text} />
+        ? <EventDialogue character={currentLine.character!} text={currentLine.text ?? ''} />
+        : lastSpoken && <EventDialogue character={lastSpoken.character!} text={lastSpoken.text ?? ''} />
       }
     </LinearGradient>
   );
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: H / 3,
+    height: H / 2.4,
     paddingHorizontal: 30,
     paddingTop: 32,
     paddingBottom: 12,
