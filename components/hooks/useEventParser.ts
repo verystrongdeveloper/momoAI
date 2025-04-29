@@ -14,7 +14,11 @@ export default function useEventParser(script: string) {
       .map(l => l.trim())
       .filter(Boolean)
       .forEach(l => {
-        if (l.startsWith('타이틀')) return;
+        if (l.startsWith('타이틀')) {
+          const txt = l.replace(/^타이틀\s*:\s*/, '').trim();
+          out.push({ type: '타이틀', text: txt });
+          return;
+        }
 
         if (l.startsWith('selection')) {
           const opts = [...l.matchAll(/\(\d+\)"(.*?)"/g)].map(m => m[1]);

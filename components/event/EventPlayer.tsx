@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, Dimensions, Text } from 'react-native';
 import { Asset } from 'expo-asset';
 import { sfxMap, bgMap, emotionMap, expressionMap } from '../constants/eventAssets';
 import useEventParser from '../hooks/useEventParser';
@@ -8,6 +8,7 @@ import { EventLine } from '../types/EventLine';
 import EventBackground from './EventBackground';
 import CharacterSprite from './CharacterSprite';
 import EventSelection from './EventSelection';
+import TitleBanner from './TitleBanner';
 import TextBox from './TextBox';
 import { Audio } from 'expo-av';
 
@@ -24,6 +25,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const [last, setLast] = useState<EventLine | null>(null);
 
   /* ───────── 비주얼 상태 ───────── */
+  const [title, setTitle] = useState<string | null>(null);
+  const [showTitle, setShowTitle] = useState(false);
   const [bg, setBg] = useState<string | null>(null);
   const [emo, setEmo] = useState<string | null>(null);
   const [animation, setAnimation] = useState<{
@@ -67,6 +70,22 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   useEffect(() => {
     if (!line) return;
 
+    // 타이틀 처리
+    if (line.type === '타이틀') {
+      setTitle(line.text || '');
+      setShowTitle(true);
+    
+      // 3초간 보여주고 -> 페이드 아웃 후 → 1초 대기 후 nextLine
+      setTimeout(() => {
+        setShowTitle(false);
+    
+        // 여기서 1초 후 nextLine
+        setTimeout(() => {
+          nextLine();
+        }, 1000); // ← 여기! 1초 딜레이
+      }, 3000); // ← 타이틀 표시 시간
+      return;
+    }
     // 대사·나레이션
     if (line.type === 'dialogue' || line.type === 'narration') {
       setLast(line);
@@ -108,12 +127,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     // 애니메이션 처리
     if (line.type === 'animation' || (line.type === 'dialogue' && line.animationType)) {
       const animTypeRaw = line.animationType || '';
-    
+
       const type = animTypeRaw.toLowerCase().includes('slide') ? 'slide' : 'shake';
       const axis = animTypeRaw.toLowerCase().includes('x') ? 'x' : 'y';
-    
+
       console.log(`🎯 애니메이션 파싱됨: type=${type}, axis=${axis}`);
-    
+
       const animation = {
         type,
         axis,
@@ -121,18 +140,18 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         duration: 80,
         iterations: 3,
       } as const;
-    
+
       setAnimation(animation);
-    
+
       setTimeout(() => {
         setAnimation(null);
       }, (animation.duration * (animation.iterations || 1) * 2) + 100);
-    
+
       return;
     }
-    
-    
-    
+
+
+
 
 
     // 명령
@@ -179,6 +198,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   /* ───────── render ───────── */
   return (
     <View style={styles.full}>
+      <TitleBanner title={title || ''} visible={showTitle} />
       <EventBackground bgKey={bg} fadeAnim={bgOpacity} />
       <CharacterSprite
         current={emo}
@@ -214,4 +234,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   touch: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+
+  
 });

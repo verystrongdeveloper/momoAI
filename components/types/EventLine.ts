@@ -1,5 +1,5 @@
 export interface EventLine {
-    type: 'dialogue' | 'selection' | 'narration' | 'command' | 'animation';
+    type: 'dialogue' | 'selection' | 'narration' | 'command' | 'animation' | '타이틀';
     character?: string;
     text?: string;
     emotion?: string;
