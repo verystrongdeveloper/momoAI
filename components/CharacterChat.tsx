@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
-        fontSize: 23,
+        fontSize: 30,
     },
     avatarWrapper: {
         width: 42,                  // 아바타 공간 고정
@@ -312,13 +312,13 @@ const styles = StyleSheet.create({
         marginRight: 6,
     },
     avatar: {
-        width: 42,
-        height: 42,
+        width: 50,
+        height: 50,
         borderRadius: 18,
     },
     avatarPlaceholder: {
-        width: 36,
-        height: 36,
+        width: 50,
+        height: 50,
         borderRadius: 18,
         backgroundColor: 'transparent',
     },
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
         color: '#333',
         fontWeight: 'bold',
         marginBottom: 2,
-        fontSize: 28,
+        fontSize: 40,
     },
     eventContainer: {
         alignItems: 'center',
