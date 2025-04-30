@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
   /* 각 emotion PNG */
   char: {
     left: 50,
-    width: 2000,
-    height: 1300,
+    width: '100%',
+    height: '130%',
     resizeMode: 'contain',
     position: 'absolute',
   },

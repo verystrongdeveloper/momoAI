@@ -36,7 +36,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
         // setState가 반영된 뒤 한 프레임 정도 늦게 스크롤해야
         // 아이템 생성 → 레이아웃 계산 → 스크롤 순서가 꼬이지 않습니다.
         const timeout = setTimeout(() => {
-            listRef.current?.scrollToEnd({ animated: true });
+            listRef.current?.scrollToOffset({ offset: 99999, animated: true });
         }, 50);                                             // ★ 50ms 딜레이
         return () => clearTimeout(timeout);
     }, [messages]);
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
+        fontSize: 23,
     },
     followupBubble: {
         marginLeft: 42,
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
     typingBubble: {
         fontFamily: 'monospace',
         letterSpacing: 2,
-        fontSize: 16,
+        fontSize: 23,
     },
     inputArea: {
         flexDirection: 'row',
@@ -338,6 +339,7 @@ const styles = StyleSheet.create({
         color: '#333',
         fontWeight: 'bold',
         marginBottom: 2,
+        fontSize: 28,
     },
     eventContainer: {
         alignItems: 'center',
