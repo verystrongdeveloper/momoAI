@@ -67,6 +67,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 35,
     color: '#ffffff',
-    lineHeight: 28,
+    lineHeight: 40,
   },
 });
