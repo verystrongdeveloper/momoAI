@@ -52,12 +52,12 @@ export default EventDialogue;
 /* ------------------------------ 스타일 ---------------------------------- */
 const styles = StyleSheet.create({
   name: {
-    fontSize: 40,
+    fontSize: 50,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   affiliation: {
-    fontSize: 20,
+    fontSize: 30,
     color: '#8fd3ff',
     marginBottom: 12,
     borderBottomColor: '#ffffff',
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   text: {
-    fontSize: 25,
+    fontSize: 35,
     color: '#ffffff',
     lineHeight: 28,
   },

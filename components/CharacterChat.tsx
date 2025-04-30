@@ -199,11 +199,17 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     const renderItem = ({ item }: { item: Chat }) => {
         const isUser = item.sender === 'user';
         const isTyping = item.sender === 'typing';
-
+    
         return (
             <View style={[styles.messageRow, isUser ? styles.right : styles.left]}>
-                {!isUser && item.showImage && (
-                    <Image source={characterImage} style={styles.avatar} />
+                {!isUser && (
+                    <View style={styles.avatarWrapper}>
+                        {item.showImage ? (
+                            <Image source={characterImage} style={styles.avatar} />
+                        ) : (
+                            <View style={styles.avatarPlaceholder} />
+                        )}
+                    </View>
                 )}
                 <View style={styles.messageColumn}>
                     {!isUser && item.showImage && (
@@ -214,7 +220,6 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
                             styles.bubble,
                             isUser ? styles.userBubble : styles.charBubble,
                             isTyping && styles.typingBubble,
-                            !isUser && !item.showImage && styles.followupBubble,
                         ]}>
                         {item.text}
                     </Text>
@@ -222,6 +227,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
             </View>
         );
     };
+    
 
     return (
         <View style={styles.chatContainer}>
@@ -300,8 +306,21 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         fontSize: 23,
     },
-    followupBubble: {
-        marginLeft: 42,
+    avatarWrapper: {
+        width: 42,                  // 아바타 공간 고정
+        alignItems: 'center',
+        marginRight: 6,
+    },
+    avatar: {
+        width: 42,
+        height: 42,
+        borderRadius: 18,
+    },
+    avatarPlaceholder: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'transparent',
     },
     userBubble: {
         backgroundColor: '#DCF8C6',
@@ -329,12 +348,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         marginRight: 8,
     },
-    avatar: {
-        width: 36,
-        height: 36,
-        marginRight: 6,
-        borderRadius: 18,
-    },
     charName: {
         color: '#333',
         fontWeight: 'bold',
@@ -347,7 +360,7 @@ const styles = StyleSheet.create({
     },
     eventLabel: {
         color: '#888',
-        fontSize: 12,
+        fontSize: 20,
         marginBottom: 4,
     },
     eventButton: {
@@ -359,6 +372,8 @@ const styles = StyleSheet.create({
     eventButtonText: {
         color: 'white',
         fontWeight: 'bold',
+        fontSize: 35,
+
     },
 
 });
