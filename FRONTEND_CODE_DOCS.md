@@ -41,7 +41,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
         // setState가 반영된 뒤 한 프레임 정도 늦게 스크롤해야
         // 아이템 생성 → 레이아웃 계산 → 스크롤 순서가 꼬이지 않습니다.
         const timeout = setTimeout(() => {
-            listRef.current?.scrollToEnd({ animated: true });
+            listRef.current?.scrollToOffset({ offset: 99999, animated: true });
         }, 50);                                             // ★ 50ms 딜레이
         return () => clearTimeout(timeout);
     }, [messages]);
@@ -204,11 +204,17 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     const renderItem = ({ item }: { item: Chat }) => {
         const isUser = item.sender === 'user';
         const isTyping = item.sender === 'typing';
-
+    
         return (
             <View style={[styles.messageRow, isUser ? styles.right : styles.left]}>
-                {!isUser && item.showImage && (
-                    <Image source={characterImage} style={styles.avatar} />
+                {!isUser && (
+                    <View style={styles.avatarWrapper}>
+                        {item.showImage ? (
+                            <Image source={characterImage} style={styles.avatar} />
+                        ) : (
+                            <View style={styles.avatarPlaceholder} />
+                        )}
+                    </View>
                 )}
                 <View style={styles.messageColumn}>
                     {!isUser && item.showImage && (
@@ -219,7 +225,6 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
                             styles.bubble,
                             isUser ? styles.userBubble : styles.charBubble,
                             isTyping && styles.typingBubble,
-                            !isUser && !item.showImage && styles.followupBubble,
                         ]}>
                         {item.text}
                     </Text>
@@ -227,6 +232,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
             </View>
         );
     };
+    
 
     return (
         <View style={styles.chatContainer}>
@@ -303,9 +309,23 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
+        fontSize: 23,
     },
-    followupBubble: {
-        marginLeft: 42,
+    avatarWrapper: {
+        width: 42,                  // 아바타 공간 고정
+        alignItems: 'center',
+        marginRight: 6,
+    },
+    avatar: {
+        width: 42,
+        height: 42,
+        borderRadius: 18,
+    },
+    avatarPlaceholder: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'transparent',
     },
     userBubble: {
         backgroundColor: '#DCF8C6',
@@ -317,7 +337,7 @@ const styles = StyleSheet.create({
     typingBubble: {
         fontFamily: 'monospace',
         letterSpacing: 2,
-        fontSize: 16,
+        fontSize: 23,
     },
     inputArea: {
         flexDirection: 'row',
@@ -333,16 +353,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         marginRight: 8,
     },
-    avatar: {
-        width: 36,
-        height: 36,
-        marginRight: 6,
-        borderRadius: 18,
-    },
     charName: {
         color: '#333',
         fontWeight: 'bold',
         marginBottom: 2,
+        fontSize: 28,
     },
     eventContainer: {
         alignItems: 'center',
@@ -350,7 +365,7 @@ const styles = StyleSheet.create({
     },
     eventLabel: {
         color: '#888',
-        fontSize: 12,
+        fontSize: 20,
         marginBottom: 4,
     },
     eventButton: {
@@ -362,6 +377,8 @@ const styles = StyleSheet.create({
     eventButtonText: {
         color: 'white',
         fontWeight: 'bold',
+        fontSize: 35,
+
     },
 
 });
@@ -885,14 +902,11 @@ const styles = StyleSheet.create({
   },
   /* 각 emotion PNG */
   char: {
-    position: 'absolute',
-    bottom: 0,
-    left: '35%',
-    transform: [{ translateX: -W * 0.35 }],
-    width: W * 0.99,
-    height: H * 1,
+    left: 50,
+    width: '100%',
+    height: '130%',
     resizeMode: 'contain',
-    pointerEvents: 'none',
+    position: 'absolute',
   },
   
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
@@ -939,7 +953,7 @@ const styles = StyleSheet.create({
 ## 📄 `components/event/EventDialogue.tsx`
 
 ```tsx
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useEffect, useState } from 'react';   // ← useLayoutEffect 추가
 import { View, Text, StyleSheet } from 'react-native';
 
 interface Props {
@@ -948,33 +962,37 @@ interface Props {
 }
 
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
+  /* 캐릭터 이름·소속 분리 ------------------------------------------------ */
   const parseCharacterName = (character: string) => {
     const match = character.match(/^(.*?)\((.*?)\)$/);
     return match
       ? { name: match[1], affiliation: match[2] }
       : { name: character, affiliation: '' };
   };
-
   const { name, affiliation } = parseCharacterName(character);
 
+  /* 타이핑 애니메이션용 상태 -------------------------------------------- */
   const [displayedText, setDisplayedText] = useState('');
   const [index, setIndex] = useState(0);
 
-  useEffect(() => {
+  /* 🔸 text가 바뀌면 먼저 상태를 0으로 초기화 – 화면 그리기 전에 실행 */
+  useLayoutEffect(() => {
     setDisplayedText('');
     setIndex(0);
-  }, [text]);
+  }, [text]);                              // ← useEffect ➜ useLayoutEffect 로 변경
 
+  /* 글자 하나씩 찍어주기 -------------------------------------------------- */
   useEffect(() => {
     if (index < text.length) {
       const timeout = setTimeout(() => {
-        setDisplayedText((prev) => prev + text.charAt(index));
+        setDisplayedText(prev => prev + text.charAt(index));
         setIndex(index + 1);
-      }, 30); // 글자 간 간격(ms)
+      }, 30);                              // 글자 간 간격(ms)
       return () => clearTimeout(timeout);
     }
   }, [index, text]);
 
+  /* ---------------------------------------------------------------------- */
   return (
     <View>
       <Text style={styles.name}>{name}</Text>
@@ -986,14 +1004,15 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
 
 export default EventDialogue;
 
+/* ------------------------------ 스타일 ---------------------------------- */
 const styles = StyleSheet.create({
   name: {
-    fontSize: 40,
+    fontSize: 50,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   affiliation: {
-    fontSize: 20,
+    fontSize: 30,
     color: '#8fd3ff',
     marginBottom: 12,
     borderBottomColor: '#ffffff',
@@ -1001,9 +1020,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   text: {
-    fontSize: 25,
+    fontSize: 35,
     color: '#ffffff',
-    lineHeight: 28,
+    lineHeight: 40,
   },
 });
 
@@ -1013,7 +1032,7 @@ const styles = StyleSheet.create({
 
 ```tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, TouchableOpacity, Dimensions, Text } from 'react-native';
 import { Asset } from 'expo-asset';
 import { sfxMap, bgMap, emotionMap, expressionMap } from '../constants/eventAssets';
 import useEventParser from '../hooks/useEventParser';
@@ -1022,6 +1041,7 @@ import { EventLine } from '../types/EventLine';
 import EventBackground from './EventBackground';
 import CharacterSprite from './CharacterSprite';
 import EventSelection from './EventSelection';
+import TitleBanner from './TitleBanner';
 import TextBox from './TextBox';
 import { Audio } from 'expo-av';
 
@@ -1038,6 +1058,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const [last, setLast] = useState<EventLine | null>(null);
 
   /* ───────── 비주얼 상태 ───────── */
+  const [title, setTitle] = useState<string | null>(null);
+  const [showTitle, setShowTitle] = useState(false);
   const [bg, setBg] = useState<string | null>(null);
   const [emo, setEmo] = useState<string | null>(null);
   const [animation, setAnimation] = useState<{
@@ -1081,6 +1103,22 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   useEffect(() => {
     if (!line) return;
 
+    // 타이틀 처리
+    if (line.type === '타이틀') {
+      setTitle(line.text || '');
+      setShowTitle(true);
+    
+      // 3초간 보여주고 -> 페이드 아웃 후 → 1초 대기 후 nextLine
+      setTimeout(() => {
+        setShowTitle(false);
+    
+        // 여기서 1초 후 nextLine
+        setTimeout(() => {
+          nextLine();
+        }, 1000); // ← 여기! 1초 딜레이
+      }, 3000); // ← 타이틀 표시 시간
+      return;
+    }
     // 대사·나레이션
     if (line.type === 'dialogue' || line.type === 'narration') {
       setLast(line);
@@ -1105,6 +1143,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           useNativeDriver: true,
         }).start();
 
+
         setTimeout(() => {
           Animated.timing(expFadeAnim, {
             toValue: 0,
@@ -1122,12 +1161,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     // 애니메이션 처리
     if (line.type === 'animation' || (line.type === 'dialogue' && line.animationType)) {
       const animTypeRaw = line.animationType || '';
-    
+
       const type = animTypeRaw.toLowerCase().includes('slide') ? 'slide' : 'shake';
       const axis = animTypeRaw.toLowerCase().includes('x') ? 'x' : 'y';
-    
+
       console.log(`🎯 애니메이션 파싱됨: type=${type}, axis=${axis}`);
-    
+
       const animation = {
         type,
         axis,
@@ -1135,18 +1174,18 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         duration: 80,
         iterations: 3,
       } as const;
-    
+
       setAnimation(animation);
-    
+
       setTimeout(() => {
         setAnimation(null);
       }, (animation.duration * (animation.iterations || 1) * 2) + 100);
-    
+
       return;
     }
-    
-    
-    
+
+
+
 
 
     // 명령
@@ -1193,6 +1232,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   /* ───────── render ───────── */
   return (
     <View style={styles.full}>
+      <TitleBanner title={title || ''} visible={showTitle} />
       <EventBackground bgKey={bg} fadeAnim={bgOpacity} />
       <CharacterSprite
         current={emo}
@@ -1228,6 +1268,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   touch: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+
+  
 });
 
 ```
@@ -1236,7 +1278,7 @@ const styles = StyleSheet.create({
 
 ```tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ImageBackground } from 'react-native';
 
 interface Props {
   options: string[];
@@ -1254,7 +1296,13 @@ const EventSelection: React.FC<Props> = ({ options, onSelect }) => {
           style={styles.btn}
           onPress={() => onSelect(opt)}
         >
-          <Text style={styles.text}>{opt}</Text>
+          <ImageBackground
+            source={require('../../assets/ui/selection_bg.png')}
+            resizeMode="stretch"
+            style={styles.btnBg}
+          >
+            <Text style={styles.text}>{opt}</Text>
+          </ImageBackground>
         </TouchableOpacity>
       ))}
     </View>
@@ -1265,24 +1313,29 @@ export default EventSelection;
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_W * 0.8,
-    alignSelf: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
   btn: {
-    backgroundColor: 'rgba(255,255,255,0.8)', // 반투명 흰색
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginVertical: 6,
-    borderWidth: 1,
-    borderColor: '#fff',
-    transform: [{ skewX: '-15deg' }], // ✅ 평행사변형 효과 추가
+    width: '80%',           // 🔥 가로폭을 넓게 (기존 80% → 85%)
+    height: 70,             // 🔥 높이 키우기 (기존 60 → 70)
+    marginVertical: 10,     // 🔥 선택지 간 간격 조금 키우기
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  btnBg: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
-    color: '#000',    // 검정 텍스트
-    textAlign: 'center',
     fontSize: 25,
+    fontWeight: 'bold',
+    color: '#334877',         // 🔥 선택지 텍스트 색감 조금 더 선명하게
+    textAlign: 'center',
   },
+  
 });
 
 ```
@@ -1328,6 +1381,92 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingLeft: 100,
     paddingRight: 100,
+  },
+});
+
+```
+
+## 📄 `components/event/TitleBanner.tsx`
+
+```tsx
+import React, { useEffect, useRef } from 'react';
+import { Animated, Text, StyleSheet, Dimensions } from 'react-native';
+
+const { height: H } = Dimensions.get('window');
+
+interface Props {
+  title: string;
+  visible: boolean;
+}
+
+const TitleBanner: React.FC<Props> = ({ title, visible }) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const height = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      // 등장할 때: 높이 + 투명도 애니메이션
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(height, {
+          toValue: H / 4,
+          duration: 500,
+          useNativeDriver: false, // height는 layout 관련이니까 false
+        }),
+      ]).start();
+    } else {
+      // 사라질 때: 투명도만 애니메이션
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.overlay,
+        { opacity },
+      ]}
+      pointerEvents="none"
+    >
+      <Animated.View style={[styles.box, { height }]}>
+        <Text style={styles.text}>{title}</Text>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+export default TitleBanner;
+
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  box: {
+    width: '100%',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: '#ccc',
+    overflow: 'hidden',
+  },
+  text: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#556390',
+    textAlign: 'center',
   },
 });
 

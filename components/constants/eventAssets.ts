@@ -81,6 +81,7 @@ export const bgMap: Record<string, any> = {
 
 /* 표정 */
 export const emotionMap: Record<string, any> = {
+  // 호시노 기본
   hoshino_angry: require('../../assets/images/hoshino/hoshino_angry.png'),
   hoshino_bigLaugh: require('../../assets/images/hoshino/hoshino_bigLaugh.png'),
   hoshino_dontknowAnything: require('../../assets/images/hoshino/hoshino_dontknowAnything.png'),
@@ -94,7 +95,28 @@ export const emotionMap: Record<string, any> = {
   hoshino_yawn: require('../../assets/images/hoshino/hoshino_yawn.png'),
   hoshino_yawn2: require('../../assets/images/hoshino/hoshino_yawn2.png'),
 
-  // 히나
+  // 호시노 수영복
+  hoshino_swimsuit_angry: require('../../assets/images/hoshino/hoshino_swimsuit_angry.png'),
+  hoshino_swimsuit_bewildered: require('../../assets/images/hoshino/hoshino_swimsuit_bewildered.png'),
+  hoshino_swimsuit_bigsmile: require('../../assets/images/hoshino/hoshino_swimsuit_bigsmile.png'),
+  hoshino_swimsuit_bigyawn: require('../../assets/images/hoshino/hoshino_swimsuit_bigyawn.png'),
+  hoshino_swimsuit_confused: require('../../assets/images/hoshino/hoshino_swimsuit_confused.png'),
+  hoshino_swimsuit_consider: require('../../assets/images/hoshino/hoshino_swimsuit_consider.png'),
+  hoshino_swimsuit_consider2: require('../../assets/images/hoshino/hoshino_swimsuit_consider2.png'),
+  hoshino_swimsuit_embarrassed: require('../../assets/images/hoshino/hoshino_swimsuit_embarrassed.png'),
+  hoshino_swimsuit_feeling: require('../../assets/images/hoshino/hoshino_swimsuit_feeling.png'),
+  hoshino_swimsuit_helpless_but_cute: require('../../assets/images/hoshino/hoshino_swimsuit_helpless_but_cute.png'),
+  hoshino_swimsuit_helpless_but_cute2: require('../../assets/images/hoshino/hoshino_swimsuit_helpless_but_cute2.png'),
+  hoshino_swimsuit_serious: require('../../assets/images/hoshino/hoshino_swimsuit_serious.png'),
+  hoshino_swimsuit_smile: require('../../assets/images/hoshino/hoshino_swimsuit_smile.png'),
+  hoshino_swimsuit_smile2: require('../../assets/images/hoshino/hoshino_swimsuit_smile2.png'),
+  hoshino_swimsuit_smile3: require('../../assets/images/hoshino/hoshino_swimsuit_smile3.png'),
+  hoshino_swimsuit_sunglass: require('../../assets/images/hoshino/hoshino_swimsuit_sunglass.png'),
+  hoshino_swimsuit_surprised: require('../../assets/images/hoshino/hoshino_swimsuit_surprised.png'),
+  hoshino_swimsuit_upset: require('../../assets/images/hoshino/hoshino_swimsuit_upset.png'),
+  hoshino_swimsuit_yawn: require('../../assets/images/hoshino/hoshino_swimsuit_yawn.png'),
+
+  // 히나 기본
   hina_angry: require('../../assets/images/hina/hina_angry.png'),
   hina_bigsmile: require('../../assets/images/hina/hina_bigsmile.png'),
   hina_closingeyes: require('../../assets/images/hina/hina_closingeyes.png'),
@@ -113,6 +135,45 @@ export const emotionMap: Record<string, any> = {
   hina_weaksmile: require('../../assets/images/hina/hina_weaksmile.png'),
   hina_weaksmile2: require('../../assets/images/hina/hina_weaksmile2.png'),
   hina_wink: require('../../assets/images/hina/hina_wink.png'),
+
+  // 히나 수영복
+  hina_swimsuit_angry: require('../../assets/images/hina/hina_swimsuit_angry.png'),
+  hina_swimsuit_angry2: require('../../assets/images/hina/hina_swimsuit_angry2.png'),
+  hina_swimsuit_bigsmile: require('../../assets/images/hina/hina_swimsuit_bigsmile.png'),
+  hina_swimsuit_default: require('../../assets/images/hina/hina_swimsuit_default.png'),
+  hina_swimsuit_embarrassed: require('../../assets/images/hina/hina_swimsuit_embarrassed.png'),
+  hina_swimsuit_nervous: require('../../assets/images/hina/hina_swimsuit_nervous.png'),
+  hina_swimsuit_strugglle: require('../../assets/images/hina/hina_swimsuit_strugglle.png'),
+  hina_swimsuit_thinking: require('../../assets/images/hina/hina_swimsuit_thinking.png'),
+  hina_swimsuit_weaksmile: require('../../assets/images/hina/hina_swimsuit_weaksmile.png'),
+  hina_swimsuit_wink: require('../../assets/images/hina/hina_swimsuit_wink.png'),
+
+  // 게헨나 학생
+  gehenna_student_default: require('../../assets/images/gehenna_student/gehenna_student_default.png'),
+  gehenna_student_shout: require('../../assets/images/gehenna_student/gehenna_student_shout.png'),
+  gehenna_student_gnash_teeth: require('../../assets/images/gehenna_student/gehenna_student_gnash_teeth.png'),
+  gehenna_student_smile: require('../../assets/images/gehenna_student/gehenna_student_smile.png'),
+  gehenna_student_speaking: require('../../assets/images/gehenna_student/gehenna_student_speaking.png'),
+
+  // 로봇
+  robot_default: require('../../assets/images/robot/robot_default.png'),
+  robot_serious: require('../../assets/images/robot/robot_serious.png'),
+  robot_lethargic: require('../../assets/images/robot/robot_lethargic.png'),
+  robot_grimace: require('../../assets/images/robot/robot_grimace.png'),
+  robot_fainted: require('../../assets/images/robot/robot_fainted.png'),
+  robot_crying: require('../../assets/images/robot/robot_crying.png'),
+  robot_angry: require('../../assets/images/robot/robot_angry.png'),
+  robot_confused: require('../../assets/images/robot/robot_confused.png'),
+  robot_smile: require('../../assets/images/robot/robot_smile.png'),
+
+  // 시민/동물
+  citizen_animal_dog: require('../../assets/images/citizen/Citizen_Animal_Dog.png'),
+  citizen_animal_dog2: require('../../assets/images/citizen/Citizen_Animal_Dog2.png'),
+  citizen_animal_dog3: require('../../assets/images/citizen/Citizen_Animal_Dog3.png'),
+  citizen_animal_dog4: require('../../assets/images/citizen/Citizen_Animal_Dog4.png'),
+  citizen_animal_cat: require('../../assets/images/citizen/Citizen_Animal_Cat.png'),
+  citizen_animal_bandaged_dog: require('../../assets/images/citizen/Citizen_Animal_Bandaged_Dog.png'),
+  citizen_animal_engineer_dog: require('../../assets/images/citizen/Citizen_Animal_Engineer_Dog.png'),
 } as const;
 
 /* BGM */

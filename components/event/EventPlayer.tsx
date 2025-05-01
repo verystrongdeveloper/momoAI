@@ -114,7 +114,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         setTimeout(() => {
           Animated.timing(expFadeAnim, {
             toValue: 0,
-            duration: 300, //변경 가능
+            duration: 500, //변경 가능
             useNativeDriver: true,
           }).start(() => {
             setExpression(null);

@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',
-    bottom: H * 0.58,
-    left: W * 0.38,
+    top: H * 0.17,      // 캐릭터 상단 기준 위치
+    left: W * 0.28,     // 캐릭터 왼쪽 기준 위치
     width: 40,
     height: 40,
     resizeMode: 'contain',
