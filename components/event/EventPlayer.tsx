@@ -94,7 +94,10 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
 
     // 비주얼
     if (line.bg) setBg(line.bg);
-    if (line.emotion) setEmo(line.emotion);
+    if (line.emotion) {
+      setEmo(line.emotion);
+      emoOpacity.setValue(1); // ✅ 다시 보이게 만들기
+    }
     if (line.music !== undefined) setMusic(line.music);
     if (line.expression) {
       const expFadeAnim = new Animated.Value(0);
