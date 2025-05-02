@@ -50,6 +50,9 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     useEffect(() => {
         const tryTrigger = async () => {
             if (Math.random() < 0.5) {
+                // 1) 일단 타이핑 표시
+                setMessages(prev => [...prev, { sender: 'typing', text: '···', showImage: true }]);
+    
                 try {
                     const res = await fetch('http://localhost:3000/api/trigger', {
                         method: 'POST',
@@ -57,39 +60,49 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
                         body: JSON.stringify({ character: characterName }),
                     });
                     const data = await res.json();
-
-                    if (data.triggerLine) {
-                        const sentences = (data.triggerLine as string)
-                            .split(/(?<=[.!?])\s+(?=\S)/g)
-                            .map((s: string) => s.replace(/\n/g, ' ').trim())
-                            .filter((s: string) => s !== '' && !/^(\.){2,}$/.test(s));
-
-
-                        if (sentences.length > 0) {
-                            setMessages(prev => [
-                                ...prev,
-                                { sender: 'character', text: sentences[0], showImage: true },
-                            ]);
-
-                            for (let i = 1; i < sentences.length; i++) {
-                                setMessages(prev => [...prev, { sender: 'typing', text: '···' }]);
-                                await new Promise(resolve => setTimeout(resolve, 1500));
-                                setMessages(prev =>
-                                    prev
-                                        .filter(m => m.sender !== 'typing')
-                                        .concat({ sender: 'character', text: sentences[i] }),
-                                );
-                            }
+    
+                    // 2) 잠시 기다림
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+                    const sentences = (data.triggerLine as string)
+                        ?.split(/(?<=[.!?])\s+(?=\S)/g)
+                        .map((s: string) => s.replace(/\n/g, ' ').trim())
+                        .filter((s: string) => s !== '' && !/^(\.){2,}$/.test(s));
+    
+                    if (sentences && sentences.length > 0) {
+                        // 3) 첫 문장 표시
+                        setMessages(prev =>
+                            prev.filter(m => m.sender !== 'typing')
+                                .concat({ sender: 'character', text: sentences[0], showImage: true }),
+                        );
+    
+                        // 4) 나머지 문장 출력
+                        for (let i = 1; i < sentences.length; i++) {
+                            setMessages(prev => [...prev, { sender: 'typing', text: '···' }]);
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                            setMessages(prev =>
+                                prev
+                                    .filter(m => m.sender !== 'typing')
+                                    .concat({ sender: 'character', text: sentences[i] }),
+                            );
                         }
+                    } else {
+                        // ✨ triggerLine이 없을 경우 → 그냥 ... 제거
+                        setMessages(prev => prev.filter(m => m.sender !== 'typing'));
                     }
+    
                 } catch (e) {
                     console.error('트리거 대사 로딩 실패:', e);
+                    // 에러일 경우도 동일하게 타이핑 제거
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    setMessages(prev => prev.filter(m => m.sender !== 'typing'));
                 }
             }
         };
-
+    
         tryTrigger();
     }, []);
+    
 
 
 
@@ -337,7 +350,7 @@ const styles = StyleSheet.create({
     typingBubble: {
         fontFamily: 'monospace',
         letterSpacing: 2,
-        fontSize: 23,
+        fontSize: 30,
     },
     inputArea: {
         flexDirection: 'row',
@@ -1218,6 +1231,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           return;
       }
     }
+    if (line.type === 'command' && line.commandType === 'backgroundOnly') {
+      if (line.bg) setBg(line.bg);
+      if (line.music !== undefined) setMusic(line.music);
+      setTimeout(() => nextLine(), 1000);
+      return;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line]);
 
@@ -1363,6 +1382,13 @@ interface Props {
  * narration이면 그대로, 그 외엔 직전 대사/나레이션 표시  
  */
 export default function TextBox({ currentLine, lastSpoken }: Props) {
+  // narration이면 텍스트 있음, dialogue/selection이면 직전 대사 유지
+  const shouldShow =
+    (currentLine?.type === 'narration' && currentLine.text) ||
+    (['dialogue', 'selection'].includes(currentLine?.type ?? '') && lastSpoken?.text);
+
+  if (!shouldShow) return null;
+
   return (
     <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.box}>
       {currentLine?.type === 'narration'
@@ -1372,6 +1398,8 @@ export default function TextBox({ currentLine, lastSpoken }: Props) {
     </LinearGradient>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   box: {

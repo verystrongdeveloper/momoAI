@@ -43,6 +43,11 @@ const characters = [
     status: '',
     image: require('../assets/images/hina.jpg'), // 이미지 경로 추가 필요
   },
+  {
+    name: '이부키',
+    status: '게헨나 학원의 이부키입니다!',
+    image: require('../assets/images/ibuki.jpg'), 
+  },
 ];
 
 

@@ -196,6 +196,27 @@ export const emotionMap: Record<string, any> = {
   nonomi_shock: require('../../assets/images/nonomi/nonomi_shock.png'),
   nonomi_little_bit_sad: require('../../assets/images/nonomi/nonomi_little_bit_sad.png'),
   nonomi_smile_with_closing_eyes: require('../../assets/images/nonomi/nonomi_smile_with_closing_eyes.png'),
+
+  // 이부키
+  ibuki_default: require('../../assets/images/ibuki/ibuki_default.png'),
+  ibuki_weaksmile: require('../../assets/images/ibuki/ibuki_weaksmile.png'),
+  ibuki_curious: require('../../assets/images/ibuki/ibuki_curious.png'),
+  ibuki_bigsmile: require('../../assets/images/ibuki/ibuki_bigsmile.png'),
+  ibuki_confused: require('../../assets/images/ibuki/ibuki_confused.png'),
+  ibuki_angry: require('../../assets/images/ibuki/ibuki_angry.png'),
+  ibuki_crying: require('../../assets/images/ibuki/ibuki_crying.png'),
+  ibuki_interesting: require('../../assets/images/ibuki/ibuki_interesting.png'),
+  ibuki_notfunny: require('../../assets/images/ibuki/ibuki_notfunny.png'),
+  ibuki_exciting: require('../../assets/images/ibuki/ibuki_exciting.png'),
+  ibuki_sulky_face: require('../../assets/images/ibuki/ibuki_sulky_face.png'),
+  ibuki_sad: require('../../assets/images/ibuki/ibuki_sad.png'),
+  ibuki_sad_and_crying: require('../../assets/images/ibuki/ibuki_sad_and_crying.png'),
+  ibuki_deadpan: require('../../assets/images/ibuki/Ibuki_deadpan.png'),
+  ibuki_cold_stare: require('../../assets/images/ibuki/Ibuki_cold_stare.png'),
+  ibuki_confindence: require('../../assets/images/ibuki/Ibuki_confindence.png'),
+  ibuki_sleepy: require('../../assets/images/ibuki/Ibuki_sleepy.png'),
+  ibuki_hurt: require('../../assets/images/ibuki/Ibuki_hurt.png'),
+  ibuki_smile_with_closing_eyes: require('../../assets/images/ibuki/Ibuki_smile_with_closing_eyes.png'),
 } as const;
 
 /* BGM */
