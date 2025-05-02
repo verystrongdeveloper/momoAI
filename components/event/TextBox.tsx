@@ -15,6 +15,13 @@ interface Props {
  * narration이면 그대로, 그 외엔 직전 대사/나레이션 표시  
  */
 export default function TextBox({ currentLine, lastSpoken }: Props) {
+  // narration이면 텍스트 있음, dialogue/selection이면 직전 대사 유지
+  const shouldShow =
+    (currentLine?.type === 'narration' && currentLine.text) ||
+    (['dialogue', 'selection'].includes(currentLine?.type ?? '') && lastSpoken?.text);
+
+  if (!shouldShow) return null;
+
   return (
     <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.box}>
       {currentLine?.type === 'narration'
@@ -24,6 +31,8 @@ export default function TextBox({ currentLine, lastSpoken }: Props) {
     </LinearGradient>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   box: {

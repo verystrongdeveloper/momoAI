@@ -174,6 +174,28 @@ export const emotionMap: Record<string, any> = {
   citizen_animal_cat: require('../../assets/images/citizen/Citizen_Animal_Cat.png'),
   citizen_animal_bandaged_dog: require('../../assets/images/citizen/Citizen_Animal_Bandaged_Dog.png'),
   citizen_animal_engineer_dog: require('../../assets/images/citizen/Citizen_Animal_Engineer_Dog.png'),
+
+  // 노노미
+  nonomi_default: require('../../assets/images/nonomi/nonomi_default.png'),
+  nonomi_smile: require('../../assets/images/nonomi/nonomi_smile.png'),
+  nonomi_speaking: require('../../assets/images/nonomi/nonomi_speaking.png'),
+  nonomi_confuse: require('../../assets/images/nonomi/nonomi_confuse.png'),
+  nonomi_little_bit_angry: require('../../assets/images/nonomi/nonomi_little_bit_angry.png'),
+  nonomi_angry_with_shout: require('../../assets/images/nonomi/nonomi_angry_with_shout.png'),
+  nonomi_satisfaction: require('../../assets/images/nonomi/nonomi_satisfaction.png'),
+  nonomi_closing_eye: require('../../assets/images/nonomi/nonomi_closing_eye.png'),
+  nonomi_weak_smile: require('../../assets/images/nonomi/nonomi_weak_smile.png'),
+  nonomi_upset: require('../../assets/images/nonomi/nonomi_upset.png'),
+  nonomi_upset2: require('../../assets/images/nonomi/nonomi_upset2.png'),
+  nonomi_worry: require('../../assets/images/nonomi/nonomi_worry.png'),
+  nonomi_worry2: require('../../assets/images/nonomi/nonomi_worry2.png'),
+  nonomi_awkward: require('../../assets/images/nonomi/nonomi_awkward.png'),
+  nonomi_blank_stare: require('../../assets/images/nonomi/nonomi_blank_stare.png'),
+  nonomi_sly_smile: require('../../assets/images/nonomi/nonomi_sly_smile.png'),
+  nonomi_sly_smile2: require('../../assets/images/nonomi/nonomi_sly_smile2.png'),
+  nonomi_shock: require('../../assets/images/nonomi/nonomi_shock.png'),
+  nonomi_little_bit_sad: require('../../assets/images/nonomi/nonomi_little_bit_sad.png'),
+  nonomi_smile_with_closing_eyes: require('../../assets/images/nonomi/nonomi_smile_with_closing_eyes.png'),
 } as const;
 
 /* BGM */

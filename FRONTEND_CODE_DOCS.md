@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
-        fontSize: 23,
+        fontSize: 30,
     },
     avatarWrapper: {
         width: 42,                  // 아바타 공간 고정
@@ -317,13 +317,13 @@ const styles = StyleSheet.create({
         marginRight: 6,
     },
     avatar: {
-        width: 42,
-        height: 42,
+        width: 50,
+        height: 50,
         borderRadius: 18,
     },
     avatarPlaceholder: {
-        width: 36,
-        height: 36,
+        width: 50,
+        height: 50,
         borderRadius: 18,
         backgroundColor: 'transparent',
     },
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
         color: '#333',
         fontWeight: 'bold',
         marginBottom: 2,
-        fontSize: 28,
+        fontSize: 40,
     },
     eventContainer: {
         alignItems: 'center',
@@ -912,8 +912,8 @@ const styles = StyleSheet.create({
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',
-    bottom: H * 0.58,
-    left: W * 0.38,
+    top: H * 0.17,      // 캐릭터 상단 기준 위치
+    left: W * 0.28,     // 캐릭터 왼쪽 기준 위치
     width: 40,
     height: 40,
     resizeMode: 'contain',
@@ -1127,7 +1127,10 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
 
     // 비주얼
     if (line.bg) setBg(line.bg);
-    if (line.emotion) setEmo(line.emotion);
+    if (line.emotion) {
+      setEmo(line.emotion);
+      emoOpacity.setValue(1); // ✅ 다시 보이게 만들기
+    }
     if (line.music !== undefined) setMusic(line.music);
     if (line.expression) {
       const expFadeAnim = new Animated.Value(0);
@@ -1147,7 +1150,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         setTimeout(() => {
           Animated.timing(expFadeAnim, {
             toValue: 0,
-            duration: 300, //변경 가능
+            duration: 500, //변경 가능
             useNativeDriver: true,
           }).start(() => {
             setExpression(null);
@@ -1375,9 +1378,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: H / 2.4,
+    height: H / 2.2,
     paddingHorizontal: 30,
-    paddingTop: 32,
+    paddingTop: 22,
     paddingBottom: 12,
     paddingLeft: 100,
     paddingRight: 100,

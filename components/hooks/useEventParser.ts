@@ -53,12 +53,30 @@ export default function useEventParser(script: string) {
           return;
         }
 
-        
-        /* 일반 대사 */
+        // ✅ bg나 music만 있는 줄 처리
+        if (
+          /\bbg\s*:\s*BG_[\w]+\.jpg\b/i.test(l) ||
+          /\bmusic\s*:\s*[\w_-]+\.mp3\b/i.test(l)
+        ) {
+          const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
+          const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+          out.push({
+            type: 'command',
+            commandType: 'backgroundOnly',
+            text: '',
+            bg,
+            music: mus,
+          });
+          return;
+        }
+
+        // 일반 대사 처리
         const i = l.indexOf(':');
         if (i === -1) return;
+
         const spk = l.slice(0, i).trim();
         const rest = l.slice(i + 1).trim();
+
         const emo = rest.match(/emotion\s*:\s*([\w_]+\.png)/)?.[1]?.replace('.png', '');
         const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
         const mus = rest.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
@@ -66,7 +84,18 @@ export default function useEventParser(script: string) {
         const exp = rest.match(/expression\s*:\s*([\w_.-]+\.png)/)?.[1];
         const anim = rest.match(/animation\s*:\s*(\w+)/)?.[1];
         const txt = rest.replace(/\[.*?]/g, '').trim();
-        out.push({ type: 'dialogue', character: spk, text: txt, emotion: emo, bg, music: mus, soundFile: snd, expression: exp, animationType: anim });
+
+        out.push({
+          type: 'dialogue',
+          character: spk,
+          text: txt,
+          emotion: emo,
+          bg,
+          music: mus,
+          soundFile: snd,
+          expression: exp,
+          animationType: anim,
+        });
       });
 
     return out;

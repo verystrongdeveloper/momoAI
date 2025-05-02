@@ -185,6 +185,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           return;
       }
     }
+    if (line.type === 'command' && line.commandType === 'backgroundOnly') {
+      if (line.bg) setBg(line.bg);
+      if (line.music !== undefined) setMusic(line.music);
+      setTimeout(() => nextLine(), 1000);
+      return;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line]);
 
