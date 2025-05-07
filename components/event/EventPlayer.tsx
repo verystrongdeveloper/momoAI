@@ -20,6 +20,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   console.log(script);
   /* ───────── 데이터 ───────── */
   const lines = useEventParser(script);
+  console.log(JSON.stringify(lines, null, 2));
   const [idx, setIdx] = useState(0);
   const line = lines[idx] || null;
   const [last, setLast] = useState<EventLine | null>(null);
@@ -237,12 +238,15 @@ const styles = StyleSheet.create({
   full: { flex: 1, backgroundColor: '#000' },
   sel: {
     position: 'absolute',
-    top: H * 0.4,
+    top: '50%',               // 화면 세로의 50%
     left: 0,
     right: 0,
     alignItems: 'center',
+    transform: [{ translateY: -40 }],  // 요소 높이의 절반 (예: 80px인 경우 -40)
     zIndex: 10,
   },
+  
+  
   touch: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 
   

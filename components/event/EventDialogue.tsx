@@ -9,6 +9,9 @@ interface Props {
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
   /* 캐릭터 이름·소속 분리 ------------------------------------------------ */
   const parseCharacterName = (character: string) => {
+    if (character === '???') {
+      return { name: '???', affiliation: '' }; // 또는 '???'에 특별한 스타일 적용
+    }
     const match = character.match(/^(.*?)\((.*?)\)$/);
     return match
       ? { name: match[1], affiliation: match[2] }
@@ -52,12 +55,12 @@ export default EventDialogue;
 /* ------------------------------ 스타일 ---------------------------------- */
 const styles = StyleSheet.create({
   name: {
-    fontSize: 50,
+    fontSize: 70,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   affiliation: {
-    fontSize: 30,
+    fontSize: 40,
     color: '#8fd3ff',
     marginBottom: 12,
     borderBottomColor: '#ffffff',
@@ -65,8 +68,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   text: {
-    fontSize: 35,
+    fontSize: 55,
     color: '#ffffff',
-    lineHeight: 40,
+    lineHeight: 60,
   },
 });

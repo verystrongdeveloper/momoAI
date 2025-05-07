@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 25,
+    fontSize: 35,
     fontWeight: 'bold',
     color: '#334877',         // 🔥 선택지 텍스트 색감 조금 더 선명하게
     textAlign: 'center',

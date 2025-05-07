@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
   },
   /* 각 emotion PNG */
   char: {
-    left: 50,
-    width: '100%',
-    height: '130%',
+    left: 100,
+    width: '110%',
+    height: '120%',
     resizeMode: 'contain',
     position: 'absolute',
   },
@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',
-    top: H * 0.17,      // 캐릭터 상단 기준 위치
-    left: W * 0.28,     // 캐릭터 왼쪽 기준 위치
-    width: 40,
-    height: 40,
+    top: H * 0.02,      // 캐릭터 상단 기준 위치
+    left: W * 0.35,     // 캐릭터 왼쪽 기준 위치
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
 });

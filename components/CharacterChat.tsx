@@ -317,7 +317,8 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
-        fontSize: 30,
+        fontSize: 40,
+        
     },
     avatarWrapper: {
         width: 42,                  // 아바타 공간 고정
@@ -341,6 +342,7 @@ const styles = StyleSheet.create({
     charBubble: {
         backgroundColor: '#44546A',
         color: 'white',
+        maxWidth: 700, 
     },
     typingBubble: {
         fontFamily: 'monospace',

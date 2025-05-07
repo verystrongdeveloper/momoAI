@@ -1,52 +1,72 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Audio } from 'expo-av';
 import { musicMap } from '../constants/eventAssets';
 
+/**
+ * BGM 재생 전용 훅
+ *  - 한 번에 한 트랙만 재생
+ *  - 다른 트랙으로 교체 시 자동으로 기존 사운드 stop + unload
+ *  - 'none' 키를 넘기면 즉시 정지
+ */
 export default function useBGM() {
-  const bgmRef = useRef<Audio.Sound | null>(null);
-  const prevKey = useRef<string | null>(null);
-
-  /* ───── 정지 ───── */
+  /** 현재 재생 중인 사운드 객체 */
+  const soundRef = useRef<Audio.Sound | null>(null);
+  /** 현재 재생 중인 파일명(중복 재생 방지) */
+  const currentKey = useRef<string | null>(null);
+  const isLoadingRef = useRef<boolean>(false);
+  /** 모든 사운드 정지 */
   const stop = useCallback(async () => {
-    if (bgmRef.current) {
+    if (soundRef.current) {
       try {
-        await bgmRef.current.stopAsync();
-        await bgmRef.current.unloadAsync();
-      } catch {}
-      bgmRef.current = null;
-      prevKey.current = null;
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+      } catch {
+        /* ignore */
+      }
+      soundRef.current = null;
+      currentKey.current = null;
     }
   }, []);
 
-  /* ───── 새 음악 설정 ───── */
+  /**
+   * 새 BGM 지정
+   * @param key  음악 파일명(ext 포함) ― 'none' 이면 정지만
+   */
   const setMusic = useCallback(
-    async (key?: string | null) => {
-      if (!key || key === 'none') {
-        await stop();
-        return;
-      }
-      if (prevKey.current === key) return;
+    async (key: string | 'none') => {
+      if (isLoadingRef.current) return; // 중복 방지 🔒
+      isLoadingRef.current = true;
 
-      await stop();
-      const sound = new Audio.Sound();
       try {
-        // ↓ 방법 A : musicMap 을 Record<string, any> 로 바꿨다면 그대로 사용
-        await sound.loadAsync(musicMap[key]);
-        await sound.setVolumeAsync(0.5);          // 🔥 볼륨 50%로 설정 추가
-        await sound.setIsLoopingAsync(true);
-        await sound.playAsync();
-        bgmRef.current = sound;
-        prevKey.current = key;
-      } catch (e) {
-        console.warn('[BGM] load error', e);
+        if (key === currentKey.current) return;
+
+        await stop();
+        if (key === 'none') return;
+
+        const src = musicMap[key as keyof typeof musicMap];
+        if (!src) {
+          console.warn(`[useBGM] 존재하지 않는 음악 키: ${key}`);
+          return;
+        }
+
+        const snd = new Audio.Sound();
+        await snd.loadAsync(src, { isLooping: true });
+        await snd.playAsync();
+
+        soundRef.current = snd;
+        currentKey.current = key;
+      } finally {
+        isLoadingRef.current = false; // 해제
       }
     },
     [stop],
   );
 
-  /* 언마운트 시 BGM 정리 */
+  /** 언마운트 시 안전하게 정리 */
   useEffect(() => {
-    return () => { stop(); };
+    return () => {
+      void stop();
+    };
   }, [stop]);
 
   return { setMusic, stop };

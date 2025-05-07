@@ -322,7 +322,8 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         flexWrap: 'wrap',
-        fontSize: 30,
+        fontSize: 40,
+        
     },
     avatarWrapper: {
         width: 42,                  // 아바타 공간 고정
@@ -346,6 +347,7 @@ const styles = StyleSheet.create({
     charBubble: {
         backgroundColor: '#44546A',
         color: 'white',
+        maxWidth: 700, 
     },
     typingBubble: {
         fontFamily: 'monospace',
@@ -601,6 +603,11 @@ const characters = [
     name: '히나',
     status: '',
     image: require('../assets/images/hina.jpg'), // 이미지 경로 추가 필요
+  },
+  {
+    name: '이부키',
+    status: '게헨나 학원의 이부키입니다!',
+    image: require('../assets/images/ibuki.jpg'), 
   },
 ];
 
@@ -915,9 +922,9 @@ const styles = StyleSheet.create({
   },
   /* 각 emotion PNG */
   char: {
-    left: 50,
-    width: '100%',
-    height: '130%',
+    left: 100,
+    width: '110%',
+    height: '120%',
     resizeMode: 'contain',
     position: 'absolute',
   },
@@ -925,10 +932,10 @@ const styles = StyleSheet.create({
   /* 이모션 버블 위치 (캐릭터 왼쪽 위) */
   expression: {
     position: 'absolute',
-    top: H * 0.17,      // 캐릭터 상단 기준 위치
-    left: W * 0.28,     // 캐릭터 왼쪽 기준 위치
-    width: 40,
-    height: 40,
+    top: H * 0.02,      // 캐릭터 상단 기준 위치
+    left: W * 0.35,     // 캐릭터 왼쪽 기준 위치
+    width: 80,
+    height: 80,
     resizeMode: 'contain',
   },
 });
@@ -977,6 +984,9 @@ interface Props {
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
   /* 캐릭터 이름·소속 분리 ------------------------------------------------ */
   const parseCharacterName = (character: string) => {
+    if (character === '???') {
+      return { name: '???', affiliation: '' }; // 또는 '???'에 특별한 스타일 적용
+    }
     const match = character.match(/^(.*?)\((.*?)\)$/);
     return match
       ? { name: match[1], affiliation: match[2] }
@@ -1020,12 +1030,12 @@ export default EventDialogue;
 /* ------------------------------ 스타일 ---------------------------------- */
 const styles = StyleSheet.create({
   name: {
-    fontSize: 50,
+    fontSize: 70,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   affiliation: {
-    fontSize: 30,
+    fontSize: 40,
     color: '#8fd3ff',
     marginBottom: 12,
     borderBottomColor: '#ffffff',
@@ -1033,9 +1043,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   text: {
-    fontSize: 35,
+    fontSize: 55,
     color: '#ffffff',
-    lineHeight: 40,
+    lineHeight: 60,
   },
 });
 
@@ -1066,6 +1076,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   console.log(script);
   /* ───────── 데이터 ───────── */
   const lines = useEventParser(script);
+  console.log(JSON.stringify(lines, null, 2));
   const [idx, setIdx] = useState(0);
   const line = lines[idx] || null;
   const [last, setLast] = useState<EventLine | null>(null);
@@ -1283,12 +1294,15 @@ const styles = StyleSheet.create({
   full: { flex: 1, backgroundColor: '#000' },
   sel: {
     position: 'absolute',
-    top: H * 0.4,
+    top: '50%',               // 화면 세로의 50%
     left: 0,
     right: 0,
     alignItems: 'center',
+    transform: [{ translateY: -40 }],  // 요소 높이의 절반 (예: 80px인 경우 -40)
     zIndex: 10,
   },
+  
+  
   touch: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 
   
@@ -1352,7 +1366,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 25,
+    fontSize: 35,
     fontWeight: 'bold',
     color: '#334877',         // 🔥 선택지 텍스트 색감 조금 더 선명하게
     textAlign: 'center',
@@ -1406,7 +1420,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: H / 2.2,
+    height: H / 2.5,
     paddingHorizontal: 30,
     paddingTop: 22,
     paddingBottom: 12,

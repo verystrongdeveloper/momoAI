@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: H / 2.2,
+    height: H / 2.5,
     paddingHorizontal: 30,
     paddingTop: 22,
     paddingBottom: 12,

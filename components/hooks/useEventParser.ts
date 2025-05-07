@@ -30,7 +30,8 @@ export default function useEventParser(script: string) {
           const txt = l.match(/narration\s*:\s*(.+?)(?:\[|$)/)?.[1].trim() || '';
           const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
           const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
-          out.push({ type: 'narration', character: '', text: txt, bg, music: mus });
+          const snd = l.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
+          out.push({ type: 'narration', character: '', text: txt, bg, music: mus, soundFile: snd });
           return;
         }
 
@@ -53,49 +54,58 @@ export default function useEventParser(script: string) {
           return;
         }
 
-        // ✅ bg나 music만 있는 줄 처리
+        // 일반 대사 처리 - 먼저 대화인지 확인
+        const i = l.indexOf(':');
+        if (i !== -1) {
+          const speakerRaw = l.slice(0, i).trim();
+          // 화자가 있고 narration, selection, animation 등의 키워드가 아닌 경우 대화로 처리
+          if (speakerRaw && !['narration', 'selection', 'animation', 'waitSecond', 'bg', 'music', 'sound'].includes(speakerRaw)) {
+            const speakerMatch = speakerRaw.match(/^(.+?)\s*\((.+?)\)$/);
+            const spk = speakerMatch ? `${speakerMatch[1]}(${speakerMatch[2]})` : speakerRaw;
+            const rest = l.slice(i + 1).trim();
+
+            const emo = rest.match(/emotion\s*:\s*([\w_]+\.png)/)?.[1]?.replace('.png', '');
+            const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
+            const mus = rest.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+            const snd = rest.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
+            const exp = rest.match(/expression\s*:\s*([\w_.-]+\.png)/)?.[1];
+            const anim = rest.match(/animation\s*:\s*(\w+)/)?.[1];
+            const txt = rest.replace(/\[.*?]/g, '').trim();
+
+            out.push({
+              type: 'dialogue',
+              character: spk,
+              text: txt,
+              emotion: emo,
+              bg,
+              music: mus,
+              soundFile: snd,
+              expression: exp,
+              animationType: anim,
+            });
+            return;
+          }
+        }
+
+        // ✅ bg나 music, sound만 있는 줄 처리
         if (
           /\bbg\s*:\s*BG_[\w]+\.jpg\b/i.test(l) ||
-          /\bmusic\s*:\s*[\w_-]+\.mp3\b/i.test(l)
+          /\bmusic\s*:\s*[\w_-]+\.mp3\b/i.test(l) ||
+          /\bsound\s*:\s*[\w'_.-]+\.mp3\b/i.test(l)
         ) {
           const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
           const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+          const snd = l.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
           out.push({
             type: 'command',
             commandType: 'backgroundOnly',
             text: '',
             bg,
             music: mus,
+            soundFile: snd,
           });
           return;
         }
-
-        // 일반 대사 처리
-        const i = l.indexOf(':');
-        if (i === -1) return;
-
-        const spk = l.slice(0, i).trim();
-        const rest = l.slice(i + 1).trim();
-
-        const emo = rest.match(/emotion\s*:\s*([\w_]+\.png)/)?.[1]?.replace('.png', '');
-        const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
-        const mus = rest.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
-        const snd = rest.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
-        const exp = rest.match(/expression\s*:\s*([\w_.-]+\.png)/)?.[1];
-        const anim = rest.match(/animation\s*:\s*(\w+)/)?.[1];
-        const txt = rest.replace(/\[.*?]/g, '').trim();
-
-        out.push({
-          type: 'dialogue',
-          character: spk,
-          text: txt,
-          emotion: emo,
-          bg,
-          music: mus,
-          soundFile: snd,
-          expression: exp,
-          animationType: anim,
-        });
       });
 
     return out;
