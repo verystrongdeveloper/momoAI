@@ -251,6 +251,21 @@ export const emotionMap: Record<string, any> = {
   serika_weaksmile: require('../../assets/images/serika/serika_weaksmile.png'),
   serika_worry: require('../../assets/images/serika/serika_worry.png'),
 
+  // 코하루
+  koharu_default: require('../../assets/images/koharu/koharu_default.png'),
+  koharu_default2: require('../../assets/images/koharu/koharu_default2.png'),
+  koharu_bigsmile: require('../../assets/images/koharu/koharu_bigsmile.png'),
+  koharu_closingeyes: require('../../assets/images/koharu/koharu_closingeyes.png'),
+  koharu_crying: require('../../assets/images/koharu/koharu_crying.png'),
+  koharu_disgusting: require('../../assets/images/koharu/koharu_disgusting.png'),
+  koharu_embarrassed: require('../../assets/images/koharu/koharu_embarrassed.png'),
+  koharu_embarrassed2: require('../../assets/images/koharu/koharu_embarrassed2.png'),
+  koharu_interesting: require('../../assets/images/koharu/koharu_interesting.png'),
+  koharu_say_hentai: require('../../assets/images/koharu/koharu_say_hentai.png'),
+  koharu_shout: require('../../assets/images/koharu/koharu_shout.png'),
+  koharu_shout2: require('../../assets/images/koharu/koharu_shout2.png'),
+  koharu_suspicious: require('../../assets/images/koharu/koharu_suspicious.png'),
+
   // 발키리 학생
   valkyrie_student_default: require('../../assets/images/valkyrie_student/valkyrie_student_default.png'),
   valkyrie_student_speaking: require('../../assets/images/valkyrie_student/valkyrie_student_speaking.png'),
