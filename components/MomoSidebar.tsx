@@ -2,7 +2,15 @@ import React from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const MomoSidebar: React.FC = () => {
+interface MomoSidebarProps {
+  onOpenCharacterList: () => void;
+  onOpenGroupChatList: () => void;
+}
+
+const MomoSidebar: React.FC<MomoSidebarProps> = ({
+  onOpenCharacterList,
+  onOpenGroupChatList,
+}) => {
   const router = useRouter();
 
   const testScript = `
@@ -84,10 +92,29 @@ endEvent
 
   return (
     <View style={styles.sidebar}>
-      <Image source={require('../assets/images/list.jpg')} style={styles.icon} />
-      <Image source={require('../assets/images/message.jpg')} style={styles.icon} />
+      {/* 캐릭터 리스트 복귀 버튼 */}
+      <TouchableOpacity
+        onPress={onOpenCharacterList}
+        style={styles.iconBtn}
+      >
+        <Image
+          source={require('../assets/images/list.jpg')}
+          style={styles.icon}
+        />
+      </TouchableOpacity>
 
-      {/* 🔘 이벤트 테스트 버튼 추가 */}
+      {/* 메시지 아이콘 → 단톡방 리스트로 진입 */}
+      <TouchableOpacity
+        onPress={onOpenGroupChatList}
+        style={styles.iconBtn}
+      >
+        <Image
+          source={require('../assets/images/message.jpg')}
+          style={styles.icon}
+        />
+      </TouchableOpacity>
+
+      {/* 이벤트 테스트 버튼 */}
       <TouchableOpacity
         onPress={() => {
           router.push({
@@ -110,18 +137,20 @@ const styles = StyleSheet.create({
     width: 60,
     backgroundColor: '#4C5B70',
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 10,
+    paddingVertical: 12,
+  },
+  iconBtn: {
+    marginBottom: 12,
+    padding: 6,
+    borderRadius: 6,
   },
   icon: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     resizeMode: 'contain',
-    borderRadius: 5,
   },
   testBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    padding: 6,
     borderRadius: 6,
   },
   testText: {

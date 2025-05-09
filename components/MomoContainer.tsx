@@ -5,6 +5,7 @@ import MomoHeader from './MomoHeader';
 import MomoSidebar from './MomoSidebar';
 import MomoChatList from './MomoChatList';
 import ChatEntry from './ChatEntry';
+import GroupChatList from './GroupChatList';
 
 interface Character {
   name: string;
@@ -46,7 +47,7 @@ const characters = [
   {
     name: '이부키',
     status: '게헨나 학원의 이부키입니다!',
-    image: require('../assets/images/ibuki.jpg'), 
+    image: require('../assets/images/ibuki.jpg'),
   },
   {
     name: '코하루',
@@ -70,25 +71,47 @@ const characters = [
 const MomoContainer: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false); // ✅ 전역 로딩 상태 추가
+  const [activePanel, setActivePanel] = useState<'chat' | 'groupList'>('chat');
 
   return (
     <View style={styles.container}>
       <MomoHeader />
       <View style={styles.body}>
-        <MomoSidebar />
+        <MomoSidebar
+          onOpenCharacterList={() => setActivePanel('chat')}
+          onOpenGroupChatList={() => {
+            setSelectedCharacter(null);
+            setActivePanel('groupList');
+          }}
+        />
+
 
         {/* 왼쪽: 캐릭터 리스트 */}
         <View style={styles.chatList}>
-          {characters.map((char) => (
-            <ChatEntry
-              key={char.name}
-              image={char.image}
-              name={char.name}
-              status={char.status}
-              onSelect={() => setSelectedCharacter(char)}
+          {activePanel === 'chat' &&
+            characters.map((char) => (
+              <ChatEntry
+                key={char.name}
+                image={char.image}
+                name={char.name}
+                status={char.status}
+                onSelect={() => {
+                  setSelectedCharacter(char);
+                  setActivePanel('chat'); // 다시 캐릭터 채팅으로
+                }}
+              />
+            ))}
+
+          {activePanel === 'groupList' && (
+            <GroupChatList
+              onEnterRoom={(groupId) => {
+                console.log('단톡방 진입:', groupId);
+                // 추후 단톡방 화면으로 전환 예정
+              }}
             />
-          ))}
+          )}
         </View>
+
 
         {/* 오른쪽: 선택된 캐릭터의 채팅 */}
         <MomoChatList

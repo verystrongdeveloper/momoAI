@@ -614,6 +614,16 @@ const characters = [
     status: '야한 건 안 된다고 생각해!',
     image: require('../assets/images/koharu.jpg'),
   },
+  {
+    name: '아리스',
+    status: '밀레니엄 게임개발부 아리스입니다.',
+    image: require('../assets/images/aris.jpg'),
+  },
+  {
+    name: '유우카',
+    status: '계산대로야',
+    image: require('../assets/images/yuuka.jpg'),
+  },
 ];
 
 
