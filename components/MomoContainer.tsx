@@ -6,6 +6,7 @@ import MomoSidebar from './MomoSidebar';
 import MomoChatList from './MomoChatList';
 import ChatEntry from './ChatEntry';
 import GroupChatList from './GroupChatList';
+import GroupChat from './GroupChat';
 
 interface Character {
   name: string;
@@ -13,70 +14,23 @@ interface Character {
   image: any;
 }
 
-const characters = [
-  {
-    name: '시로코',
-    status: '싸이클링 파티 모집 중…(1/5)',
-    image: require('../assets/images/shiroko.jpg'),
-  },
-  {
-    name: '호시노',
-    status: '낮잠 중 방해금지',
-    image: require('../assets/images/hoshino.jpg'),
-  },
-  {
-    name: '세리카',
-    status: '대책위원회 쿠로미 세리카입니다',
-    image: require('../assets/images/serika.jpg'),
-  },
-  {
-    name: '노노미',
-    status: '즐거운 하루 되세요!',
-    image: require('../assets/images/nonomi.jpg'),
-  },
-  {
-    name: '아야네',
-    status: '상식이 존중받는 동아리, 대책...',
-    image: require('../assets/images/ayane.jpg'),
-  },
-  {
-    name: '히나',
-    status: '',
-    image: require('../assets/images/hina.jpg'), // 이미지 경로 추가 필요
-  },
-  {
-    name: '이부키',
-    status: '게헨나 학원의 이부키입니다!',
-    image: require('../assets/images/ibuki.jpg'),
-  },
-  {
-    name: '코하루',
-    status: '야한 건 안 된다고 생각해!',
-    image: require('../assets/images/koharu.jpg'),
-  },
-  {
-    name: '아리스',
-    status: '밀레니엄 게임개발부 아리스입니다.',
-    image: require('../assets/images/aris.jpg'),
-  },
-  {
-    name: '유우카',
-    status: '계산대로야',
-    image: require('../assets/images/yuuka.jpg'),
-  },
-];
-
+import characters from '../constants/characters'; // 실제 경로 확인
 
 
 const MomoContainer: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [globalLoading, setGlobalLoading] = useState(false); // ✅ 전역 로딩 상태 추가
-  const [activePanel, setActivePanel] = useState<'chat' | 'groupList'>('chat');
+  const [globalLoading, setGlobalLoading] = useState(false);
+
+  /** ▲ chat : 1:1 채팅  |  groupList : 단톡방 목록  |  groupChat : 단톡방 실제 채팅 */
+  const [activePanel, setActivePanel] = useState<'chat' | 'groupList' | 'groupChat'>('chat');
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   return (
     <View style={styles.container}>
       <MomoHeader />
+
       <View style={styles.body}>
+        {/* ───────── 왼쪽 사이드바 ───────── */}
         <MomoSidebar
           onOpenCharacterList={() => setActivePanel('chat')}
           onOpenGroupChatList={() => {
@@ -85,8 +39,7 @@ const MomoContainer: React.FC = () => {
           }}
         />
 
-
-        {/* 왼쪽: 캐릭터 리스트 */}
+        {/* ───────── 왼쪽 리스트 영역 ───────── */}
         <View style={styles.chatList}>
           {activePanel === 'chat' &&
             characters.map((char) => (
@@ -97,7 +50,8 @@ const MomoContainer: React.FC = () => {
                 status={char.status}
                 onSelect={() => {
                   setSelectedCharacter(char);
-                  setActivePanel('chat'); // 다시 캐릭터 채팅으로
+                  setActiveGroupId(null);
+                  setActivePanel('chat');
                 }}
               />
             ))}
@@ -105,22 +59,36 @@ const MomoContainer: React.FC = () => {
           {activePanel === 'groupList' && (
             <GroupChatList
               onEnterRoom={(groupId) => {
-                console.log('단톡방 진입:', groupId);
-                // 추후 단톡방 화면으로 전환 예정
+                setActiveGroupId(groupId);
+                setSelectedCharacter(null);
+                setActivePanel('groupChat');   // ★ 단톡방으로 전환
               }}
             />
           )}
         </View>
 
+        {/* ───────── 오른쪽 채팅 / 단톡방 영역 ───────── */}
+        <View
+          style={[
+            styles.chatWindow,
+            activePanel === 'groupChat' && styles.narrowWindow, // ✅ 조건부 적용
+          ]}
+        >
+          {activePanel === 'groupChat' && activeGroupId && (
+            <GroupChat groupId={activeGroupId} />
+          )}
 
-        {/* 오른쪽: 선택된 캐릭터의 채팅 */}
-        <MomoChatList
-          selectedCharacter={selectedCharacter}
-          setGlobalLoading={setGlobalLoading} // ✅ 전달
-        />
+          {activePanel !== 'groupChat' && (
+            <MomoChatList
+              selectedCharacter={selectedCharacter}
+              setGlobalLoading={setGlobalLoading}
+            />
+          )}
+        </View>
+
       </View>
 
-      {/* ✅ 전역 로딩 오버레이 */}
+      {/* 전역 로딩 오버레이 */}
       {globalLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ffffff" />
@@ -132,6 +100,9 @@ const MomoContainer: React.FC = () => {
 
 export default MomoContainer;
 
+/* -------------------------------------------------------------------- */
+/*                              스타일시트                               */
+/* -------------------------------------------------------------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -153,7 +124,14 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f4f7f8',
   },
-  // ✅ 로딩 오버레이 스타일
+  chatWindow: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  narrowWindow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loadingOverlay: {
     position: 'absolute',
     top: 0,

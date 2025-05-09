@@ -503,6 +503,101 @@ const styles = StyleSheet.create({
 
 ```
 
+## 📄 `components/GroupChatList.tsx`
+
+```tsx
+import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+
+interface GroupChatRoom {
+    id: string;
+    name: string;
+    members: string[];
+    image: any;
+    lastMessage: string;
+}
+
+interface Props {
+    onEnterRoom: (groupId: string) => void;
+}
+
+const GROUP_CHAT_ROOMS: GroupChatRoom[] = [
+    {
+        id: 'council',
+        name: '대책위원회방',
+        members: ['호시노', '세리카', '노노미', '아야네', '시로코'],
+        image: require('../assets/images/hoshino.jpg'),
+        lastMessage: '호시노: 으헤~ 선생, 감자 폭탄은 안 터졌어!',
+    },
+    {
+        id: 'millennium',
+        name: '밀레니엄 게임부',
+        members: ['아리스', '유우카'],
+        image: require('../assets/images/aris.jpg'),
+        lastMessage: '아리스: 유우카! 서버 비용은 왜 또...',
+    },
+];
+
+const GroupChatList: React.FC<Props> = ({ onEnterRoom }) => {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>📱 단톡방 리스트</Text>
+            {GROUP_CHAT_ROOMS.map((room) => (
+                <TouchableOpacity
+                    key={room.id}
+                    onPress={() => onEnterRoom(room.id)}
+                    style={styles.entry}
+                >
+                    <Image source={room.image} style={styles.avatar} />
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.name}>{room.name} ({room.members.length}명)</Text>
+                        <Text style={styles.lastMessage} numberOfLines={1}>{room.lastMessage}</Text>
+                    </View>
+                </TouchableOpacity>
+            ))}
+        </View>
+    );
+};
+
+export default GroupChatList;
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 20,
+        flex: 1,
+        gap: 10,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    entry: {
+        flexDirection: 'row',
+        gap: 10,
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    avatar: {
+        width: 54,
+        height: 54,
+        borderRadius: 10,
+    },
+    name: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    lastMessage: {
+        fontSize: 14,
+        color: '#666',
+        marginTop: 4,
+    },
+});
+
+```
+
 ## 📄 `components/MomoChatList.tsx`
 
 ```tsx
@@ -566,6 +661,7 @@ import MomoHeader from './MomoHeader';
 import MomoSidebar from './MomoSidebar';
 import MomoChatList from './MomoChatList';
 import ChatEntry from './ChatEntry';
+import GroupChatList from './GroupChatList';
 
 interface Character {
   name: string;
@@ -607,7 +703,7 @@ const characters = [
   {
     name: '이부키',
     status: '게헨나 학원의 이부키입니다!',
-    image: require('../assets/images/ibuki.jpg'), 
+    image: require('../assets/images/ibuki.jpg'),
   },
   {
     name: '코하루',
@@ -631,25 +727,47 @@ const characters = [
 const MomoContainer: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false); // ✅ 전역 로딩 상태 추가
+  const [activePanel, setActivePanel] = useState<'chat' | 'groupList'>('chat');
 
   return (
     <View style={styles.container}>
       <MomoHeader />
       <View style={styles.body}>
-        <MomoSidebar />
+        <MomoSidebar
+          onOpenCharacterList={() => setActivePanel('chat')}
+          onOpenGroupChatList={() => {
+            setSelectedCharacter(null);
+            setActivePanel('groupList');
+          }}
+        />
+
 
         {/* 왼쪽: 캐릭터 리스트 */}
         <View style={styles.chatList}>
-          {characters.map((char) => (
-            <ChatEntry
-              key={char.name}
-              image={char.image}
-              name={char.name}
-              status={char.status}
-              onSelect={() => setSelectedCharacter(char)}
+          {activePanel === 'chat' &&
+            characters.map((char) => (
+              <ChatEntry
+                key={char.name}
+                image={char.image}
+                name={char.name}
+                status={char.status}
+                onSelect={() => {
+                  setSelectedCharacter(char);
+                  setActivePanel('chat'); // 다시 캐릭터 채팅으로
+                }}
+              />
+            ))}
+
+          {activePanel === 'groupList' && (
+            <GroupChatList
+              onEnterRoom={(groupId) => {
+                console.log('단톡방 진입:', groupId);
+                // 추후 단톡방 화면으로 전환 예정
+              }}
             />
-          ))}
+          )}
         </View>
+
 
         {/* 오른쪽: 선택된 캐릭터의 채팅 */}
         <MomoChatList
@@ -767,7 +885,15 @@ import React from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const MomoSidebar: React.FC = () => {
+interface MomoSidebarProps {
+  onOpenCharacterList: () => void;
+  onOpenGroupChatList: () => void;
+}
+
+const MomoSidebar: React.FC<MomoSidebarProps> = ({
+  onOpenCharacterList,
+  onOpenGroupChatList,
+}) => {
   const router = useRouter();
 
   const testScript = `
@@ -849,10 +975,29 @@ endEvent
 
   return (
     <View style={styles.sidebar}>
-      <Image source={require('../assets/images/list.jpg')} style={styles.icon} />
-      <Image source={require('../assets/images/message.jpg')} style={styles.icon} />
+      {/* 캐릭터 리스트 복귀 버튼 */}
+      <TouchableOpacity
+        onPress={onOpenCharacterList}
+        style={styles.iconBtn}
+      >
+        <Image
+          source={require('../assets/images/list.jpg')}
+          style={styles.icon}
+        />
+      </TouchableOpacity>
 
-      {/* 🔘 이벤트 테스트 버튼 추가 */}
+      {/* 메시지 아이콘 → 단톡방 리스트로 진입 */}
+      <TouchableOpacity
+        onPress={onOpenGroupChatList}
+        style={styles.iconBtn}
+      >
+        <Image
+          source={require('../assets/images/message.jpg')}
+          style={styles.icon}
+        />
+      </TouchableOpacity>
+
+      {/* 이벤트 테스트 버튼 */}
       <TouchableOpacity
         onPress={() => {
           router.push({
@@ -875,18 +1020,20 @@ const styles = StyleSheet.create({
     width: 60,
     backgroundColor: '#4C5B70',
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 10,
+    paddingVertical: 12,
+  },
+  iconBtn: {
+    marginBottom: 12,
+    padding: 6,
+    borderRadius: 6,
   },
   icon: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     resizeMode: 'contain',
-    borderRadius: 5,
   },
   testBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    padding: 6,
     borderRadius: 6,
   },
   testText: {
