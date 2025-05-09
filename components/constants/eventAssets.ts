@@ -286,6 +286,17 @@ export const emotionMap: Record<string, any> = {
   aris_very_angry2: require('../../assets/images/aris/aris_very_angry2.png'),
   aris_closing_eyes: require('../../assets/images/aris/aris_closing_eyes.png'),
 
+  //유우카
+  yuuka_awkward: require('../../assets/images/yuuka/yuuka_awkward.png'),
+  yuuka_bigsmile: require('../../assets/images/yuuka/yuuka_bigsmile.png'),
+  yuuka_closing_eyes: require('../../assets/images/yuuka/yuuka_closing_eyes.png'),
+  yuuka_default: require('../../assets/images/yuuka/yuuka_default.png'),
+  yuuka_embarrassed: require('../../assets/images/yuuka/yuuka_embarrassed.png'),
+  yuuka_scheming: require('../../assets/images/yuuka/yuuka_scheming.png'),
+  yuuka_speaking: require('../../assets/images/yuuka/yuuka_speaking.png'),
+  yuuka_suspicious: require('../../assets/images/yuuka/yuuka_suspicious.png'),
+
+
 
   // 발키리 학생
   valkyrie_student_default: require('../../assets/images/valkyrie_student/valkyrie_student_default.png'),
@@ -370,7 +381,7 @@ export const musicMap: Record<string, any> = {
 } as const;
 
 /* SFX */
-export const sfxMap : Record<string, any> = {
+export const sfxMap: Record<string, any> = {
   'SE_49mm_01.mp3': require('../../assets/sound/SE_49mm_01.mp3'),
   'SE_Appear_01a.mp3': require('../../assets/sound/SE_Appear_01a.mp3'),
   'SE_Answer_01.mp3': require('../../assets/sound/SE_Answer_01.mp3'),
