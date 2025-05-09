@@ -266,6 +266,27 @@ export const emotionMap: Record<string, any> = {
   koharu_shout2: require('../../assets/images/koharu/koharu_shout2.png'),
   koharu_suspicious: require('../../assets/images/koharu/koharu_suspicious.png'),
 
+  //아리스
+  aris_angry: require('../../assets/images/aris/aris_angry.png'),
+  aris_awkward: require('../../assets/images/aris/aris_awkward.png'),
+  aris_bigsmile: require('../../assets/images/aris/aris_bigsmile.png'),
+  aris_brave: require('../../assets/images/aris/aris_brave.png'),
+  aris_difficult: require('../../assets/images/aris/aris_difficult.png'),
+  aris_disgusting: require('../../assets/images/aris/aris_disgusting.png'),
+  aris_expressionless: require('../../assets/images/aris/aris_expressionless.png'),
+  aris_expressionless2: require('../../assets/images/aris/aris_expressionless2.png'),
+  aris_impressive: require('../../assets/images/aris/aris_impressive.png'),
+  aris_smile: require('../../assets/images/aris/aris_smile.png'),
+  aris_smile_with_tear: require('../../assets/images/aris/aris_smile_with_tear.png'),
+  aris_smile_with_tear2: require('../../assets/images/aris/aris_smile_with_tear2.png'),
+  aris_smile2: require('../../assets/images/aris/aris_smile2.png'),
+  aris_tear: require('../../assets/images/aris/aris_tear.png'),
+  aris_trouble: require('../../assets/images/aris/aris_trouble.png'),
+  aris_very_angry: require('../../assets/images/aris/aris_very_angry.png'),
+  aris_very_angry2: require('../../assets/images/aris/aris_very_angry2.png'),
+  aris_closing_eyes: require('../../assets/images/aris/aris_closing_eyes.png'),
+
+
   // 발키리 학생
   valkyrie_student_default: require('../../assets/images/valkyrie_student/valkyrie_student_default.png'),
   valkyrie_student_speaking: require('../../assets/images/valkyrie_student/valkyrie_student_speaking.png'),
@@ -293,14 +314,14 @@ export const emotionMap: Record<string, any> = {
   kaiser_pmc_director: require('../../assets/images/enemy/kaiser_pmc_director.png'),
   kaiser_pmc_general: require('../../assets/images/enemy/kaiser_pmc_general.png'),
 
-  // 트리니티 저스티스
+  // 트리니티 정의 실현부
   justice_task_force_member_default: require('../../assets/images/trinity_justice/justice_task_force_member_default.png'),
   justice_task_force_member_speaking: require('../../assets/images/trinity_justice/justice_task_force_member_speaking.png'),
   justice_task_force_member_serious: require('../../assets/images/trinity_justice/justice_task_force_member_serious.png'),
   justice_task_force_member_awkward: require('../../assets/images/trinity_justice/justice_task_force_member_awkward.png'),
   justice_task_force_member_uncomfortable: require('../../assets/images/trinity_justice/justice_task_force_member_uncomfortable.png'),
 
-  // 게헨나 감찰부 팀
+  // 게헨나 선도부부
   prefect_team_member_default: require('../../assets/images/gehenna_prefect_team/prefect_team_member_default.png'),
   prefect_team_member_speaking: require('../../assets/images/gehenna_prefect_team/prefect_team_member_speaking.png'),
   prefect_team_member_smile: require('../../assets/images/gehenna_prefect_team/prefect_team_member_smile.png'),
@@ -309,14 +330,14 @@ export const emotionMap: Record<string, any> = {
   prefect_team_member_embarrassed: require('../../assets/images/gehenna_prefect_team/prefect_team_member_embarrassed.png'),
   prefect_team_member_serious: require('../../assets/images/gehenna_prefect_team/prefect_team_member_serious.png'),
 
-  // 햐키야코 학생
+  // 백귀야행행 학생
   hyakkiyako_student_default: require('../../assets/images/hyakkiyako_student/hyakkiyako_student_default.png'),
   hyakkiyako_student_speaking: require('../../assets/images/hyakkiyako_student/hyakkiyako_student_speaking.png'),
   hyakkiyako_student_confused: require('../../assets/images/hyakkiyako_student/hyakkiyako_student_confused.png'),
   hyakkiyako_student_serious: require('../../assets/images/hyakkiyako_student/hyakkiyako_student_serious.png'),
   hyakkiyako_student_awkward: require('../../assets/images/hyakkiyako_student/hyakkiyako_student_awkward.png'),
 
-  // 현무문 학생
+  // 현룡문
   genryumon_student_default: require('../../assets/images/genryumon_student/genryumon_student_default.png'),
   genryumon_student_speaking: require('../../assets/images/genryumon_student/genryumon_student_speaking.png'),
   genryumon_student_smile: require('../../assets/images/genryumon_student/genryumon_student_smile.png'),

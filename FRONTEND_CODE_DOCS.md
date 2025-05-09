@@ -609,6 +609,11 @@ const characters = [
     status: '게헨나 학원의 이부키입니다!',
     image: require('../assets/images/ibuki.jpg'), 
   },
+  {
+    name: '코하루',
+    status: '야한 건 안 된다고 생각해!',
+    image: require('../assets/images/koharu.jpg'),
+  },
 ];
 
 
