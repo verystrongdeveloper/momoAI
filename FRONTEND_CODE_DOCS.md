@@ -503,97 +503,251 @@ const styles = StyleSheet.create({
 
 ```
 
+## 📄 `components/GroupChat.tsx`
+
+```tsx
+import React, { useEffect, useRef, useState } from 'react';
+import { FlatList, View, Text, Image, TextInput, Button, StyleSheet } from 'react-native';
+
+interface Props { groupId: string; }
+interface ChatLine {
+  sender: string;
+  text: string;
+  avatar?: any;
+  typing?: boolean;
+}
+
+/* 멤버 DUMMY */
+const ROOM_MEMBERS: Record<string, { name: string; avatar: any }[]> = {
+  council: [
+    { name: '호시노', avatar: require('../assets/images/hoshino.jpg') },
+    { name: '세리카', avatar: require('../assets/images/serika.jpg') },
+    { name: '시로코', avatar: require('../assets/images/shiroko.jpg') },
+    { name: '노노미', avatar: require('../assets/images/nonomi.jpg') },
+    { name: '아야네', avatar: require('../assets/images/ayane.jpg') },
+  ],
+  millennium: [
+    { name: '아리스', avatar: require('../assets/images/aris.jpg') },
+    { name: '유우카', avatar: require('../assets/images/yuuka.jpg') },
+  ],
+};
+
+export default function GroupChat({ groupId }: Props) {
+  const members = ROOM_MEMBERS[groupId];
+  const [msgs, setMsgs] = useState<ChatLine[]>([]);
+  const [input, setInput] = useState('');
+  const listRef = useRef<FlatList<ChatLine>>(null);
+
+  /* 스크롤 유지 */
+  useEffect(() => {
+    const t = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 30);
+    return () => clearTimeout(t);
+  }, [msgs]);
+
+  /* 입장 트리거 */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/group/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId: groupId }),
+        });
+        const data = await res.json();
+        if (data.triggered) {
+          const m = members.find(v => v.name === data.speaker);
+          if (m) await simulateTyping(m.name, data.text, m.avatar);
+        }
+      } catch (e) { console.warn(e); }
+    })();
+  }, [groupId]);
+
+  const simulateTyping = async (name: string, text: string, avatar: any) => {
+    setMsgs(p => [...p, { sender: name, text: '', typing: true, avatar }]);
+    await new Promise(r => setTimeout(r, 1000));
+    setMsgs(p => [...p.slice(0, -1), { sender: name, text, avatar }]);
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    setMsgs(p => [...p, { sender: 'user', text: input }]);
+    const msgCopy = input;
+    setInput('');
+    try {
+      const res = await fetch('http://localhost:3000/api/group/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: groupId, userMessage: msgCopy, history: [] }),
+      });
+      const data = await res.json();
+      for (const ans of data.answers) {
+        const m = members.find(v => v.name === ans.speaker);
+        if (m) await simulateTyping(m.name, ans.text, m.avatar);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const renderItem = ({ item }: { item: ChatLine }) => {
+    const me = item.sender === 'user';
+    return (
+      <View style={[styles.row, me && styles.rowRight]}>
+        {!me && item.avatar && <Image source={item.avatar} style={styles.avatar} />}
+        <Text style={[styles.bubble, me ? styles.userBubble : styles.charBubble]}>
+          {item.typing ? '···' : item.text}
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    /* ───────── 쇼츠용 폰 프레임 ───────── */
+    <View style={styles.container}>
+      <View style={styles.phoneFrame}>
+        <FlatList
+          ref={listRef}
+          data={msgs}
+          keyExtractor={(_, i) => i.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.phoneContent.list}
+        />
+        <View style={styles.phoneContent.inputBar}>
+          <TextInput
+            style={styles.phoneContent.input}
+            placeholder="메시지를 입력하세요"
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={handleSend}
+          />
+          <Button title="보내기" onPress={handleSend} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ──────────────────────────────────────────── */
+const FRAME_WIDTH  = 360;
+const FRAME_HEIGHT = 640;
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  /* ★ 폰 프레임 */
+  phoneFrame: {
+    width: FRAME_WIDTH,
+    height: FRAME_HEIGHT,
+    backgroundColor: '#ffffff',
+    borderRadius: 26,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+
+  /* 내부 요소 그룹화 */
+  phoneContent: {
+    list: { padding: 12, flexGrow: 1 },
+    inputBar: {
+      flexDirection: 'row',
+      padding: 8,
+      borderTopWidth: 1,
+      borderColor: '#ddd',
+    },
+    input: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: '#aaa',
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      marginRight: 6,
+    },
+  } as any, // 타입스크립트 배려
+
+  /* 채팅 버블/행 */
+  row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-end' },
+  rowRight: { flexDirection: 'row-reverse' },
+  avatar: { width: 40, height: 40, borderRadius: 8, marginRight: 6 },
+  bubble: { padding: 8, borderRadius: 10, maxWidth: '75%' },
+  userBubble: { backgroundColor: '#DCF8C6' },
+  charBubble: { backgroundColor: '#44546A', color: 'white' },
+});
+
+```
+
 ## 📄 `components/GroupChatList.tsx`
 
 ```tsx
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-
-interface GroupChatRoom {
-    id: string;
-    name: string;
-    members: string[];
-    image: any;
-    lastMessage: string;
-}
+import { GROUP_CHAT_ROOMS, GroupChatRoom } from '../constants/groupChatRooms';
 
 interface Props {
-    onEnterRoom: (groupId: string) => void;
+  /** 방 진입 시 호출 – 상위(MomoContainer 등)에서 구현 */
+  onEnterRoom: (groupId: string) => void;
 }
 
-const GROUP_CHAT_ROOMS: GroupChatRoom[] = [
-    {
-        id: 'council',
-        name: '대책위원회방',
-        members: ['호시노', '세리카', '노노미', '아야네', '시로코'],
-        image: require('../assets/images/hoshino.jpg'),
-        lastMessage: '호시노: 으헤~ 선생, 감자 폭탄은 안 터졌어!',
-    },
-    {
-        id: 'millennium',
-        name: '밀레니엄 게임부',
-        members: ['아리스', '유우카'],
-        image: require('../assets/images/aris.jpg'),
-        lastMessage: '아리스: 유우카! 서버 비용은 왜 또...',
-    },
-];
-
 const GroupChatList: React.FC<Props> = ({ onEnterRoom }) => {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>📱 단톡방 리스트</Text>
-            {GROUP_CHAT_ROOMS.map((room) => (
-                <TouchableOpacity
-                    key={room.id}
-                    onPress={() => onEnterRoom(room.id)}
-                    style={styles.entry}
-                >
-                    <Image source={room.image} style={styles.avatar} />
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.name}>{room.name} ({room.members.length}명)</Text>
-                        <Text style={styles.lastMessage} numberOfLines={1}>{room.lastMessage}</Text>
-                    </View>
-                </TouchableOpacity>
-            ))}
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>📱 단톡방 리스트</Text>
+
+      {GROUP_CHAT_ROOMS.map((room: GroupChatRoom) => (
+        <TouchableOpacity
+          key={room.id}
+          onPress={() => onEnterRoom(room.id)}
+          style={styles.entry}
+        >
+          <Image source={room.image} style={styles.avatar} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name}>
+              {room.name} ({room.members.length}명)
+            </Text>
+            <Text style={styles.lastMessage} numberOfLines={1}>
+              {room.lastMessage}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 };
 
 export default GroupChatList;
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-        flex: 1,
-        gap: 10,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    entry: {
-        flexDirection: 'row',
-        gap: 10,
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-    },
-    avatar: {
-        width: 54,
-        height: 54,
-        borderRadius: 10,
-    },
-    name: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    lastMessage: {
-        fontSize: 14,
-        color: '#666',
-        marginTop: 4,
-    },
+  container: {
+    padding: 20,
+    flex: 1,
+    gap: 10,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  entry: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  avatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 10,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
 });
 
 ```
@@ -662,6 +816,7 @@ import MomoSidebar from './MomoSidebar';
 import MomoChatList from './MomoChatList';
 import ChatEntry from './ChatEntry';
 import GroupChatList from './GroupChatList';
+import GroupChat from './GroupChat';
 
 interface Character {
   name: string;
@@ -669,70 +824,23 @@ interface Character {
   image: any;
 }
 
-const characters = [
-  {
-    name: '시로코',
-    status: '싸이클링 파티 모집 중…(1/5)',
-    image: require('../assets/images/shiroko.jpg'),
-  },
-  {
-    name: '호시노',
-    status: '낮잠 중 방해금지',
-    image: require('../assets/images/hoshino.jpg'),
-  },
-  {
-    name: '세리카',
-    status: '대책위원회 쿠로미 세리카입니다',
-    image: require('../assets/images/serika.jpg'),
-  },
-  {
-    name: '노노미',
-    status: '즐거운 하루 되세요!',
-    image: require('../assets/images/nonomi.jpg'),
-  },
-  {
-    name: '아야네',
-    status: '상식이 존중받는 동아리, 대책...',
-    image: require('../assets/images/ayane.jpg'),
-  },
-  {
-    name: '히나',
-    status: '',
-    image: require('../assets/images/hina.jpg'), // 이미지 경로 추가 필요
-  },
-  {
-    name: '이부키',
-    status: '게헨나 학원의 이부키입니다!',
-    image: require('../assets/images/ibuki.jpg'),
-  },
-  {
-    name: '코하루',
-    status: '야한 건 안 된다고 생각해!',
-    image: require('../assets/images/koharu.jpg'),
-  },
-  {
-    name: '아리스',
-    status: '밀레니엄 게임개발부 아리스입니다.',
-    image: require('../assets/images/aris.jpg'),
-  },
-  {
-    name: '유우카',
-    status: '계산대로야',
-    image: require('../assets/images/yuuka.jpg'),
-  },
-];
-
+import characters from '../constants/characters'; // 실제 경로 확인
 
 
 const MomoContainer: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [globalLoading, setGlobalLoading] = useState(false); // ✅ 전역 로딩 상태 추가
-  const [activePanel, setActivePanel] = useState<'chat' | 'groupList'>('chat');
+  const [globalLoading, setGlobalLoading] = useState(false);
+
+  /** ▲ chat : 1:1 채팅  |  groupList : 단톡방 목록  |  groupChat : 단톡방 실제 채팅 */
+  const [activePanel, setActivePanel] = useState<'chat' | 'groupList' | 'groupChat'>('chat');
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   return (
     <View style={styles.container}>
       <MomoHeader />
+
       <View style={styles.body}>
+        {/* ───────── 왼쪽 사이드바 ───────── */}
         <MomoSidebar
           onOpenCharacterList={() => setActivePanel('chat')}
           onOpenGroupChatList={() => {
@@ -741,8 +849,7 @@ const MomoContainer: React.FC = () => {
           }}
         />
 
-
-        {/* 왼쪽: 캐릭터 리스트 */}
+        {/* ───────── 왼쪽 리스트 영역 ───────── */}
         <View style={styles.chatList}>
           {activePanel === 'chat' &&
             characters.map((char) => (
@@ -753,7 +860,8 @@ const MomoContainer: React.FC = () => {
                 status={char.status}
                 onSelect={() => {
                   setSelectedCharacter(char);
-                  setActivePanel('chat'); // 다시 캐릭터 채팅으로
+                  setActiveGroupId(null);
+                  setActivePanel('chat');
                 }}
               />
             ))}
@@ -761,22 +869,36 @@ const MomoContainer: React.FC = () => {
           {activePanel === 'groupList' && (
             <GroupChatList
               onEnterRoom={(groupId) => {
-                console.log('단톡방 진입:', groupId);
-                // 추후 단톡방 화면으로 전환 예정
+                setActiveGroupId(groupId);
+                setSelectedCharacter(null);
+                setActivePanel('groupChat');   // ★ 단톡방으로 전환
               }}
             />
           )}
         </View>
 
+        {/* ───────── 오른쪽 채팅 / 단톡방 영역 ───────── */}
+        <View
+          style={[
+            styles.chatWindow,
+            activePanel === 'groupChat' && styles.narrowWindow, // ✅ 조건부 적용
+          ]}
+        >
+          {activePanel === 'groupChat' && activeGroupId && (
+            <GroupChat groupId={activeGroupId} />
+          )}
 
-        {/* 오른쪽: 선택된 캐릭터의 채팅 */}
-        <MomoChatList
-          selectedCharacter={selectedCharacter}
-          setGlobalLoading={setGlobalLoading} // ✅ 전달
-        />
+          {activePanel !== 'groupChat' && (
+            <MomoChatList
+              selectedCharacter={selectedCharacter}
+              setGlobalLoading={setGlobalLoading}
+            />
+          )}
+        </View>
+
       </View>
 
-      {/* ✅ 전역 로딩 오버레이 */}
+      {/* 전역 로딩 오버레이 */}
       {globalLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ffffff" />
@@ -788,6 +910,9 @@ const MomoContainer: React.FC = () => {
 
 export default MomoContainer;
 
+/* -------------------------------------------------------------------- */
+/*                              스타일시트                               */
+/* -------------------------------------------------------------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -809,7 +934,14 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f4f7f8',
   },
-  // ✅ 로딩 오버레이 스타일
+  chatWindow: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  narrowWindow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -822,7 +954,6 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
 });
-
 ```
 
 ## 📄 `components/MomoHeader.tsx`
