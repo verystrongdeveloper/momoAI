@@ -1028,79 +1028,54 @@ const MomoSidebar: React.FC<MomoSidebarProps> = ({
   const router = useRouter();
 
   const testScript = `
-타이틀 : 감자 폭탄은 잠시 안녕
-호시노(대책위원회) : 정말? 선생이 그렇게 말해주니 아저씨 기분 좋아졌어! [emotion : hoshino_bigLaugh.png, bg : BG_AbydosCouncilRoom.jpg, music : lovely_picnic.mp3]
-호시노(대책위원회) : 으헤헤, 역시 선생은 착하다니까.
-호시노(대책위원회) : 딴 애들이었으면 "아저씨, 또 시작이네" 하면서 츳코미 넣었을 텐데.
-호시노(대책위원회) : 선생, 혹시 오늘 시간 있어? 아저씨랑 같이 땡땡이칠래? [emotion : hoshino_weakLaugh.png]
-selection : (1)"좋아, 호시노. 가끔은 그런 시간도 필요하지." (2)"땡땡이라니, 또 무슨 재미있는 계획이라도 있는 거야?"
-호시노(대책위원회) : 으헤헤, 역시 선생이야! 뭘 좀 안다니까~ [emotion : hoshino_bigLaugh.png]
-호시노(대책위원회) : 아저씨는 말이지, 오늘 아주 중요한 임무를 계획했거든.
-호시노(대책위원회) : 바로... 최고의 낮잠 스팟을 찾는 임무! [emotion : hoshino_feelGood.png]
-호시노(대책위원회) : 대책위원회 위원장 대리 업무도 가끔은 피곤하다구, 으헤~
-narration : (호시노는 여전히 졸린 눈이었지만, 그 안에는 장난기 가득한 활기가 넘실거렸다.) [bg : BG_AbydosCouncilRoom.jpg]
-narration : (평소의 호시노다운 제안이었지만, 왠지 거절하기 어려운 매력이 있었다.)
-호시노(대책위원회) : 자, 그럼 아저씨를 따라와, 선생. 비밀 작전 개시다! [emotion : hoshino_serious.png]
+타이틀 : 용사 아리스, 선도부 체험 퀘스트!
+아리스(게임개발부) : 빠밤! 아리스, 게헨나 선도부에 용사 체험을 하러 왔습니다! 히나 선배, 잘 부탁드립니다! [emotion : aris_bigsmile.png, bg : BG_CommitteeRoom.jpg, music : mischievous_step.mp3]
+히나(선도부) : ...하아. 그래, 텐도 아리스. 갑자기 찾아와서 선도부 체험을 하고 싶다니, 무슨 바람이 분 건지는 모르겠지만. [emotion : hina_expressionless.png]
+히나(선도부) : 일단 말해두지만, 선도부 일은 게임이 아니야. 장난으로 할 생각이라면 지금 돌아가는 게 좋아. [emotion : hina_serious.png]
+아리스(게임개발부) : 아닙니다! 아리스는 진심입니다! 선도부의 정의로운 활동은 용사의 길과 통한다고 생각합니다! 레벨 업의 기회입니다! [emotion : aris_brave.png]
+히나(선도부) : ...레벨 업이라니. 아무튼, 오늘 하루 동안 내 지시에 잘 따라줘야 해. 알겠어? [emotion : hina_upset.png]
+아리스(게임개발부) : 네, 히나 대장님! 퀘스트 수락! 아리스, 최선을 다하겠습니다! [emotion : aris_smile.png]
+narration : (히나는 깊은 한숨을 내쉬고는 아리스에게 선도부 완장을 채워주었다.) [bg : BG_CommitteeRoom.jpg, sound : SE_Confirm_01.mp3]
+히나(선도부) : 그럼, 먼저 교내 순찰부터 시작한다. 따라와. [emotion : hina_expressionless.png, music : unwelcome_school.mp3]
 deleteAll
 waitSecond = 1
-narration : (호시노를 따라 나선 곳은 학생회실 한쪽 구석이었다.) [bg : BG_AbydosCouncilRoom.jpg, music : walkthrough.mp3]
-호시노(대책위원회) : 으음... 여긴 햇볕이 너무 잘 들어서 탈락. [emotion : hoshino_suspicious.png]
-호시노(대책위원회) : 낮잠은 역시 좀 어둑한 곳이 최고지. 안 그래, 선생?
-narration : (창문으로 들어오는 햇살이 따스했지만, 호시노의 기준에는 맞지 않는 모양이었다.)
-호시노(대책위원회) : 게다가 여긴 아야네 쨩한테 금방 들킬 것 같고. [emotion : hoshino_weakLaugh.png]
-호시노(대책위원회) : 그 아이, 일 처리는 칼 같으니까 말이야. 아저씨의 땡땡이를 용납 못 할걸.
-narration : (문밖에서 희미하게 서류를 넘기는 소리와 발소리가 들리는 듯했다.)
-narration : (우리가 숨어있는 줄은 꿈에도 모르겠지.)
-호시노(대책위원회) : 역시 여긴 아니야. 더 좋은 곳이 있을 거야. [emotion : hoshino_dontknowAnything.png]
-호시노(대책위원회) : 아저씨의 감이 그렇게 말하고 있어! 다음 장소로 가자, 선생!
+narration : (아리스는 의욕 넘치는 발걸음으로 히나의 뒤를 따랐다. 게헨나 학원의 복도는 여전히 소란스러웠다.) [bg : BG_GehennaCampus.jpg, music : unwelcome_school.mp3]
+아리스(게임개발부) : 히나 선배, 저기 복도에서 뛰어다니는 학생들이 보입니다! 일종의 몬스터 출현입니까? HP를 깎아야 할까요? [emotion : aris_awkward.png]
+히나(선도부) : ...그냥 뛰는 것뿐이야. 주의만 주면 돼. "복도에서는 뛰지 마라." 이렇게. [emotion : hina_serious.png]
+아리스(게임개발부) : 알겠습니다! "복도에서는 뛰지 마시오, 미니언들이여! 용사의 앞길을 막는다면 경험치로 만들어주겠노라!" [emotion : aris_brave.png, animation : shakeX]
+히나(선도부) : 하아... 그냥 조용히 주의만 주라고 했을 텐데. 그리고 미니언이 아니라 그냥 학생이야. [emotion : hina_sweating.png, expression : question_mark.png]
+narration : (그때, 저편에서 불량학생 몇몇이 소란을 피우는 것이 보였다. 확실히 '이벤트 몬스터' 같은 분위기였다.) [bg : BG_GehennaStreet.jpg, music : crossfire.mp3]
+스케반 : 뭐냐, 선도부냐? 우리가 뭘 하든 네놈들이 상관할 바 아니잖아! [emotion : sukeban_thug_smg_angry.png]
+아리스(게임개발부) : 빠밤! 드디어 중간 보스 등장입니다! 히나 선배, 저 악당들은 아리스가 처리하겠습니다! 빛이여! 아리스의 필살기, '레일건 Mk.I' 발사 준비! [emotion : aris_very_angry.png, sound : SE_Beep_01.mp3]
+히나(선도부) : 잠깐, 텐도 아리스! 그 무기는 또 뭐야! 그런 건 필요 없어! [emotion : hina_shout.png, animation : shakeY]
+히나(선도부) : 너희들, 여기서 소란 피우지 말고 당장 흩어져. 내 말이 말 같지 않나? [emotion : hina_angry.png]
+narration : (히나가 차갑게 말하자, 불량학생들은 히나의 악명을 떠올렸는지 슬금슬금 도망쳤다.) [bg : BG_GehennaStreet.jpg, sound : SE_Denied_01.mp3]
+스케반 : 쳇, 오늘은 운이 없었군! 두고 보자! [emotion : sukeban_thug_smg_uncomfortable.png]
+아리스(게임개발부) : 와아! 히나 선배, 정말 대단합니다! 눈빛만으로 강력한 보스 몬스터를 퇴치하다니! 역시 최종 레벨 용사는 다릅니다! [emotion : aris_impressive.png]
+히나(선도부) : ...보스가 아니라 그냥 좀 시끄러운 녀석들이었을 뿐이야. 그리고 매번 저렇게 쉽게 해결되는 것도 아니고. [emotion : hina_expressionless.png, music : unwelcome_school.mp3]
+아리스(게임개발부) : 그래도 아리스, 뭔가 도움이 되고 싶습니다! 다음 퀘스트는 무엇입니까? 혹시 강력한 아이템 파밍 지역이라도 있습니까? [emotion : aris_smile2.png]
+히나(선도부) : ...다음은 서류 작업이다. 사무실로 돌아가지. [emotion : hina_closingeyes.png]
 deleteAll
 waitSecond = 1
-narration : (다음으로 호시노가 나를 이끈 곳은 학교 뒤편, 거의 사용되지 않는 낡은 복도였다.) [bg : BG_AbandonedCorridor_Night.jpg, music : walkthrough.mp3]
-호시노(대책위원회) : 으헤~ 여긴 좀 으스스한가? [emotion : hoshino_weakLaugh.png]
-호시노(대책위원회) : 먼지가 좀 많긴 하지만... 아저씨는 이런 분위기, 싫지 않아.
-narration : (발을 디딜 때마다 바닥의 먼지가 풀썩이는 소리가 났다. 확실히 인적이 드문 곳이었다.)
-호시노(대책위원회) : 선생, 저기 봐봐. 저 문 너머에 뭔가 있을 것 같지 않아? [emotion : hoshino_makebigEye.png, expression : question_mark.png]
-narration : (호시노가 낡은 문 하나를 가리켰다. 문에는 '자료보관실 3'이라고 희미하게 적혀 있었다.)
-selection : (1)"한번 열어볼까?" (2)"안에 뭐가 있을지 모르는데, 괜찮을까?"
-호시노(대책위원회) : 으헤헤, 선생도 궁금한가 보네? [emotion : hoshino_bigLaugh.png]
-deleteEmotion
-호시노(대책위원회) : 괜찮아, 괜찮아. 아저씨한테 맡겨두라구. [sound : SE_DoorSlowOpen_01.mp3]
-narration : (호시노는 익숙하다는 듯 문고리를 잡아 돌렸다. 끼이익, 하는 소리와 함께 문이 천천히 열렸다.)
-호시노(대책위원회) : 짜잔~ 어때, 선생? 아저씨의 예감이 맞았지? [emotion : hoshino_feelGood.png, bg : BG_AbandonedWarehouse.jpg]
-narration : (문 안쪽은 생각보다 넓은 공간이었다. 창고로 쓰였던 건지 선반들이 있었지만, 대부분 비어있고 먼지만 자욱했다.)
-narration : (하지만 방 한가운데, 놀랍게도 꽤나 멀쩡해 보이는 낡은 소파 하나가 놓여 있었다.)
-호시노(대책위원회) : 으헤헤, 이거 완전 보물 발견 아니야? [emotion : hoshino_bigLaugh.png]
-호시노(대책위원회) : 먼지는 좀 털어야겠지만, 이 정도면 특등석이지!
-selection : (1)"정말 대단한 걸 찾아냈네, 호시노." (2)"먼지 알레르기는 없겠지, 아저씨?"
-호시노(대책위원회) : 칭찬 고마워, 선생~ 아저씨의 눈썰미는 아직 죽지 않았다구. [emotion : hoshino_feelGood.png]
-호시노(대책위원회) : 알레르기? 으헤~ 아저씨는 그런 거 없어. 잠만 잘 자면 뭐든 괜찮아.
-narration : (호시노는 소파로 다가가 손으로 먼지를 툭툭 털어냈다. 생각보다 푹신해 보였다.)
-호시노(대책위원회) : 자, 선생도 여기 앉아봐. 생각보다 괜찮다니까? [emotion : hoshino_weakLaugh.png]
-narration : (나도 조심스럽게 소파 한쪽에 걸터앉았다. 오래된 가죽 냄새와 먼지 냄새가 섞여 났지만, 이상하게 아늑한 느낌이었다.)
-호시노(대책위원회) : 으헤~ 역시... 아저씨의 선택은 틀리지 않았어. [emotion : hoshino_feelGood.png]
-호시노(대책위원회) : 여긴 조용하고... 아무한테도 방해받지 않을 것 같아.
-호시노(대책위원회) : 세리카의 감자 폭탄 소리도... 여기까지 들리진 않겠지? 으헤헤. [emotion : hoshino_bigLaugh.png]
-narration : (창밖으로는 아비도스의 황량한 풍경이 보였지만, 이 작은 창고 안은 우리만의 아지트가 된 것 같았다.)
-narration : (그때, 멀리서 희미하게 '쿵-' 하는 소리가 들려왔다.)
-호시노(대책위원회) : ...어라? 선생, 방금 그 소리... 들었어? [emotion : hoshino_surprised.png, expression : question_mark.png]
-selection : (1)"혹시... 감자 폭탄 2호라도 터진 걸까?" (2)"글쎄, 바람 소리 아닐까?"
-호시노(대책위원회) : 으헤헤! 선생, 이제 아저씨 농담에 물들었구나! [emotion : hoshino_bigLaugh.png]
-호시노(대책위원회) : 감자 폭탄 2호라니, 그거 마음에 드는데? 역시 선생은 센스가 있다니까.
-deleteEmotion
-호시노(대책위원회) : 뭐, 진짜 폭탄이든 아니든... 지금은 이 평화를 즐기자구. [emotion : hoshino_feelGood.png]
-호시노(대책위원회) : 하아암~ 벌써부터 잠이 솔솔 오네... [emotion : hoshino_yawn.png]
-narration : (호시노는 소파에 깊숙이 몸을 기댔다. 금방이라도 잠들 것처럼 눈이 스르륵 감겼다.)
-호시노(대책위원회) : 선생... 옆에 있으니까... 따뜻하고... 안심돼... [emotion : hoshino_yawn2.png]
-호시노(대책위원회) : 으헤헤... 좋은... 꿈을... 꿀 것 같아...
-narration : (작은 목소리로 중얼거리던 호시노는 이내 고른 숨소리를 내며 잠이 들었다.) [music : morose_dreamer.mp3]
-narration : (새근새근 잠든 얼굴은 평소의 장난기 대신 어린아이 같은 평온함만이 가득했다.)
-narration : (이런 작은 휴식이 호시노에게 얼마나 소중한 시간일까. 잠깐이나마 모든 짐을 내려놓고 쉴 수 있도록.)
-narration : (나는 소파 등받이에 기대, 잠든 호시노가 깨지 않도록 조용히 숨을 골랐다.)
-narration : (창고 안에는 우리 둘의 숨소리와, 아주 가끔 들려오는 바람 소리만이 가득했다.)
+narration : (선도부 사무실은 산더미 같은 서류로 가득했다. 히나는 익숙하게 자리에 앉아 서류를 처리하기 시작했다.) [bg : BG_CommitteeRoom.jpg, music : morose_dreamer.mp3]
+히나(선도부) : 텐도 아리스, 너는 저기 있는 보고서들을 날짜순으로 정리해. 간단한 작업이니 할 수 있겠지. [emotion : hina_serious.png]
+아리스(게임개발부) : 빠밤! '문서 정리 퀘스트'로군요! 아리스, 이 정도는 식은 죽 먹기입니다! 경험치를 대량 획득하겠습니다! [emotion : aris_brave.png]
+narration : (아리스는 의욕적으로 서류 더미에 달려들었다. 하지만 잠시 후, 아리스의 표정이 점점 심각해졌다.) [bg : BG_CommitteeRoom.jpg]
+아리스(게임개발부) : 으음... 히나 선배, 이 문서들은 암호 해독 스킬이 필요한 것 같습니다. 아리스의 현재 스탯으로는 해독이 불가능합니다. 혹시 해독 스크롤 아이템이 있습니까? [emotion : aris_difficult.png, expression : question_mark.png]
+히나(선도부) : ...그냥 날짜만 보면 되는 건데. 암호 같은 건 없어. [emotion : hina_upset.png]
+아리스(게임개발부) : 앗! 그렇습니까? 아리스, 숨겨진 함정인 줄 알았습니다! 역시 선도부의 퀘스트는 심오합니다! [emotion : aris_awkward.png]
+narration : (몇 시간이 흘렀을까. 히나는 여전히 서류와 씨름 중이었고, 아리스는 간신히 문서 정리를 마친 듯 보였다. 하지만 어딘가 이상했다.) [bg : BG_CommitteeRoom.jpg, music : morose_dreamer.mp3]
+히나(선도부) : ...텐도 아리스, 다 됐나? 그런데 그건... [emotion : hina_makebigeyes.png]
+narration : (아리스는 서류들을 색깔별로, 그리고 이상한 기호 모양으로 분류해 탑처럼 쌓아놓고 있었다.) [bg : BG_CommitteeRoom.jpg]
+아리스(게임개발부) : 네, 히나 선배! 아리스, 새로운 분류법을 개발했습니다! '용사 아리스식 효율적 문서 정리 마법진'입니다! 이 마법진은 문서에 담긴 에너지를 증폭시켜 업무 효율을 극대화합니다! 빠밤! [emotion : aris_bigsmile.png]
+히나(선도부) : ............하아.................. [emotion : hina_sweating.png, animation : shakeY]
+히나(선도부) : 오늘은... 이만하면 됐다. 체험은 여기까지 하지. 수고했다, 텐도 아리스. 정말로... 수고 많았어. [emotion : hina_closingeyes.png]
+아리스(게임개발부) : 앗! 벌써 퀘스트 완료입니까? 아리스, 많은 경험치를 얻은 것 같습니다! 히나 선배, 오늘 정말 즐거웠습니다! 다음에 또 다른 퀘스트를 주십시오! [emotion : aris_smile_with_tear.png]
+히나(선도부) : ...그래. 다음은... 한 1년 뒤쯤에 생각해 보지. [emotion : hina_weaksmile.png]
 deleteAll
 waitSecond = 2
-narration : (한참 동안 호시노가 곤히 자는 모습을 지켜보다, 다음 일정을 위해 조용히 자리에서 일어섰다.) [music : none]
-narration : (부디, 좋은 꿈을 꾸기를. 감자 폭탄이 등장하지 않는, 평화로운 꿈을.)
+narration : (아리스는 씩씩하게 경례를 하고 선도부실을 나섰다. 히나는 홀로 남아 책상에 엎드렸다. 평소보다 두 배는 더 피곤해 보였다.) [music : none]
+히나(선도부) : ...그래도... 이상하게 활기차긴 했네. 아주 조금은... [emotion : hina_weaksmile2.png]
 endEvent
   `.trim();
 

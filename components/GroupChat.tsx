@@ -38,7 +38,10 @@ export default function GroupChat({ groupId }: Props) {
 
   /* 입장 트리거 */
   useEffect(() => {
-    (async () => {
+    const tryTrigger = async () => {
+      const shouldTrigger = Math.random() < 0.5; // 👉 50% 확률
+      if (!shouldTrigger) return;
+  
       try {
         const res = await fetch('http://localhost:3000/api/group/trigger', {
           method: 'POST',
@@ -46,13 +49,28 @@ export default function GroupChat({ groupId }: Props) {
           body: JSON.stringify({ roomId: groupId }),
         });
         const data = await res.json();
-        if (data.triggered) {
-          const m = members.find(v => v.name === data.speaker);
-          if (m) await simulateTyping(m.name, data.text, m.avatar);
+  
+        if (data.answer) {
+          const lines = data.answer.split('\n').map((line: string) => {
+            const match = line.match(/^\[(.+?)\] ?: ?(.+)$/);
+            if (!match) return null;
+            const [, speaker, text] = match;
+            const m = members.find(v => v.name === speaker);
+            return m ? { sender: speaker, text, avatar: m.avatar } : null;
+          }).filter(Boolean);
+  
+          for (const chat of lines) {
+            if (chat) await simulateTyping(chat.sender, chat.text, chat.avatar);
+          }
         }
-      } catch (e) { console.warn(e); }
-    })();
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+  
+    tryTrigger();
   }, [groupId]);
+  
 
   const simulateTyping = async (name: string, text: string, avatar: any) => {
     setMsgs(p => [...p, { sender: name, text: '', typing: true, avatar }]);
@@ -72,24 +90,48 @@ export default function GroupChat({ groupId }: Props) {
         body: JSON.stringify({ roomId: groupId, userMessage: msgCopy, history: [] }),
       });
       const data = await res.json();
-      for (const ans of data.answers) {
-        const m = members.find(v => v.name === ans.speaker);
-        if (m) await simulateTyping(m.name, ans.text, m.avatar);
+      const lines = data.answer.split('\n').map((line: string) => {
+        const match = line.match(/^\[(.+?)\] ?: ?(.+)$/); // 예: "[호시노] : 으헤~"
+        if (!match) return null;
+        const [, speaker, text] = match;
+        const m = members.find(v => v.name === speaker);
+        return m ? { sender: speaker, text, avatar: m.avatar } : null;
+      }).filter(Boolean);
+
+      for (const chat of lines) {
+        if (chat) await simulateTyping(chat.sender, chat.text, chat.avatar);
       }
     } catch (e) { console.error(e); }
   };
 
   const renderItem = ({ item }: { item: ChatLine }) => {
     const me = item.sender === 'user';
+    if (me) {
+      return (
+        <View style={[styles.row, styles.rowRight]}>
+          <Text style={[styles.bubble, styles.userBubble]}>
+            {item.typing ? '···' : item.text}
+          </Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={[styles.row, me && styles.rowRight]}>
-        {!me && item.avatar && <Image source={item.avatar} style={styles.avatar} />}
-        <Text style={[styles.bubble, me ? styles.userBubble : styles.charBubble]}>
-          {item.typing ? '···' : item.text}
-        </Text>
+      <View style={styles.row}>
+        {/* 아바타 */}
+        <Image source={item.avatar} style={styles.avatar} />
+
+        {/* 이름 + 채팅 */}
+        <View style={styles.chatBlock}>
+          <Text style={styles.name}>{item.sender}</Text>
+          <Text style={[styles.bubble, styles.charBubble]}>
+            {item.typing ? '···' : item.text}
+          </Text>
+        </View>
       </View>
     );
   };
+
 
   return (
     /* ───────── 쇼츠용 폰 프레임 ───────── */
@@ -118,7 +160,7 @@ export default function GroupChat({ groupId }: Props) {
 }
 
 /* ──────────────────────────────────────────── */
-const FRAME_WIDTH  = 360;
+const FRAME_WIDTH = 360;
 const FRAME_HEIGHT = 640;
 
 const styles = StyleSheet.create({
@@ -129,7 +171,6 @@ const styles = StyleSheet.create({
     width: FRAME_WIDTH,
     height: FRAME_HEIGHT,
     backgroundColor: '#ffffff',
-    borderRadius: 26,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.15,
@@ -159,7 +200,24 @@ const styles = StyleSheet.create({
   /* 채팅 버블/행 */
   row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-end' },
   rowRight: { flexDirection: 'row-reverse' },
-  avatar: { width: 40, height: 40, borderRadius: 8, marginRight: 6 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 8,
+  },
+
+  chatBlock: {
+    flexShrink: 1,
+  },
+
+  name: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 2,
+  },
+
   bubble: { padding: 8, borderRadius: 10, maxWidth: '75%' },
   userBubble: { backgroundColor: '#DCF8C6' },
   charBubble: { backgroundColor: '#44546A', color: 'white' },
