@@ -296,7 +296,23 @@ export const emotionMap: Record<string, any> = {
   yuuka_speaking: require('../../assets/images/yuuka/yuuka_speaking.png'),
   yuuka_suspicious: require('../../assets/images/yuuka/yuuka_suspicious.png'),
 
-
+  ako_angry: require('../../assets/images/ako/ako_angry.png'),
+  ako_awkward: require('../../assets/images/ako/ako_awkward.png'),
+  ako_bigsmile: require('../../assets/images/ako/ako_bigsmile.png'),
+  ako_crying: require('../../assets/images/ako/ako_crying.png'),
+  ako_curious: require('../../assets/images/ako/ako_curious.png'),
+  ako_eyesmile: require('../../assets/images/ako/ako_eyesmile.png'),
+  ako_mental_out: require('../../assets/images/ako/ako_mental_out.png'),
+  ako_serious: require('../../assets/images/ako/ako_serious.png'),
+  ako_shout: require('../../assets/images/ako/ako_shout.png'),
+  ako_shout_with_angry: require('../../assets/images/ako/ako_shout_with_angry.png'),
+  ako_smile: require('../../assets/images/ako/ako_smile.png'),
+  ako_smile_with_closing_eyes: require('../../assets/images/ako/ako_smile_with_closing_eyes.png'),
+  ako_sweating: require('../../assets/images/ako/ako_sweating.png'),
+  ako_upset: require('../../assets/images/ako/ako_upset.png'),
+  ako_veryangry1: require('../../assets/images/ako/ako_veryangry1.png'),
+  ako_veryangry2: require('../../assets/images/ako/ako_veryangry2.png'),
+  ako_weaksmile: require('../../assets/images/ako/ako_weaksmile.png'),
 
   // 발키리 학생
   valkyrie_student_default: require('../../assets/images/valkyrie_student/valkyrie_student_default.png'),

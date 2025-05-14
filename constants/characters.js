@@ -49,6 +49,11 @@ const characters = [
         status: '계산대로야',
         image: require('../assets/images/yuuka.jpg'),
     },
+    {
+        name: '아코',
+        status: '업무 이외의 연락 사절',
+        image: require('../assets/images/ako.jpg'),
+    },
 ];
 
 export default characters;
