@@ -546,7 +546,10 @@ export default function GroupChat({ groupId }: Props) {
 
   /* 입장 트리거 */
   useEffect(() => {
-    (async () => {
+    const tryTrigger = async () => {
+      const shouldTrigger = Math.random() < 0.5; // 👉 50% 확률
+      if (!shouldTrigger) return;
+  
       try {
         const res = await fetch('http://localhost:3000/api/group/trigger', {
           method: 'POST',
@@ -554,13 +557,28 @@ export default function GroupChat({ groupId }: Props) {
           body: JSON.stringify({ roomId: groupId }),
         });
         const data = await res.json();
-        if (data.triggered) {
-          const m = members.find(v => v.name === data.speaker);
-          if (m) await simulateTyping(m.name, data.text, m.avatar);
+  
+        if (data.answer) {
+          const lines = data.answer.split('\n').map((line: string) => {
+            const match = line.match(/^\[(.+?)\] ?: ?(.+)$/);
+            if (!match) return null;
+            const [, speaker, text] = match;
+            const m = members.find(v => v.name === speaker);
+            return m ? { sender: speaker, text, avatar: m.avatar } : null;
+          }).filter(Boolean);
+  
+          for (const chat of lines) {
+            if (chat) await simulateTyping(chat.sender, chat.text, chat.avatar);
+          }
         }
-      } catch (e) { console.warn(e); }
-    })();
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+  
+    tryTrigger();
   }, [groupId]);
+  
 
   const simulateTyping = async (name: string, text: string, avatar: any) => {
     setMsgs(p => [...p, { sender: name, text: '', typing: true, avatar }]);
@@ -580,24 +598,48 @@ export default function GroupChat({ groupId }: Props) {
         body: JSON.stringify({ roomId: groupId, userMessage: msgCopy, history: [] }),
       });
       const data = await res.json();
-      for (const ans of data.answers) {
-        const m = members.find(v => v.name === ans.speaker);
-        if (m) await simulateTyping(m.name, ans.text, m.avatar);
+      const lines = data.answer.split('\n').map((line: string) => {
+        const match = line.match(/^\[(.+?)\] ?: ?(.+)$/); // 예: "[호시노] : 으헤~"
+        if (!match) return null;
+        const [, speaker, text] = match;
+        const m = members.find(v => v.name === speaker);
+        return m ? { sender: speaker, text, avatar: m.avatar } : null;
+      }).filter(Boolean);
+
+      for (const chat of lines) {
+        if (chat) await simulateTyping(chat.sender, chat.text, chat.avatar);
       }
     } catch (e) { console.error(e); }
   };
 
   const renderItem = ({ item }: { item: ChatLine }) => {
     const me = item.sender === 'user';
+    if (me) {
+      return (
+        <View style={[styles.row, styles.rowRight]}>
+          <Text style={[styles.bubble, styles.userBubble]}>
+            {item.typing ? '···' : item.text}
+          </Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={[styles.row, me && styles.rowRight]}>
-        {!me && item.avatar && <Image source={item.avatar} style={styles.avatar} />}
-        <Text style={[styles.bubble, me ? styles.userBubble : styles.charBubble]}>
-          {item.typing ? '···' : item.text}
-        </Text>
+      <View style={styles.row}>
+        {/* 아바타 */}
+        <Image source={item.avatar} style={styles.avatar} />
+
+        {/* 이름 + 채팅 */}
+        <View style={styles.chatBlock}>
+          <Text style={styles.name}>{item.sender}</Text>
+          <Text style={[styles.bubble, styles.charBubble]}>
+            {item.typing ? '···' : item.text}
+          </Text>
+        </View>
       </View>
     );
   };
+
 
   return (
     /* ───────── 쇼츠용 폰 프레임 ───────── */
@@ -626,7 +668,7 @@ export default function GroupChat({ groupId }: Props) {
 }
 
 /* ──────────────────────────────────────────── */
-const FRAME_WIDTH  = 360;
+const FRAME_WIDTH = 360;
 const FRAME_HEIGHT = 640;
 
 const styles = StyleSheet.create({
@@ -637,7 +679,6 @@ const styles = StyleSheet.create({
     width: FRAME_WIDTH,
     height: FRAME_HEIGHT,
     backgroundColor: '#ffffff',
-    borderRadius: 26,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.15,
@@ -667,7 +708,24 @@ const styles = StyleSheet.create({
   /* 채팅 버블/행 */
   row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-end' },
   rowRight: { flexDirection: 'row-reverse' },
-  avatar: { width: 40, height: 40, borderRadius: 8, marginRight: 6 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 8,
+  },
+
+  chatBlock: {
+    flexShrink: 1,
+  },
+
+  name: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 2,
+  },
+
   bubble: { padding: 8, borderRadius: 10, maxWidth: '75%' },
   userBubble: { backgroundColor: '#DCF8C6' },
   charBubble: { backgroundColor: '#44546A', color: 'white' },
@@ -1028,54 +1086,195 @@ const MomoSidebar: React.FC<MomoSidebarProps> = ({
   const router = useRouter();
 
   const testScript = `
-타이틀 : 용사 아리스, 선도부 체험 퀘스트!
-아리스(게임개발부) : 빠밤! 아리스, 게헨나 선도부에 용사 체험을 하러 왔습니다! 히나 선배, 잘 부탁드립니다! [emotion : aris_bigsmile.png, bg : BG_CommitteeRoom.jpg, music : mischievous_step.mp3]
-히나(선도부) : ...하아. 그래, 텐도 아리스. 갑자기 찾아와서 선도부 체험을 하고 싶다니, 무슨 바람이 분 건지는 모르겠지만. [emotion : hina_expressionless.png]
-히나(선도부) : 일단 말해두지만, 선도부 일은 게임이 아니야. 장난으로 할 생각이라면 지금 돌아가는 게 좋아. [emotion : hina_serious.png]
-아리스(게임개발부) : 아닙니다! 아리스는 진심입니다! 선도부의 정의로운 활동은 용사의 길과 통한다고 생각합니다! 레벨 업의 기회입니다! [emotion : aris_brave.png]
-히나(선도부) : ...레벨 업이라니. 아무튼, 오늘 하루 동안 내 지시에 잘 따라줘야 해. 알겠어? [emotion : hina_upset.png]
-아리스(게임개발부) : 네, 히나 대장님! 퀘스트 수락! 아리스, 최선을 다하겠습니다! [emotion : aris_smile.png]
-narration : (히나는 깊은 한숨을 내쉬고는 아리스에게 선도부 완장을 채워주었다.) [bg : BG_CommitteeRoom.jpg, sound : SE_Confirm_01.mp3]
-히나(선도부) : 그럼, 먼저 교내 순찰부터 시작한다. 따라와. [emotion : hina_expressionless.png, music : unwelcome_school.mp3]
-deleteAll
-waitSecond = 1
-narration : (아리스는 의욕 넘치는 발걸음으로 히나의 뒤를 따랐다. 게헨나 학원의 복도는 여전히 소란스러웠다.) [bg : BG_GehennaCampus.jpg, music : unwelcome_school.mp3]
-아리스(게임개발부) : 히나 선배, 저기 복도에서 뛰어다니는 학생들이 보입니다! 일종의 몬스터 출현입니까? HP를 깎아야 할까요? [emotion : aris_awkward.png]
-히나(선도부) : ...그냥 뛰는 것뿐이야. 주의만 주면 돼. "복도에서는 뛰지 마라." 이렇게. [emotion : hina_serious.png]
-아리스(게임개발부) : 알겠습니다! "복도에서는 뛰지 마시오, 미니언들이여! 용사의 앞길을 막는다면 경험치로 만들어주겠노라!" [emotion : aris_brave.png, animation : shakeX]
-히나(선도부) : 하아... 그냥 조용히 주의만 주라고 했을 텐데. 그리고 미니언이 아니라 그냥 학생이야. [emotion : hina_sweating.png, expression : question_mark.png]
-narration : (그때, 저편에서 불량학생 몇몇이 소란을 피우는 것이 보였다. 확실히 '이벤트 몬스터' 같은 분위기였다.) [bg : BG_GehennaStreet.jpg, music : crossfire.mp3]
-스케반 : 뭐냐, 선도부냐? 우리가 뭘 하든 네놈들이 상관할 바 아니잖아! [emotion : sukeban_thug_smg_angry.png]
-아리스(게임개발부) : 빠밤! 드디어 중간 보스 등장입니다! 히나 선배, 저 악당들은 아리스가 처리하겠습니다! 빛이여! 아리스의 필살기, '레일건 Mk.I' 발사 준비! [emotion : aris_very_angry.png, sound : SE_Beep_01.mp3]
-히나(선도부) : 잠깐, 텐도 아리스! 그 무기는 또 뭐야! 그런 건 필요 없어! [emotion : hina_shout.png, animation : shakeY]
-히나(선도부) : 너희들, 여기서 소란 피우지 말고 당장 흩어져. 내 말이 말 같지 않나? [emotion : hina_angry.png]
-narration : (히나가 차갑게 말하자, 불량학생들은 히나의 악명을 떠올렸는지 슬금슬금 도망쳤다.) [bg : BG_GehennaStreet.jpg, sound : SE_Denied_01.mp3]
-스케반 : 쳇, 오늘은 운이 없었군! 두고 보자! [emotion : sukeban_thug_smg_uncomfortable.png]
-아리스(게임개발부) : 와아! 히나 선배, 정말 대단합니다! 눈빛만으로 강력한 보스 몬스터를 퇴치하다니! 역시 최종 레벨 용사는 다릅니다! [emotion : aris_impressive.png]
-히나(선도부) : ...보스가 아니라 그냥 좀 시끄러운 녀석들이었을 뿐이야. 그리고 매번 저렇게 쉽게 해결되는 것도 아니고. [emotion : hina_expressionless.png, music : unwelcome_school.mp3]
-아리스(게임개발부) : 그래도 아리스, 뭔가 도움이 되고 싶습니다! 다음 퀘스트는 무엇입니까? 혹시 강력한 아이템 파밍 지역이라도 있습니까? [emotion : aris_smile2.png]
-히나(선도부) : ...다음은 서류 작업이다. 사무실로 돌아가지. [emotion : hina_closingeyes.png]
-deleteAll
-waitSecond = 1
-narration : (선도부 사무실은 산더미 같은 서류로 가득했다. 히나는 익숙하게 자리에 앉아 서류를 처리하기 시작했다.) [bg : BG_CommitteeRoom.jpg, music : morose_dreamer.mp3]
-히나(선도부) : 텐도 아리스, 너는 저기 있는 보고서들을 날짜순으로 정리해. 간단한 작업이니 할 수 있겠지. [emotion : hina_serious.png]
-아리스(게임개발부) : 빠밤! '문서 정리 퀘스트'로군요! 아리스, 이 정도는 식은 죽 먹기입니다! 경험치를 대량 획득하겠습니다! [emotion : aris_brave.png]
-narration : (아리스는 의욕적으로 서류 더미에 달려들었다. 하지만 잠시 후, 아리스의 표정이 점점 심각해졌다.) [bg : BG_CommitteeRoom.jpg]
-아리스(게임개발부) : 으음... 히나 선배, 이 문서들은 암호 해독 스킬이 필요한 것 같습니다. 아리스의 현재 스탯으로는 해독이 불가능합니다. 혹시 해독 스크롤 아이템이 있습니까? [emotion : aris_difficult.png, expression : question_mark.png]
-히나(선도부) : ...그냥 날짜만 보면 되는 건데. 암호 같은 건 없어. [emotion : hina_upset.png]
-아리스(게임개발부) : 앗! 그렇습니까? 아리스, 숨겨진 함정인 줄 알았습니다! 역시 선도부의 퀘스트는 심오합니다! [emotion : aris_awkward.png]
-narration : (몇 시간이 흘렀을까. 히나는 여전히 서류와 씨름 중이었고, 아리스는 간신히 문서 정리를 마친 듯 보였다. 하지만 어딘가 이상했다.) [bg : BG_CommitteeRoom.jpg, music : morose_dreamer.mp3]
-히나(선도부) : ...텐도 아리스, 다 됐나? 그런데 그건... [emotion : hina_makebigeyes.png]
-narration : (아리스는 서류들을 색깔별로, 그리고 이상한 기호 모양으로 분류해 탑처럼 쌓아놓고 있었다.) [bg : BG_CommitteeRoom.jpg]
-아리스(게임개발부) : 네, 히나 선배! 아리스, 새로운 분류법을 개발했습니다! '용사 아리스식 효율적 문서 정리 마법진'입니다! 이 마법진은 문서에 담긴 에너지를 증폭시켜 업무 효율을 극대화합니다! 빠밤! [emotion : aris_bigsmile.png]
-히나(선도부) : ............하아.................. [emotion : hina_sweating.png, animation : shakeY]
-히나(선도부) : 오늘은... 이만하면 됐다. 체험은 여기까지 하지. 수고했다, 텐도 아리스. 정말로... 수고 많았어. [emotion : hina_closingeyes.png]
-아리스(게임개발부) : 앗! 벌써 퀘스트 완료입니까? 아리스, 많은 경험치를 얻은 것 같습니다! 히나 선배, 오늘 정말 즐거웠습니다! 다음에 또 다른 퀘스트를 주십시오! [emotion : aris_smile_with_tear.png]
-히나(선도부) : ...그래. 다음은... 한 1년 뒤쯤에 생각해 보지. [emotion : hina_weaksmile.png]
+타이틀 : 선도부의 비밀스러운 오후
+narration : (게헨나 학원 선도부 사무실. 한가한 오후, 나는 문서 검토 부탁을 받고 들어섰다.) [bg : BG_GehennaStudentCouncil_Tent.jpg, music : unwelcome_school.mp3]
+아코(선도부) : 선생님, 오셨군요. 기다리고 있었습니다. [emotion : ako_serious.png]
+아코(선도부) : 오늘 검토해야 할 서류가 있어서 연락드렸습니다. 히나 부장님이 먼저 확인한 후 전달해 달라 하셨거든요. [emotion : ako_smile.png]
+selection : (1)"히나는 어디 있어?" (2)"언제나처럼 바쁘네, 아코."
+아코(선도부) : 히나 부장님은 잠시 자리를 비우셨습니다. 곧 돌아오실 겁니다. [emotion : ako_serious.png]
+아코(선도부) : 아, 차 한 잔 내드릴게요. 오늘은 특별히 유자차를 준비했습니다. [emotion : ako_smile.png, sound : SE_Cup_02.mp3]
+narration : (아코는 책상 위에 놓인 주전자에서 따뜻한 유자차를 따라 내밀었다.)
+아코(선도부) : 요즘 건강관리 하고 계신가요? 감기 조심하셔야 합니다. [emotion : ako_curious.png]
+selection : (1)"아코도 건강 챙기고 있어?" (2)"아코와 히나는 서로 잘 챙겨주나 보네."
+아코(선도부) : 저야 뭐... 히나 부장님이 강제로라도 챙기게 하니까요. [emotion : ako_awkward.png]
+아코(선도부) : 항상 "아코, 너 또 밤새웠지?" 하면서요... [emotion : ako_weaksmile.png]
+narration : (아코의 얼굴이 살짝 붉어졌다.)
+아코(선도부) : 그...그런데 부장님도 말이 좋아서 그렇지, 자신은 더 심하게 일하시면서... [emotion : ako_upset.png]
+히나(선도부) : 내 얘기를 하고 있나 보네. [emotion : hina_expressionless.png]
+narration : (갑작스러운 히나의 등장에 아코가 화들짝 놀랐다.) [animation : shakeX]
+아코(선도부) : 히, 히나 부장님?! [emotion : ako_shout.png]
+아코(선도부) : 언제 오셨어요? 문 여는 소리도 못 들었는데... [emotion : ako_sweating.png]
+히나(선도부) : 방금. 선생도 왔네. [emotion : hina_expressionless.png]
+히나(선도부) : 서류 검토하러 온 거지? [emotion : hina_serious.png]
+selection : (1)"응, 아코가 연락해서 왔어." (2)"너희 둘 다 오늘따라 긴장된 분위기네."
+히나(선도부) : 그래. 아코가 선생을 불러줬구나. [emotion : hina_weaksmile.png]
+히나(선도부) : 방금 무슨 얘기했어? [emotion : hina_makebigeyes.png]
+아코(선도부) : 아...아무것도 아니에요! 그냥 날씨 얘기를... [emotion : ako_shout_with_angry.png]
+히나(선도부) : 그래? 날씨 얘기에 내 이름이 왜 나오지? [emotion : hina_makebigeyes.png]
+아코(선도부) : 그건... 저... [emotion : ako_sweating.png]
+narration : (아코가 당황한 기색이 역력하다. 히나는 의아한 표정으로 아코를 바라보았다.)
+히나(선도부) : 하아... 중요한 건 아니니까 넘어갈게. [emotion : hina_closingeyes.png]
+히나(선도부) : 아, 선생. 차 마셨어? 아코가 내려준 거? [emotion : hina_weaksmile.png]
+selection : (1)"응, 유자차. 맛있더라." (2)"아코가 특별히 준비했다던데."
+히나(선도부) : 그 차... [emotion : hina_embarrassed.png]
+히나(선도부) : 사실 내가 좋아하는 건데. 아코가 그걸 어떻게 알았지? [emotion : hina_expressionless.png]
+아코(선도부) : 그거야... 부장님이 언젠가 한 번 말씀하셨잖아요. [emotion : ako_awkward.png]
+아코(선도부) : 유자차가 피로회복에 좋다고... 요즘 부장님이 많이 피곤해 보이셔서... [emotion : ako_weaksmile.png]
+히나(선도부) : 그런 말을 했었나? [emotion : hina_sweating.png]
+아코(선도부) : 네! 분명히 하셨어요! [emotion : ako_shout.png]
+히나(선도부) : 그래? 기억이 안 나는데... [emotion : hina_expressionless.png]
+narration : (뭔가 둘 사이에 미묘한 기류가 흐르는 것이 느껴졌다.)
+히나(선도부) : 아무튼, 서류 확인하자. [emotion : hina_serious.png]
+narration : (히나가 테이블 위에 서류 묶음을 올려놓았다.)
+히나(선도부) : 이번 학기 선도부 활동 계획서야. 확인해 줘. [emotion : hina_expressionless.png]
+selection : (1)"둘이 같이 검토하면 더 효율적일 것 같은데." (2)"난 잠시 자리를 비켜줄까?"
+히나(선도부) : 둘이? 아코랑? [emotion : hina_makebigeyes.png]
+아코(선도부) : 저...저도 같이요? [emotion : ako_sweating.png]
+히나(선도부) : 나쁘지 않은 생각이네. [emotion : hina_weaksmile.png]
+히나(선도부) : 아코, 넌 계획안 3페이지부터 검토해. 난 1페이지부터 볼게. [emotion : hina_serious.png]
+아코(선도부) : 네, 알겠습니다! [emotion : ako_serious.png]
+narration : (세 사람은 테이블에 둘러앉아 서류를 검토하기 시작했다. 잠시 침묵이 흐른다.)
+아코(선도부) : 음... 이 부분은 좀 모호한 것 같은데요. [emotion : ako_serious.png]
+아코(선도부) : "필요시 추가 인력 배치"라는 건 구체적으로 어떤 상황을 말하는 건가요? [emotion : ako_curious.png]
+히나(선도부) : 그거? 축제 기간이랑 시험 기간에 순찰 인원 늘리는 거. [emotion : hina_expressionless.png]
+아코(선도부) : 아, 그럼 이렇게 수정하는 게 좋겠네요. [emotion : ako_smile.png]
+narration : (아코가 펜을 들어 메모를 하려다 실수로 히나의 손에 펜이 닿았다.) [sound : SE_Confirm_01.mp3]
+아코(선도부) : 앗! 죄송합니다! [emotion : ako_awkward.png, animation : shakeY]
+히나(선도부) : ... [emotion : hina_embarrassed.png]
+히나(선도부) : 괜찮아. [emotion : hina_littlebitembarrassed.png]
+narration : (순간 사무실 안이 어색한 침묵에 휩싸였다.)
+selection : (1)"음, 차 좀 더 마실까?" (2)"두 사람, 요즘 괜찮아?"
+히나(선도부) : 차... 그래, 차 좀 더 마시자. [emotion : hina_expressionless.png]
+히나(선도부) : 아코, 차 좀 더 따라줄래? [emotion : hina_littlebitembarrassed.png]
+아코(선도부) : 네! 당장 따라드릴게요. [emotion : ako_smile.png, sound : SE_Cup_02.mp3]
+narration : (아코가 서둘러 차를 따르는 동안, 히나는 창문 밖을 바라보고 있다.)
+아코(선도부) : 여기 있습니다. [emotion : ako_smile_with_closing_eyes.png]
+히나(선도부) : 고마워. [emotion : hina_weaksmile.png]
+아코(선도부) : 아, 저기... 부장님. [emotion : ako_serious.png]
+히나(선도부) : 왜? [emotion : hina_expressionless.png]
+아코(선도부) : 오늘 밤 순찰 일정 말인데요. 부장님이 많이 피곤해 보이셔서... 제가 대신 할까요? [emotion : ako_weaksmile.png]
+히나(선도부) : ... [emotion : hina_closingeyes.png]
+히나(선도부) : 괜찮아. 내가 할 수 있어. [emotion : hina_expressionless.png]
+아코(선도부) : 하지만 부장님, 요즘 너무 무리하시는 것 같아요. [emotion : ako_serious.png]
+selection : (1)"히나, 아코 말이 맞는 것 같아." (2)"서로 도와가며 일하는 게 좋을 것 같아."
+히나(선도부) : ... [emotion : hina_closingeyes.png]
+히나(선도부) : 선생까지 그런 말을 하네. [emotion : hina_weaksmile.png]
+히나(선도부) : 그래, 알았어. 오늘은 아코랑 같이 순찰하자. [emotion : hina_expressionless.png]
+아코(선도부) : 정말요?! [emotion : ako_bigsmile.png]
+아코(선도부) : 아, 아니... 그러니까... 좋은 결정이십니다, 부장님. [emotion : ako_awkward.png]
+히나(선도부) : 왜 그렇게 좋아하는 거야? 일인데. [emotion : hina_sweating.png]
+아코(선도부) : 그건... 부장님이랑 함께 일하면 배울 게 많아서요. [emotion : ako_smile.png]
+히나(선도부) : 그래? [emotion : hina_littlebitembarrassed.png]
+narration : (히나가 작게 미소를 지었다. 평소와는 다른 표정이었다.)
+selection : (1)"히나가 웃는 모습은 정말 보기 드물지." (2)"두 사람이 함께 있으면 분위기가 달라지네."
+히나(선도부) : 뭐, 뭘 보고 있어? [emotion : hina_embarrassed.png]
+아코(선도부) : 부장님, 얼굴이 빨개졌어요! [emotion : ako_bigsmile.png]
+히나(선도부) : 안 그래. 그냥 더워서 그래. [emotion : hina_embarrassed3.png]
+아코(선도부) : 하지만 여긴 에어컨이 잘 작동하고 있는데요? [emotion : ako_smile.png]
+히나(선도부) : ... [emotion : hina_embarrassed2.png]
+narration : (히나는 자리에서 벌떡 일어났다.)
+히나(선도부) : 잠깐 바람 좀 쐬고 올게. [emotion : hina_embarrassed.png]
+아코(선도부) : 부장님? 괜찮으세요? [emotion : ako_curious.png]
+히나(선도부) : 괜찮아. 그냥... 잠시만. [emotion : hina_closingeyes.png, sound : SE_DoorClose_01.mp3]
+narration : (히나가 급하게 사무실을 나갔다.)
+selection : (1)"무슨 일이 있었던 거야?" (2)"아코, 히나한테 무슨 일이 생긴 거 아니야?"
+아코(선도부) : 저도... 잘 모르겠어요. [emotion : ako_sweating.png]
+아코(선도부) : 최근에 부장님이 조금... 이상하시긴 했어요. [emotion : ako_upset.png]
+아코(선도부) : 제가 옆에 있으면 자꾸 당황하시고... [emotion : ako_weaksmile.png]
+narration : (아코가 말끝을 흐렸다.)
+아코(선도부) : 선생님... 비밀 하나 말해도 될까요? [emotion : ako_serious.png]
+selection : (1)"물론이지. 무슨 일이야?" (2)"히나에 관한 일이야?"
+아코(선도부) : 사실... 어제... [emotion : ako_awkward.png]
+아코(선도부) : 제가 부장님께 편지를 드렸어요. [emotion : ako_upset.png]
+아코(선도부) : 그... 감사하다는 내용이었는데... 조금 더 깊은 감정도 있었어요. [emotion : ako_sweating.png]
+아코(선도부) : 아마도 그래서 부장님이 저를 보면 어색해하시는 것 같아요. [emotion : ako_upset.png]
+selection : (1)"히나에게 고백한 거야?" (2)"아코, 너 히나를 좋아하는구나."
+아코(선도부) : 고백이라기보다는... [emotion : ako_crying.png]
+아코(선도부) : 네... 저는 부장님을 존경하는 것 이상으로... [emotion : ako_weaksmile.png]
+아코(선도부) : 하지만 부장님의 반응을 보니... 아마 거절당한 것 같아요. [emotion : ako_upset.png]
+narration : (아코의 표정이 어두워졌다.)
+아코(선도부) : 이제 어쩌죠, 선생님? 부장님과 계속 일해야 하는데... [emotion : ako_crying.png]
+selection : (1)"히나와 직접 대화해 보는 게 어때?" (2)"아직 히나가 분명하게 답한 건 아니잖아."
+아코(선도부) : 대화요...? [emotion : ako_curious.png]
+아코(선도부) : 하지만 부장님은 제 앞에서 도망가셨는걸요. [emotion : ako_upset.png]
+narration : (갑자기 사무실 문이 열렸다.) 
+히나(선도부) : 아코. [emotion : hina_serious.png]
+아코(선도부) : 부, 부장님?! [emotion : ako_shout.png, animation : shakeX]
+히나(선도부) : 할 얘기가 있어. [emotion : hina_expressionless.png]
+히나(선도부) : 선생, 잠시 우리만 있게 해줄래? [emotion : hina_serious.png]
+selection : (1)"그래, 이해해." (2)"응, 두 사람이서 잘 얘기해봐."
+히나(선도부) : 고마워. [emotion : hina_weaksmile.png]
+narration : (나는 조용히 자리에서 일어나 사무실 밖으로 나왔다.)
 deleteAll
 waitSecond = 2
-narration : (아리스는 씩씩하게 경례를 하고 선도부실을 나섰다. 히나는 홀로 남아 책상에 엎드렸다. 평소보다 두 배는 더 피곤해 보였다.) [music : none]
-히나(선도부) : ...그래도... 이상하게 활기차긴 했네. 아주 조금은... [emotion : hina_weaksmile2.png]
+narration : (복도에서 잠시 기다리는 동안, 선도부 사무실 안에서 무슨 일이 벌어지고 있을지 궁금했다.) [bg : BG_GehennaCorridor_Party.jpg]
+narration : (약 10분 정도가 지나자 사무실 문이 열렸다.)
+히나(선도부) : 선생, 들어와도 돼. [emotion : hina_expressionless.png]
+selection : (1)"어떻게 됐어?" (2)"괜찮아 보이네."
+히나(선도부) : ... [emotion : hina_littlebitembarrassed.png]
+narration : (사무실로 들어서자 아코가 환하게 웃고 있었다.)
+아코(선도부) : 선생님! [emotion : ako_bigsmile.png]
+히나(선도부) : 일단 서류 검토부터 마무리하자. [emotion : hina_serious.png]
+아코(선도부) : 네, 부장님! [emotion : ako_eyesmile.png]
+narration : (두 사람 사이의 분위기가 확연히 달라져 있었다.)
+selection : (1)"무슨 좋은 일이라도?" (2)"서류 검토 계속할까?"
+히나(선도부) : 서류 검토 계속하자. [emotion : hina_embarrassed.png]
+아코(선도부) : 네! 바로 시작하겠습니다! [emotion : ako_smile_with_closing_eyes.png]
+narration : (히나와 아코는 서로 눈빛을 교환하며 미소를 지었다.)
+히나(선도부) : 아코. [emotion : hina_weaksmile.png]
+아코(선도부) : 네, 부장님? [emotion : ako_smile.png]
+히나(선도부) : 차 좀 더 따라줄래? [emotion : hina_littlebitembarrassed.png]
+아코(선도부) : 네! 당장이요! [emotion : ako_bigsmile.png, sound : SE_Cup_02.mp3]
+narration : (아코가 차를 따르는 동안, 히나는 내게 작은 목소리로 말했다.)
+히나(선도부) : 선생... 고마워. [emotion : hina_weaksmile2.png]
+selection : (1)"무슨 일이 있었던 거야?" (2)"서로의 마음을 확인한 모양이네."
+히나(선도부) : ... [emotion : hina_embarrassed.png]
+히나(선도부) : 그냥... 서로 오해가 있었어. [emotion : hina_littlebitembarrassed.png]
+히나(선도부) : 나도 아코에게 할 말이 있었거든. [emotion : hina_weaksmile.png]
+narration : (히나의 표정에서 행복감이 묻어났다.)
+아코(선도부) : 여기 차 있습니다! [emotion : ako_bigsmile.png]
+히나(선도부) : 고마워, 아코. [emotion : hina_weaksmile.png]
+아코(선도부) : 부장님... [emotion : ako_smile.png]
+히나(선도부) : 응? [emotion : hina_weaksmile.png]
+아코(선도부) : 아니에요. 그냥... 고맙습니다. [emotion : ako_smile_with_closing_eyes.png]
+narration : (두 사람의 시선이 다시 한번 마주쳤다.)
+selection : (1)"이제 서류 검토를 마무리할까?" (2)"나는 이만 가볼게."
+히나(선도부) : 응, 서류 검토 마무리하자. [emotion : hina_serious.png]
+히나(선도부) : 선생도 도와줘. [emotion : hina_expressionless.png]
+아코(선도부) : 저도 열심히 하겠습니다! [emotion : ako_smile.png]
+narration : (세 사람은 다시 서류 검토에 집중했다. 하지만 이제 사무실의 분위기는 완전히 달라져 있었다.)
+narration : (시간이 흘러 검토가 끝나갈 무렵, 창밖으로는 저녁 노을이 지고 있었다.)
+히나(선도부) : 다 끝났네. 고생했어. [emotion : hina_weaksmile.png]
+아코(선도부) : 부장님도 수고하셨습니다. [emotion : ako_smile.png]
+selection : (1)"두 사람도 이제 쉬는 게 좋겠어." (2)"저녁 식사는 어떻게 할 거야?"
+히나(선도부) : 그러고 보니 저녁 시간이네. [emotion : hina_expressionless.png]
+아코(선도부) : 맞아요. 벌써 이런 시간이... [emotion : ako_curious.png]
+히나(선도부) : 아코. [emotion : hina_expressionless.png]
+아코(선도부) : 네, 부장님? [emotion : ako_curious.png]
+히나(선도부) : 저녁... 같이 먹을래? [emotion : hina_littlebitembarrassed.png]
+아코(선도부) : 네?! [emotion : ako_shout.png]
+아코(선도부) : 아, 네! 물론이죠! [emotion : ako_bigsmile.png]
+히나(선도부) : 선생도 같이 갈래? [emotion : hina_weaksmile.png]
+selection : (1)"아니, 나는 다른 약속이 있어." (2)"두 사람이서 가는 게 좋을 것 같아."
+히나(선도부) : 그래? [emotion : hina_embarrassed.png]
+히나(선도부) : 그럼... 아코, 우리 둘이서 가자. [emotion : hina_littlebitembarrassed.png]
+아코(선도부) : 네, 부장님! [emotion : ako_bigsmile.png]
+narration : (두 사람은 서류를 정리하고 함께 사무실을 나설 준비를 했다.)
+히나(선도부) : 선생, 오늘 도와줘서 고마워. [emotion : hina_weaksmile.png]
+아코(선도부) : 네, 정말 감사합니다, 선생님! [emotion : ako_smile_with_closing_eyes.png]
+selection : (1)"별 거 아니야. 잘 다녀와." (2)"두 사람이 행복해 보여서 다행이야."
+히나(선도부) : ... [emotion : hina_embarrassed.png]
+아코(선도부) : 선생님... [emotion : ako_weaksmile.png]
+히나(선도부) : 가자, 아코. [emotion : hina_littlebitembarrassed.png]
+아코(선도부) : 네, 부장님! [emotion : ako_bigsmile.png, sound : SE_DoorClose_01.mp3]
+narration : (두 사람은 함께 사무실을 나섰다. 창밖으로 보이는 저녁 노을이 두 사람의 모습을 붉게 물들였다.)
+deleteAll
+waitSecond = 2
+narration : (나는 조용히 선도부 사무실을 나왔다. 복도 끝에서 히나와 아코가 나란히 걸어가는 모습이 보였다.) [bg : BG_GehennaStreet.jpg, music : future_bossa.mp3]
+narration : (가끔은 엄격한 선도부장과 그의 충실한 행정관 사이에도 다른 감정이 피어날 수 있다는 것을 오늘 알게 된 것 같다.)
+narration : (두 사람의 손이 우연히 스쳤고, 히나가 슬쩍 아코의 손을 잡는 모습을 보았다. 아코의 얼굴이 붉게 물들었다.)
+narration : (게헨나 학원의 엄격한 규율 속에서도, 때로는 이런 따뜻한 순간이 있다는 것이 참 다행이라는 생각이 들었다.)
+deleteAll
 endEvent
   `.trim();
 
