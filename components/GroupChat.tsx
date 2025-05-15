@@ -66,47 +66,53 @@ export default function GroupChat({ groupId }: Props) {
   const simulateGroupChat = async (raw: string) => {
     const parsed = parseGroupChat(raw);
     let prevSender: string | null = null;
-
+  
     for (const chat of parsed) {
       const m = members.find(v => v.name === chat.sender);
       const avatar = m?.avatar ?? null;
-
       const showAvatar = prevSender !== chat.sender;
       prevSender = chat.sender;
-
-      // 1) 타이핑 중 표시
-      setMsgs(prev => [
-        ...prev,
-        {
-          sender: chat.sender,
-          text: '···',
-          typing: true,
-          avatar,
-          showAvatar,
-        },
-      ]);
-
-      // 2) 대사 출력 전 지연
-      await new Promise(res => setTimeout(res, chat.delay * 1000));
-
-      // 3) 실제 대사 출력
-      setMsgs(prev => [
-        ...prev.slice(0, -1),
-        {
-          sender: chat.sender,
-          text: chat.text,
-          typing: false,
-          avatar,
-          showAvatar,
-        },
-      ]);
-
-      // 4) 대사 간 간격 지연 (afterDelay)
+  
+      // (1) 타이핑 "···"
+      await new Promise(resolve => {
+        setMsgs(prev => [
+          ...prev,
+          {
+            sender: chat.sender,
+            text: '···',
+            typing: true,
+            avatar,
+            showAvatar,
+          },
+        ]);
+        resolve(null); // 다음 await을 정확히 순서대로
+      });
+  
+      // (2) 출력 전 delay
+      await new Promise(r => setTimeout(r, chat.delay * 1000));
+  
+      // (3) 실제 대사로 교체
+      await new Promise(resolve => {
+        setMsgs(prev => [
+          ...prev.slice(0, -1),
+          {
+            sender: chat.sender,
+            text: chat.text,
+            typing: false,
+            avatar,
+            showAvatar,
+          },
+        ]);
+        resolve(null);
+      });
+  
+      // (4) 다음 대사 전 딜레이
       if (chat.afterDelay > 0) {
-        await new Promise(res => setTimeout(res, chat.afterDelay * 1000));
+        await new Promise(r => setTimeout(r, chat.afterDelay * 1000));
       }
     }
   };
+  
 
 
 
@@ -128,9 +134,19 @@ export default function GroupChat({ groupId }: Props) {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    setMsgs(p => [...p, { sender: 'user', text: input }]);
+
     const msgCopy = input;
     setInput('');
+
+    // 유저 발화도 ChatLine 형태로 삽입
+    setMsgs(p => [...p, {
+      sender: 'user',
+      text: msgCopy,
+      avatar: null,
+      typing: false,
+      delay: 0,
+    }]);
+
     try {
       const res = await fetch('http://localhost:3000/api/group/chat', {
         method: 'POST',
@@ -140,12 +156,14 @@ export default function GroupChat({ groupId }: Props) {
       const data = await res.json();
 
       if (data.answer) {
-        await simulateGroupChat(data.answer); // ✅ 수정
+        await simulateGroupChat(data.answer);
       }
     } catch (e) {
       console.error(e);
     }
   };
+
+
 
   const renderItem = ({
     item,
