@@ -14,45 +14,51 @@ const MomoSidebar: React.FC<MomoSidebarProps> = ({
   const router = useRouter();
 
   const testScript = `
-타이틀 : 비밀스러운 책과 정의의 대혼란
-narration : (따뜻한 오후의 트리니티 교정. 저 멀리 보충수업부 학생들이 재잘거리며 지나간다. 코하루도 그 사이에 섞여 바쁘게 걸어가고 있었다. 그녀의 가방에서 무언가 살짝 삐져나와 있었다.) [bg : BG_Campus.jpg, music : lovely_picnic.mp3]
-narration : (그때, 코하루가 미처 챙기지 못한 듯, 표지부터 어딘가 수상쩍은 분위기를 풍기는 책 한 권이 바닥에 툭 떨어졌다. 일행은 이미 멀어져 가고 있었다.) [sound : SE_Book_02.mp3]
-narration : (그 순간, 근처를 순찰 중이던 정의실현부의 츠루기가 떨어진 책을 발견했다.) [bg : BG_Campus.jpg]
-츠루기(정의실현부) : 음? 이건... 학생의 분실물인가. (표지를 슬쩍 보더니 미간을 찌푸린다) ...내용물이 좀 수상해 보이는데. [emotion : tsurugi_curious.png]
-narration : (츠루기는 책을 집어 들고는, 코하루가 속한 무리를 바라보았다. 즐겁게 이야기하는 그들을 잠시 보더니, 이내 고개를 살짝 저었다.)
-츠루기(정의실현부) : (혼잣말로) ...지금은 즐거운 시간을 보내고 있는 듯하군. 일단 내가 보관했다가 나중에 확인 후 돌려주도록 하자. 혹시라도 불건전한 물건이라면 즉시 처리해야 하니. [emotion : tsurugi_serious.png]
+타이틀 : 정의와 압수품 사이
+narration : (트리니티 학원 복도. 점심시간이 끝난 후인지 학생들이 삼삼오오 교실로 향하고 있다. 저 멀리서 코하루가 보충수업부 친구들과 무언가에 대해 열띠게 토론하며 걸어오고 있다.) [bg : BG_Campus.jpg, music : lovely_picnic.mp3]
+코하루(보충수업부) : 그러니까! 그런 건 풍기문란이라니까! 정말이지, 요즘 애들은…! [emotion : koharu_shout.png]
+narration : (코하루가 열변을 토하며 손을 휘젓다, 들고 있던 분홍색 표지의 책 한 권을 놓치고 만다. 하지만 이야기에 심취한 코하루는 전혀 눈치채지 못한 채 친구들과 함께 사라진다.) [sound : SE_Book_02.mp3]
+waitSecond = 2
+narration : (그때, 복도를 순찰 중이던 츠루기가 바닥에 떨어진 책을 발견한다.) [bg : BG_Campus.jpg, music : morose_dreamer.mp3]
+츠루기(정의실현부) : …응? 이건. [emotion : tsurugi_curious.png]
+narration : (책을 집어 든 츠루기는 표지를 보고 코하루의 것임을 직감한다. 마침 멀지 않은 곳에 코하루의 뒷모습이 보인다.)
+츠루기(정의실현부) : 코하루…! 네놈, 물건을 떨어뜨렸… [emotion : tsurugi_default.png]
+narration : (츠루기가 코하루를 부르려던 순간, 즐겁게 웃으며 친구들과 이야기하는 코하루의 모습이 눈에 들어온다. 츠루기는 잠시 멈칫한다.)
+츠루기(정의실현부) : (…지금은… 방해하지 않는 편이 좋겠군. 나중에 전해주자.) [emotion : tsurugi_serious.png]
+narration : (츠루기는 책을 자신의 옆구리에 끼고 순찰을 계속한다.)
 deleteAll
 waitSecond = 2
-narration : (그렇게 츠루기는 '의심스러운' 책을 들고 자신의 숙소로 돌아갔다.) [bg : BG_Dormitory.jpg, music : shady_girls.mp3]
-narration : (츠루기는 책상 위에 코하루의 책을 올려두고, 먼저 그 내용을 살펴보기로 했다. 정의실현부 부장으로서 학생의 물건이라도 유해한 것이라면 간과할 수 없었기 때문이다.)
-narration : (사르르륵- 츠루기가 조심스럽게 책장을 넘기자마자, 그녀의 눈이 믿을 수 없다는 듯 휘둥그레졌다.) [sound : SE_BushRusting_02b.mp3]
-츠루기(정의실현부) : 이, 이, 이것은...! 단순한 풍기문란을 넘어선...! 이런 파렴치한 그림과 글자들이 버젓이! [emotion : tsurugi_shock.png, expression : sweat.png, animation : shakeX]
-narration : (츠루기의 얼굴은 순식간에 새빨갛게 달아올랐고, 온몸을 부르르 떨기 시작했다. 마치 엄청난 충격이라도 받은 듯 보였다.)
-츠루기(정의실현부) : 갸아아아아악!! 안 돼! 어떻게 이런 음란하고 해괴한 것을 학생이, 그것도 코하루 학생이...! 정의가! 정의가 용납 못 한다! [emotion : tsurugi_embarrassed2.png, animation : shakeY]
-narration : (극도의 혼란과 분노, 그리고 알 수 없는 감정에 휩싸인 츠루기는 방 안을 이리저리 날뛰며 허둥대다 그만 책 위로 격렬하게 풀썩 넘어지고 말았다!) [sound : SE_Boom_01.mp3]
-narration : (그 결과, 코하루의 '매우 소중한 비밀 책'은 산산조각이 나 버렸다.)
-츠루기(정의실현부) : 아... 아아... 내, 내가 무슨 짓을... 책이... 정의를 집행하려다가 그만...! [emotion : tsurugi_awkward.png]
+narration : (몇 시간 후, 정의실현부 부실. 츠루기는 산더미 같은 서류 옆에 코하루의 책을 잠시 내려놓았다.) [bg : BG_CommitteeRoom.jpg, music : morose_dreamer.mp3]
+츠루기(정의실현부) : 하아… 이놈의 서류는 끝이 없군. [emotion : tsurugi_serious.png]
+narration : (그때, 열린 창문으로 바람이 휙 불어와 책상 위의 서류 몇 장과 함께 코하루의 책 페이지를 빠르게 넘겼다.) [sound : SE_BushRusting_02b.mp3]
+츠루기(정의실현부) : 응? [emotion : tsurugi_curious.png]
+narration : (츠루기의 시선이 우연히 펼쳐진 책의 한 페이지에 머문다. 그곳에는 상당히… 자극적인 삽화와 문구들이 가득했다.)
+츠루기(정의실현부) : 이, 이, 이건… 뭐냐… 이… 파렴치한 것은…!! [emotion : tsurugi_shock.png, expression : question_mark.png, animation : shakeX]
+narration : (츠루기의 눈이 점점 커지고, 얼굴이 터질 듯이 새빨개지기 시작한다. 손에 든 책이 부들부들 떨린다.)
+츠루기(정의실현부) : 키에에에에에에에에에에에에에에에에에에에에에엑!! [emotion : tsurugi_embarrassed2.png, sound : SE_Cartoon_02.mp3, animation : shakeY]
+narration : (츠루기는 극도의 부끄러움과 당황함에 어쩔 줄 몰라하며 부실 안을 허둥지둥 뛰어다녔다. 그 과정에서 손에 쥐고 있던 코하루의 책은 츠루기의 격렬한 몸짓에 이리저리 구겨지고, 바닥에 떨어져 몇 번이나 밟히면서 속절없이 찢어지고 말았다.) [sound : SE_BoomEffect_02.mp3]
+waitSecond = 3
+deleteAll
+narration : (다음 날 아침, 츠루기는 밤새 테이프로 간신히 형태만 복구한 너덜너덜한 책을 들고 코하루를 찾아 나섰다. 그녀의 얼굴에는 수심이 가득했다.) [bg : BG_Campus.jpg, music : morose_dreamer.mp3]
+츠루기(정의실현부) : (…이걸 어쩐다… 코하루, 엄청나게 화내겠지…?) [emotion : tsurugi_awkward.png, expression : sweat.png]
+narration : (복도 저편에서 코하루가 걸어오는 것이 보인다.)
+코하루(보충수업부) : 어라? 츠루기 선배? 웬일이세요, 아침부터. [emotion : koharu_default.png]
+츠루기(정의실현부) : 코, 코하루…! 저, 저기… 그게…! [emotion : tsurugi_embarrassed.png]
+narration : (츠루기는 덜덜 떨리는 손으로 너덜너덜해진 책을 내밀었다.)
+츠루기(정의실현부) : 이, 이거… 네놈 것이지 않나…? 그게… 어제, 내가… 그… 실수로…! 일부러 그런 게 절대 아니다! 정말이다! 미, 미안하다아아! [emotion : tsurugi_embarrassed2.png, sound : SE_Denied_01.mp3]
+코하루(보충수업부) : 에엣?! 이, 이건 제… 아니, 제가 압수한 책인데요?! 어쩌다가 이렇게 너덜너덜…?! [emotion : koharu_embarrassed.png, expression : sweat.png]
+narration : (코하루는 경악했지만, 정의실현부 부장인 츠루기 앞에서 차마 화를 낼 수는 없었다. 게다가 츠루기의 평소 모습을 알기에 고의가 아니라는 것도 짐작할 수 있었다.)
+코하루(보충수업부) : 아, 아뇨! 괜찮아요! 어차피 풍기문란한 압수품이었으니까요! 이렇게 된 것도 뭐… 어쩔 수 없죠! 헤헤. [emotion : koharu_embarrassed2.png]
+narration : (코하루는 애써 웃어 보였지만, 너덜너덜해진 책을 받아든 그녀의 눈가에는 미세한 경련과 함께 깊은 아쉬움이 서려 있었다.)
+츠루기(정의실현부) : …저, 정말 괜찮나? [emotion : tsurugi_awkward.png]
+코하루(보충수업부) : 네, 네에! 그럼요! 전 이제 수업 가봐야 해서…! 나중에 봬요, 선배! [emotion : koharu_closingeyes.png]
+narration : (코하루는 황급히 자리를 떴다. 츠루기는 그 뒷모습을 착잡한 심정으로 바라보았다.)
+츠루기(정의실현부) : (…역시, 엄청나게 실망한 것 같군…) [emotion : tsurugi_awkward.png]
+narration : (한편, 코하루는 복도 모퉁이를 돌자마자 책을 부여잡고 작게 절규했다.)
+코하루(보충수업부) : (내 소중한 연구자료가아…! 사형이야, 사형! …아니, 츠루기 선배가 일부러 그런 건 아니지만… 그래도… 으아앙! 다시 구해야 하잖아!) [emotion : koharu_crying.png, bg : BG_ClassCorridor.jpg]
 deleteAll
 waitSecond = 2
-narration : (다음 날 아침, 정의실현부실 앞에서 츠루기가 거의 반쯤 넋이 나간 채 코하루를 기다리고 있었다. 그녀의 손에는 테이프로 처참하게 수습된, 원래 형태를 알아보기 힘든 책이 들려 있었다.) [bg : BG_Campus.jpg, music : mischievous_step.mp3]
-코하루(보충수업부) : 어, 츠루기 선배? 저한테 무슨 볼일이라도... 안색이 안 좋으신데요. [emotion : koharu_default.png]
-츠루기(정의실현부) : 코하루 학생! 그, 어제... 네놈이 떨어뜨린 이... 이 물건을... 내가, 내가 그만...! 크흐흑...! [emotion : tsurugi_embarrassed.png, animation : shakeX]
-narration : (츠루기는 거의 울먹이며 엉망진창이 된 책을 내밀었다. 코하루는 책의 상태를 보자마자 얼굴이 하얗게 질렸다.)
-코하루(보충수업부) : 에에에엣?! 이게 뭐예요! 내... 내 보물 1호가! 아니, 이 책이 왜! 왜 이렇게 된 거예요?! 사형이야, 이런 짓 한 녀석은!! [emotion : koharu_shout2.png, expression : question_mark.png]
-츠루기(정의실현부) : 미, 미안하다! 정말 면목 없다! 내가... 내가 흥분해서 그만...! 어떤 벌이라도 달게 받겠다! [emotion : tsurugi_awkward.png]
-코하루(보충수업부) : 아, 아뇨! 괜찮아요! 어, 어차피 그거... 그... 정의실현부에서 '압수'한 풍기문란한 책이니까요! 네! 전 진짜, 정말로, 하나도 안 아까워요! 하하하! (하지만 눈에는 이미 눈물이 그렁그렁 맺혀 있었다.) [emotion : koharu_embarrassed.png]
-narration : (코하루는 황급히 손사래를 쳤지만, 목소리는 떨리고 있었고, 츠루기 선배의 시선 앞에서 필사적으로 아무렇지 않은 척하고 있었다.)
-코하루(보충수업부) : (애써 밝은 척) 그, 그럼 전 이만 가볼게요! 선배도 좋은 하루 보내세요! 정말 괜찮으니까 신경 쓰지 마세요! [emotion : koharu_embarrassed2.png]
-narration : (코하루는 너덜너덜해진 책을 받아들고는 도망치듯 황급히 자리를 떠났다.)
-deleteAll
-waitSecond = 2
-narration : (조금 떨어진 복도 구석에서, 코하루는 차마 눈 뜨고 보기 힘든 몰골의 책을 내려다보았다.) [bg : BG_ClassCorridor.jpg, music : morose_dreamer.mp3]
-코하루(보충수업부) : (입술을 깨물며 울먹인다) ...흐윽. 어떻게 이럴 수가 있어. 겨우... 겨우 손에 넣은 초회 한정판이었는데... 이렇게 갈기갈기 찢어지다니... [emotion : koharu_crying.png]
-narration : (코하루는 깊은 슬픔과 아쉬움에 잠겨, 찢어진 책 조각들을 소중하게 가방 깊숙이 넣었다. 정의실현부의 무서운 선배 앞에서는 차마 진심을 다 표현할 수 없었을 것이다.)
-코하루(보충수업부) : (작은 목소리로 흐느끼며) ...어떻게든... 다시 붙여서... 하이라이트 장면만이라도... 흐어엉... [emotion : koharu_suspicious.png] // 이모션은 상황에 맞게 'crying' 이나 'disgusting' 등으로 변경 가능
-deleteAll
-waitSecond = 2
-narration : (코하루의 슬픈 어깨를 보며, 오늘의 이 '야한 책' 대소동은 그렇게 비극적으로 마무리되는 듯했다.) [music : none]
+narration : (정의와 압수품 사이에서, 오늘도 트리니티의 하루는 소란스럽게 흘러간다.) [music : none]
 endEvent
   `.trim();
 
