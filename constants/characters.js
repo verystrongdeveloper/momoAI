@@ -54,6 +54,11 @@ const characters = [
         status: '업무 이외의 연락 사절',
         image: require('../assets/images/ako.jpg'),
     },
+    {
+        name: '츠루기',
+        status: '...',
+        image: require('../assets/images/tsurugi.jpg'),
+    },
 ];
 
 export default characters;

@@ -341,6 +341,22 @@ export const emotionMap: Record<string, any> = {
   kaiser_pmc_director: require('../../assets/images/enemy/kaiser_pmc_director.png'),
   kaiser_pmc_general: require('../../assets/images/enemy/kaiser_pmc_general.png'),
 
+  // 츠루기
+  tsurugi_default: require('../../assets/images/tsurugi/tsurugi_default.png'),
+  tsurugi_smile: require('../../assets/images/tsurugi/tsurugi_smile.png'),
+  tsurugi_smile2: require('../../assets/images/tsurugi/tsurugi_smile2.png'),
+  tsurugi_dark_smile: require('../../assets/images/tsurugi/tsurugi_dark_smile.png'),
+  tsurugi_serious: require('../../assets/images/tsurugi/tsurugi_serious.png'),
+  tsurugi_embarrassed: require('../../assets/images/tsurugi/tsurugi_embarrassed.png'),
+  tsurugi_embarrassed2: require('../../assets/images/tsurugi/tsurugi_embarrassed2.png'),
+  tsurugi_confused: require('../../assets/images/tsurugi/tsurugi_confused.png'),
+  tsurugi_curious: require('../../assets/images/tsurugi/tsurugi_curious.png'),
+  tsurugi_happy: require('../../assets/images/tsurugi/tsurugi_happy.png'),
+  tsurugi_space_out: require('../../assets/images/tsurugi/tsurugi_space_out.png'),
+  tsurugi_awkward: require('../../assets/images/tsurugi/tsurugi_awkward.png'),
+  tsurugi_shock: require('../../assets/images/tsurugi/tsurugi_shock.png'),
+  tsurugi_normal: require('../../assets/images/tsurugi/tsurugi_normal.png'),
+
   // 트리니티 정의 실현부
   justice_task_force_member_default: require('../../assets/images/trinity_justice/justice_task_force_member_default.png'),
   justice_task_force_member_speaking: require('../../assets/images/trinity_justice/justice_task_force_member_speaking.png'),
