@@ -17,6 +17,7 @@ const MomoSidebar: React.FC<MomoSidebarProps> = ({
 타이틀 : 정의와 압수품 사이
 narration : (트리니티 학원 복도. 점심시간이 끝난 후인지 학생들이 삼삼오오 교실로 향하고 있다. 저 멀리서 코하루가 보충수업부 친구들과 무언가에 대해 열띠게 토론하며 걸어오고 있다.) [bg : BG_Campus.jpg, music : lovely_picnic.mp3]
 코하루(보충수업부) : 그러니까! 그런 건 풍기문란이라니까! 정말이지, 요즘 애들은…! [emotion : koharu_shout.png]
+deleteEmotion
 narration : (코하루가 열변을 토하며 손을 휘젓다, 들고 있던 분홍색 표지의 책 한 권을 놓치고 만다. 하지만 이야기에 심취한 코하루는 전혀 눈치채지 못한 채 친구들과 함께 사라진다.) [sound : SE_Book_02.mp3]
 waitSecond = 2
 narration : (그때, 복도를 순찰 중이던 츠루기가 바닥에 떨어진 책을 발견한다.) [bg : BG_Campus.jpg, music : morose_dreamer.mp3]

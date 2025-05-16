@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { GROUP_CHAT_ROOMS, GroupChatRoom } from '../constants/groupChatRooms';
+import { GROUP_CHAT_ROOMS, GroupChatRoom } from './constants/groupChatRooms';
 
 interface Props {
   /** 방 진입 시 호출 – 상위(MomoContainer 등)에서 구현 */

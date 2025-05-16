@@ -52,7 +52,8 @@ export default function GroupChat({ groupId }: Props) {
         const data = await res.json();
 
         if (data.answer) {
-          await simulateGroupChat(data.answer); // ✅ 수정: 파싱 및 지연 반영
+          console.log('[입장 트리거] 서버에서 받아온 그룹채팅:', data.answer);
+          await simulateGroupChat(data.answer); // ✅ 파싱 및 지연 반영
         }
       } catch (e) {
         console.warn(e);
@@ -112,9 +113,6 @@ export default function GroupChat({ groupId }: Props) {
       }
     }
   };
-  
-
-
 
   const simulateTyping = async (
     name: string,
@@ -122,13 +120,8 @@ export default function GroupChat({ groupId }: Props) {
     avatar: any,
     delay = 0,
   ) => {
-    /* 1) ‘…’ 타이핑 버블 삽입 -------------------- */
     setMsgs(p => [...p, { sender: name, text: '···', typing: true, avatar }]);
-
-    /* 2) 지연 시간만큼 대기 ----------------------- */
     await new Promise(r => setTimeout(r, (delay || 1) * 1_000));
-
-    /* 3) 타이핑 버블 ↦ 실제 대사로 교체 ---------- */
     setMsgs(p => [...p.slice(0, -1), { sender: name, text, avatar }]);
   };
 
@@ -156,14 +149,13 @@ export default function GroupChat({ groupId }: Props) {
       const data = await res.json();
 
       if (data.answer) {
+        console.log('[sendGroupChat] 서버에서 받아온 그룹채팅:', data.answer);
         await simulateGroupChat(data.answer);
       }
     } catch (e) {
       console.error(e);
     }
   };
-
-
 
   const renderItem = ({
     item,
@@ -200,7 +192,6 @@ export default function GroupChat({ groupId }: Props) {
     );
   };
 
-
   return (
     /* ───────── 쇼츠용 폰 프레임 ───────── */
     <View style={styles.container}>
@@ -233,8 +224,6 @@ const FRAME_HEIGHT = 640;
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
-  /* ★ 폰 프레임 */
   phoneFrame: {
     width: FRAME_WIDTH,
     height: FRAME_HEIGHT,
@@ -245,8 +234,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-
-  /* 내부 요소 그룹화 */
   phoneContent: {
     list: { padding: 12, flexGrow: 1 },
     inputBar: {
@@ -263,9 +250,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: 8,
       marginRight: 6,
     },
-  } as any, // 타입스크립트 배려
-
-  /* 채팅 버블/행 */
+  } as any,
   row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-end' },
   rowRight: { flexDirection: 'row-reverse' },
   avatar: {
@@ -274,18 +259,15 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginRight: 8,
   },
-
   chatBlock: {
     flexShrink: 1,
   },
-
   name: {
     fontSize: 13,
     fontWeight: '600',
     color: '#555',
     marginBottom: 2,
   },
-
   bubble: { padding: 8, borderRadius: 10, maxWidth: '75%' },
   userBubble: { backgroundColor: '#DCF8C6' },
   charBubble: { backgroundColor: '#44546A', color: 'white' },
