@@ -44,7 +44,7 @@ export default function GroupChat({ groupId }: Props) {
       if (!shouldTrigger) return;
 
       try {
-        const res = await fetch('http://localhost:3000/api/group/trigger', {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/group/trigger`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ roomId: groupId }),
@@ -141,7 +141,7 @@ export default function GroupChat({ groupId }: Props) {
     }]);
 
     try {
-      const res = await fetch('http://localhost:3000/api/group/chat', {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/group/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId: groupId, userMessage: msgCopy, history: [] }),

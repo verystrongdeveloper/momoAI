@@ -49,7 +49,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
                 setMessages(prev => [...prev, { sender: 'typing', text: '···', showImage: true }]);
     
                 try {
-                    const res = await fetch('http://localhost:3000/api/trigger', {
+                    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/trigger`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ character: characterName }),
@@ -104,7 +104,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     const sendToGemini = async (
         msg: string,
     ): Promise<{ reply: string; eventReady: boolean }> => {
-        const res = await fetch('http://localhost:3000/api/chat', {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ character: characterName, message: msg }),
@@ -155,7 +155,7 @@ const CharacterChat: React.FC<CharacterChatProps> = ({
     const handleEventStart = async () => {
         setGlobalLoading?.(true);
         try {
-            const res = await fetch('http://localhost:3000/api/event', {
+            const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/event`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
