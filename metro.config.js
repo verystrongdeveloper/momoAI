@@ -1,6 +1,9 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 
+// npx expo start / npm start 가 Metro 설정을 읽을 때 백엔드도 같이 띄운다.
+require('./scripts/ensure-backend');
+
 const config = getDefaultConfig(__dirname);
 
 // 백엔드 server 폴더만 Expo 번들에서 제외한다.

@@ -1,5 +1,5 @@
 // src/controllers/eventController.js
-const { getChat } = require('../services/geminiService');
+const { getChat, GEMINI_MODEL } = require('../services/geminiService');
 const { buildSelectionPrompt } = require('../utils/selectionPromptBuilder');
 const { buildEventPromptPro } = require('../utils/promptBuilderPro');
 const { getDialogHistory } = require('./chatController');
@@ -18,8 +18,8 @@ exports.createEvent = async (req, res) => {
   }
 
   try {
-    /* 1) 등장 인물 선정 – gemini-2.0-flash */
-    const selector = await getChat(character, 'gemini-2.0-flash');
+    /* 1) 등장 인물 선정 */
+    const selector = await getChat(character, GEMINI_MODEL);
     const selPrompt = buildSelectionPrompt(dialogHistory);
     console.log('🧠 [등장 인물 선정 프롬프트]');
     console.log(selPrompt);
@@ -31,7 +31,7 @@ exports.createEvent = async (req, res) => {
       ? await selRes.response.text()
       : selRes.response.text;
 
-    console.log('📦 [gemini-2.0-flash 응답]');
+    console.log(`📦 [${GEMINI_MODEL} 응답]`);
     console.log(rawSelText);
     const jsonMatch = rawSelText.match(/\{[\s\S]*}/);
     if (!jsonMatch) {
@@ -68,8 +68,8 @@ exports.createEvent = async (req, res) => {
     console.log('✨ [Pro 모델로 전달될 캐릭터 및 이모션 목록]');
     console.log(JSON.stringify(allCharsWithEmotions, null, 2));
 
-    /* 2) 이벤트 스크립트 생성 – gemini-2.5-pro-exp-03-25 */
-    const proChat = await getChat(character, 'gemini-2.5-pro-preview-03-25');
+    /* 2) 이벤트 스크립트 생성. 채팅 세션과 섞이지 않도록 세션을 분리한다. */
+    const proChat = await getChat(character, GEMINI_MODEL, 'event');
     // ★ 변경: Pro 모델에게는 이제 '모든' 캐릭터(메인 + 추가)와 그들의 감정 리스트를 함께 넘겨줍니다.
     const eventPrompt = buildEventPromptPro(
       character,

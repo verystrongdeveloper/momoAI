@@ -186,20 +186,12 @@ const chatLogs = {};  // ✅ 캐릭터별 최근 대화 저장 (5쌍)
 // 세션 생성 or 반환
 async function getOrCreateChat(characterName) {
   if (!chatSessions[characterName]) {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: prompts[characterName] || `${characterName}라는 캐릭터처럼 말해.` }],
-        },
-        {
-          role: 'model',
-          parts: [{ text: '알겠습니다. 앞으로 그렇게 응답하겠습니다!' }],
-        },
-      ],
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3.7-flash',
+      systemInstruction: prompts[characterName] || `${characterName}라는 캐릭터처럼 말해.`,
     });
+
+    const chat = model.startChat({ history: [] });
 
     chatSessions[characterName] = chat;
   }
@@ -435,7 +427,7 @@ endEvent
 `;
 
       // Gemini 모델 호출
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }); 
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.7-flash' }); 
       const result = await model.generateContent(eventPrompt);
       const text = result.response.text();
 
