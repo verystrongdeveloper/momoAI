@@ -29,13 +29,13 @@ function portInUse(port) {
 }
 
 function attachBackend() {
-  if (global.__momoBackendBootstrapped) return;
+  if (global.__momoStoryBackendBootstrapped) return;
   if (!shouldAttachBackend()) return;
-  global.__momoBackendBootstrapped = true;
+  global.__momoStoryBackendBootstrapped = true;
 
   portInUse(PORT).then((used) => {
     if (used) {
-      console.log(`[momo] 백엔드가 이미 http://localhost:${PORT} 에서 실행 중입니다.`);
+      console.log(`[MomoStory] 백엔드가 이미 http://localhost:${PORT} 에서 실행 중입니다.`);
       return;
     }
 
@@ -47,7 +47,7 @@ function attachBackend() {
 
     child.on('exit', (code) => {
       if (code && code !== 0) {
-        console.error(`[momo] 백엔드가 종료되었습니다 (code ${code}).`);
+        console.error(`[MomoStory] 백엔드가 종료되었습니다 (code ${code}).`);
       }
     });
   });

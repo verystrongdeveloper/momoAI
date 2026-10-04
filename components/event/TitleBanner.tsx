@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Text, StyleSheet, Dimensions } from 'react-native';
-
-const { height: H } = Dimensions.get('window');
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Animated, StyleSheet, Text } from 'react-native';
+import { useLayout } from '@/hooks/useLayout';
 
 interface Props {
   title: string;
@@ -9,43 +8,25 @@ interface Props {
 }
 
 const TitleBanner: React.FC<Props> = ({ title, visible }) => {
+  const { eventHeight, scale } = useLayout();
+  const styles = useMemo(() => makeStyles(scale), [scale]);
   const opacity = useRef(new Animated.Value(0)).current;
-  const height = useRef(new Animated.Value(0)).current;
+  const boxHeight = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      // 등장할 때: 높이 + 투명도 애니메이션
       Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(height, {
-          toValue: H / 4,
-          duration: 500,
-          useNativeDriver: false, // height는 layout 관련이니까 false
-        }),
+        Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: false }),
+        Animated.timing(boxHeight, { toValue: eventHeight / 4, duration: 500, useNativeDriver: false }),
       ]).start();
     } else {
-      // 사라질 때: 투명도만 애니메이션
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: false }).start();
     }
-  }, [visible]);
+  }, [visible, eventHeight, opacity, boxHeight]);
 
   return (
-    <Animated.View
-      style={[
-        styles.overlay,
-        { opacity },
-      ]}
-      pointerEvents="none"
-    >
-      <Animated.View style={[styles.box, { height }]}>
+    <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
+      <Animated.View style={[styles.box, { height: boxHeight }]}>
         <Text style={styles.text}>{title}</Text>
       </Animated.View>
     </Animated.View>
@@ -54,27 +35,29 @@ const TitleBanner: React.FC<Props> = ({ title, visible }) => {
 
 export default TitleBanner;
 
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 20,
-  },
-  box: {
-    width: '100%',
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#ccc',
-    overflow: 'hidden',
-  },
-  text: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#556390',
-    textAlign: 'center',
-  },
-});
+const makeStyles = (scale: number) =>
+  StyleSheet.create({
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 20,
+    },
+    box: {
+      width: '100%',
+      backgroundColor: 'white',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderBottomWidth: 2,
+      borderBottomColor: '#ccc',
+      overflow: 'hidden',
+      paddingHorizontal: 16,
+    },
+    text: {
+      fontSize: 48 * scale,
+      fontWeight: 'bold',
+      color: '#556390',
+      textAlign: 'center',
+    },
+  });

@@ -1,75 +1,85 @@
-import React, { useLayoutEffect, useEffect, useState } from 'react';   // ← useLayoutEffect 추가
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useLayout } from '@/hooks/useLayout';
 
 interface Props {
   character: string;
   text: string;
 }
 
+const TYPEWRITER_MS = 30;
+
+/** "이름(소속)" 형태의 화자 문자열을 분리 */
+const parseSpeaker = (character: string) => {
+  const match = character.match(/^(.*?)\((.*?)\)$/);
+  return match ? { name: match[1], affiliation: match[2] } : { name: character, affiliation: '' };
+};
+
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
-  /* 캐릭터 이름·소속 분리 ------------------------------------------------ */
-  const parseCharacterName = (character: string) => {
-    if (character === '???') {
-      return { name: '???', affiliation: '' }; // 또는 '???'에 특별한 스타일 적용
-    }
-    const match = character.match(/^(.*?)\((.*?)\)$/);
-    return match
-      ? { name: match[1], affiliation: match[2] }
-      : { name: character, affiliation: '' };
-  };
-  const { name, affiliation } = parseCharacterName(character);
+  const { eventHeight } = useLayout();
+  const styles = useMemo(() => makeStyles(eventHeight), [eventHeight]);
+  const { name, affiliation } = parseSpeaker(character);
 
-  /* 타이핑 애니메이션용 상태 -------------------------------------------- */
-  const [displayedText, setDisplayedText] = useState('');
-  const [index, setIndex] = useState(0);
+  const [shown, setShown] = useState(0);
 
-  /* 🔸 text가 바뀌면 먼저 상태를 0으로 초기화 – 화면 그리기 전에 실행 */
-  useLayoutEffect(() => {
-    setDisplayedText('');
-    setIndex(0);
-  }, [text]);                              // ← useEffect ➜ useLayoutEffect 로 변경
+  useLayoutEffect(() => setShown(0), [text]);
 
-  /* 글자 하나씩 찍어주기 -------------------------------------------------- */
   useEffect(() => {
-    if (index < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText(prev => prev + text.charAt(index));
-        setIndex(index + 1);
-      }, 30);                              // 글자 간 간격(ms)
-      return () => clearTimeout(timeout);
-    }
-  }, [index, text]);
+    if (shown >= text.length) return;
+    const t = setTimeout(() => setShown((n) => n + 1), TYPEWRITER_MS);
+    return () => clearTimeout(t);
+  }, [shown, text]);
 
-  /* ---------------------------------------------------------------------- */
   return (
-    <View>
-      <Text style={styles.name}>{name}</Text>
-      <Text style={styles.affiliation}>{affiliation}</Text>
-      <Text style={styles.text}>{displayedText}</Text>
+    <View style={styles.wrap}>
+      {!!name && (
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{name}</Text>
+          {!!affiliation && <Text style={styles.affiliation}>{affiliation}</Text>}
+        </View>
+      )}
+      {!!name && <View style={styles.rule} />}
+      <Text style={styles.text}>{text.slice(0, shown)}</Text>
     </View>
   );
 };
 
 export default EventDialogue;
 
-/* ------------------------------ 스타일 ---------------------------------- */
-const styles = StyleSheet.create({
-  name: {
-    fontSize: 70,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  affiliation: {
-    fontSize: 40,
-    color: '#8fd3ff',
-    marginBottom: 12,
-    borderBottomColor: '#ffffff',
-    borderBottomWidth: 1,
-    paddingBottom: 4,
-  },
-  text: {
-    fontSize: 55,
-    color: '#ffffff',
-    lineHeight: 60,
-  },
-});
+const makeStyles = (H: number) =>
+  StyleSheet.create({
+    wrap: {
+      flex: 1,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 8,
+    },
+    name: {
+      fontSize: Math.max(22, Math.round(H * 0.044)),
+      fontWeight: '800',
+      color: '#ffffff',
+      letterSpacing: 0.2,
+    },
+    affiliation: {
+      fontSize: Math.max(16, Math.round(H * 0.027)),
+      fontWeight: '800',
+      color: '#6fc5ee',
+    },
+    rule: {
+      marginTop: Math.round(H * 0.01),
+      marginBottom: Math.round(H * 0.018),
+      height: 1,
+      width: '42%',
+      backgroundColor: 'rgba(255,255,255,0.5)',
+    },
+    text: {
+      fontSize: Math.max(20, Math.round(H * 0.04)),
+      lineHeight: Math.max(28, Math.round(H * 0.056)),
+      color: '#ffffff',
+      textShadowColor: 'rgba(0,0,0,0.35)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+  });

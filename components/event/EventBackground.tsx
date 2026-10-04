@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Animated, StyleSheet } from 'react-native';
-import { bgMap } from '../constants/eventAssets';
+import { bgMap } from '@/constants/eventAssets';
 
 interface Props {
   bgKey: string | null;
@@ -13,6 +13,7 @@ export default function EventBackground({ bgKey, fadeAnim }: Props) {
     <Animated.Image
       source={bgMap[bgKey as keyof typeof bgMap]}
       style={[styles.bg, { opacity: fadeAnim }]}
+      resizeMode="cover"
     />
   );
 }

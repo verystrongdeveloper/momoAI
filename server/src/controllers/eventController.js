@@ -5,6 +5,9 @@ const { buildEventPromptPro } = require('../utils/promptBuilderPro');
 const { getDialogHistory } = require('./chatController');
 const { resources } = require('../config/prompts');
 
+const SELECTOR_SYSTEM = `너는 스토리 기획자다. 캐릭터처럼 말하지 않는다. 요청한 JSON만 출력한다. 대사·거절·설명 금지.`;
+const EVENT_WRITER_SYSTEM = `너는 블루 아카이브 인연 스토리 스크립트 작성기다. 캐릭터처럼 대답하지 말고, 요청한 출력 형식 그대로 스크립트만 작성한다.`;
+
 exports.createEvent = async (req, res) => {
   const { character } = req.body;
   if (!character) {
@@ -18,8 +21,8 @@ exports.createEvent = async (req, res) => {
   }
 
   try {
-    /* 1) 등장 인물 선정 */
-    const selector = await getChat(character, GEMINI_MODEL);
+    /* 1) 등장 인물 선정 — 캐릭터 채팅 세션과 분리한다 */
+    const selector = await getChat(character, GEMINI_MODEL, 'select', SELECTOR_SYSTEM);
     const selPrompt = buildSelectionPrompt(dialogHistory);
     console.log('🧠 [등장 인물 선정 프롬프트]');
     console.log(selPrompt);
@@ -34,13 +37,17 @@ exports.createEvent = async (req, res) => {
     console.log(`📦 [${GEMINI_MODEL} 응답]`);
     console.log(rawSelText);
     const jsonMatch = rawSelText.match(/\{[\s\S]*}/);
+    let selection;
     if (!jsonMatch) {
-      return res.status(500).json({
-        error: 'flash 모델 응답이 JSON 형식이 아님',
-        raw: rawSelText,
-      });
+      console.warn('[등장 인물 선정] JSON 아님, 메인 캐릭터만으로 진행');
+      selection = {
+        characters: [],
+        reason: '선정 응답 없음',
+        direction: `최근 대화를 이어 '${character}' 중심의 인연 스토리를 진행한다.`,
+      };
+    } else {
+      selection = JSON.parse(jsonMatch[0]);
     }
-    const selection = JSON.parse(jsonMatch[0]);
     console.log('📦 [추출된 JSON]');
     console.log(selection);
 
@@ -69,7 +76,7 @@ exports.createEvent = async (req, res) => {
     console.log(JSON.stringify(allCharsWithEmotions, null, 2));
 
     /* 2) 이벤트 스크립트 생성. 채팅 세션과 섞이지 않도록 세션을 분리한다. */
-    const proChat = await getChat(character, GEMINI_MODEL, 'event');
+    const proChat = await getChat(character, GEMINI_MODEL, 'event', EVENT_WRITER_SYSTEM);
     // ★ 변경: Pro 모델에게는 이제 '모든' 캐릭터(메인 + 추가)와 그들의 감정 리스트를 함께 넘겨줍니다.
     const eventPrompt = buildEventPromptPro(
       character,

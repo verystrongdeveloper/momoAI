@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "momo",
-    "slug": "momo",
+    "name": "MomoStory",
+    "slug": "momostory",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "myapp",
+    "scheme": "momostory",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
