@@ -10,10 +10,19 @@ interface Props {
 }
 
 interface ChatLine {
+  id: number;
   sender: string;
   text: string;
   avatar?: ImageSourcePropType;
   typing?: boolean;
+}
+
+/** 재생 중 어느 시점인지. 선생 말을 마지막 대사 뒤에 붙이지 않기 위해 본다. */
+interface PlayPhase {
+  active: boolean;
+  typing: boolean;
+  isLast: boolean;
+  revealedCount: number;
 }
 
 /** 쇼츠 촬영용 폰 프레임 크기. 넓은 화면에서만 고정 크기로 가운데 배치한다. */
@@ -23,42 +32,157 @@ const TRIGGER_CHANCE = 0.5;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const IDLE_PHASE: PlayPhase = { active: false, typing: false, isLast: false, revealedCount: 0 };
+
 export default function GroupChat({ groupId }: Props) {
   const { isCompact } = useLayout();
   const [msgs, setMsgs] = useState<ChatLine[]>([]);
   const [input, setInput] = useState('');
   const listRef = useRef<FlatList<ChatLine>>(null);
 
+  const aliveRef = useRef(true);
+  const playingRef = useRef(false);
+  const seqRef = useRef(0);
+  const phaseRef = useRef<PlayPhase>(IDLE_PHASE);
+  /** 화면에는 이미 올렸고, 아직 반응 요청에 넣지 않은 선생 메시지 */
+  const pendingRef = useRef<string[]>([]);
+  /** 미리 받아 둔 다음 반응. 마지막 대사가 나오면 바로 꺼낸다. */
+  const prefetchRef = useRef<Promise<string | null> | null>(null);
+
+  const nextId = () => {
+    seqRef.current += 1;
+    return seqRef.current;
+  };
+
   useEffect(() => {
     const t = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 30);
     return () => clearTimeout(t);
   }, [msgs]);
 
-  /** 서버 응답(여러 캐릭터 대사)을 지연 시간에 맞춰 순서대로 출력 */
-  const simulateGroupChat = async (raw: string) => {
-    for (const chat of parseGroupChat(raw)) {
-      const avatar = avatarOf(chat.sender);
+  const requestReply = (texts: string[]) =>
+    api
+      .groupChat(groupId, texts.join('\n'))
+      .then((res) => res.answer || null)
+      .catch((err) => {
+        console.error('[GroupChat] chat 실패:', err);
+        return null;
+      });
 
-      setMsgs((prev) => [...prev, { sender: chat.sender, text: '···', typing: true, avatar }]);
+  /** 이미 화면에 올린 선생 말로 다음 반응을 미리 받는다. 요청이 겹치지 않게 한 건만 연다. */
+  const kickPrefetch = () => {
+    if (prefetchRef.current || pendingRef.current.length === 0) return;
+    if (!phaseRef.current.active) return;
+    const texts = pendingRef.current.splice(0);
+    prefetchRef.current = requestReply(texts);
+  };
+
+  const takePrefetch = async (): Promise<string | null> => {
+    const job = prefetchRef.current;
+    if (!job) return null;
+    const answer = await job;
+    if (prefetchRef.current === job) prefetchRef.current = null;
+    return aliveRef.current ? answer : null;
+  };
+
+  /** 한 묶음을 끝까지 재생한다. 마지막 대사가 나오는 순간 큐에 있던 다음 반응을 돌려준다. */
+  const playOneBatch = async (raw: string): Promise<string | null> => {
+    const lines = parseGroupChat(raw);
+
+    for (let i = 0; i < lines.length; i++) {
+      if (!aliveRef.current) return null;
+      const chat = lines[i];
+      const isLast = i === lines.length - 1;
+      const avatar = avatarOf(chat.sender);
+      const typingId = nextId();
+
+      phaseRef.current = { active: true, typing: true, isLast, revealedCount: i };
+      setMsgs((prev) => [...prev, { id: typingId, sender: chat.sender, text: '···', typing: true, avatar }]);
+      kickPrefetch();
+
       await sleep(chat.delay * 1000);
-      setMsgs((prev) => [...prev.slice(0, -1), { sender: chat.sender, text: chat.text, avatar }]);
+      if (!aliveRef.current) return null;
+
+      setMsgs((prev) => prev.map((m) => (m.id === typingId ? { id: typingId, sender: chat.sender, text: chat.text, avatar } : m)));
+      phaseRef.current = { active: true, typing: false, isLast, revealedCount: i + 1 };
+      kickPrefetch();
+
+      if (isLast) {
+        const queued = await takePrefetch();
+        if (queued) return queued;
+        if (chat.afterDelay > 0) await sleep(chat.afterDelay * 1000);
+        if (!aliveRef.current) return null;
+        return takePrefetch();
+      }
 
       if (chat.afterDelay > 0) await sleep(chat.afterDelay * 1000);
     }
+
+    return null;
+  };
+
+  const playChain = async (firstRaw: string) => {
+    let raw: string | null = firstRaw;
+    while (raw && aliveRef.current) {
+      raw = await playOneBatch(raw);
+    }
+  };
+
+  /** 재생이 끝난 뒤 남아 있는 선생 말·미리 받은 반응을 비운다. */
+  const releasePlayback = async () => {
+    while (aliveRef.current) {
+      if (prefetchRef.current) {
+        const answer = await takePrefetch();
+        if (answer) {
+          await playChain(answer);
+          continue;
+        }
+      }
+      if (pendingRef.current.length > 0) {
+        const texts = pendingRef.current.splice(0);
+        const answer = await requestReply(texts);
+        if (answer && aliveRef.current) {
+          await playChain(answer);
+          continue;
+        }
+      }
+      break;
+    }
+    phaseRef.current = IDLE_PHASE;
+    if (aliveRef.current) playingRef.current = false;
   };
 
   /* 입장 시 일정 확률로 멤버들이 먼저 떠든다 */
   useEffect(() => {
-    if (Math.random() >= TRIGGER_CHANCE) return;
+    aliveRef.current = true;
+    playingRef.current = false;
+    pendingRef.current = [];
+    prefetchRef.current = null;
+    phaseRef.current = IDLE_PHASE;
 
+    if (Math.random() >= TRIGGER_CHANCE) {
+      return () => {
+        aliveRef.current = false;
+      };
+    }
+
+    playingRef.current = true;
+    let cancelled = false;
     (async () => {
       try {
         const { answer } = await api.groupTrigger(groupId);
-        if (answer) await simulateGroupChat(answer);
+        if (!cancelled && answer) await playChain(answer);
       } catch (e) {
         console.warn('[GroupChat] trigger 실패:', e);
+      } finally {
+        if (!cancelled) await releasePlayback();
       }
     })();
+
+    return () => {
+      cancelled = true;
+      aliveRef.current = false;
+    };
+    // 방 진입 때 한 번만. playChain은 이 렌더의 ref를 쓴다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
@@ -67,13 +191,24 @@ export default function GroupChat({ groupId }: Props) {
     if (!text) return;
 
     setInput('');
-    setMsgs((prev) => [...prev, { sender: 'user', text }]);
+
+    setMsgs((prev) => [...prev, { id: nextId(), sender: 'user', text }]);
+
+    if (playingRef.current) {
+      pendingRef.current.push(text);
+      kickPrefetch();
+      return;
+    }
+
+    playingRef.current = true;
 
     try {
       const { answer } = await api.groupChat(groupId, text);
-      if (answer) await simulateGroupChat(answer);
+      if (aliveRef.current && answer) await playChain(answer);
     } catch (e) {
       console.error('[GroupChat] chat 실패:', e);
+    } finally {
+      if (aliveRef.current) await releasePlayback();
     }
   };
 
@@ -111,7 +246,7 @@ export default function GroupChat({ groupId }: Props) {
         <FlatList
           ref={listRef}
           data={msgs}
-          keyExtractor={(_, i) => i.toString()}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
         />

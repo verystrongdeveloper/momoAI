@@ -36,6 +36,7 @@ function buildGroupSystemPrompt(members) {
 출력 형식:
 [이름] : 대사 [second : N]
 [second : N]
+- N은 1 이상 10 이하의 정수. 채팅 간격은 10초를 넘기지 않는다.
 
 등장 가능: ${members.join(', ')}
 
