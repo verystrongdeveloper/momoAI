@@ -1,4 +1,5 @@
 // src/services/geminiService.js
+const crypto = require('crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { prompts } = require('../config/prompts');
 
@@ -12,9 +13,29 @@ const MODEL_FALLBACKS = [
 
 const GEMINI_MODEL = MODEL_FALLBACKS[0];
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const clients = new Map();
 const sessions = new Map();
 let activeModel = GEMINI_MODEL;
+
+function keyId(apiKey) {
+  return crypto.createHash('sha256').update(apiKey).digest('hex').slice(0, 16);
+}
+
+/** 요청 본문 키가 있으면 그 키, 없으면 서버 환경 변수. */
+function apiKeyFrom(req) {
+  const raw = req.body?.apiKey;
+  if (typeof raw === 'string' && raw.trim()) {
+    const fromReq = raw.trim();
+    return fromReq.length > 200 ? null : fromReq;
+  }
+  return (process.env.GEMINI_API_KEY || '').trim();
+}
+
+function clientFor(apiKey) {
+  const id = keyId(apiKey);
+  if (!clients.has(id)) clients.set(id, new GoogleGenerativeAI(apiKey));
+  return { id, genAI: clients.get(id) };
+}
 
 function isOverloaded(err) {
   return err?.status === 503 || err?.status === 429;
@@ -26,8 +47,9 @@ function orderFrom(modelName) {
   return MODEL_FALLBACKS.slice(index).concat(MODEL_FALLBACKS.slice(0, index));
 }
 
-function openChat(character, modelName, sessionKey, systemInstruction) {
-  const cacheKey = [character, modelName, sessionKey].filter(Boolean).join(':');
+function openChat(character, modelName, sessionKey, systemInstruction, apiKey) {
+  const { id, genAI } = clientFor(apiKey);
+  const cacheKey = [id, character, modelName, sessionKey].filter(Boolean).join(':');
   if (sessions.has(cacheKey)) return sessions.get(cacheKey);
 
   console.log(`[Cache MISS] Creating new session for ${cacheKey}`);
@@ -40,13 +62,13 @@ function openChat(character, modelName, sessionKey, systemInstruction) {
   return chat;
 }
 
-async function sendWithFallback(character, sessionKey, message, systemInstruction) {
+async function sendWithFallback(character, sessionKey, message, systemInstruction, apiKey) {
   const order = orderFrom(activeModel);
   let lastError;
 
   for (const modelName of order) {
     try {
-      const chat = openChat(character, modelName, sessionKey, systemInstruction);
+      const chat = openChat(character, modelName, sessionKey, systemInstruction, apiKey);
       const result = await chat.sendMessage(message);
       if (activeModel !== modelName) {
         console.log(`[MomoStory] 모델 전환: ${activeModel} -> ${modelName}`);
@@ -69,12 +91,12 @@ async function sendWithFallback(character, sessionKey, message, systemInstructio
  * @param {string} [sessionKey] 같은 캐릭터라도 세션을 나눌 때 사용
  * @param {string} [systemInstruction] 있으면 캐릭터 기본 프롬프트 대신 사용
  */
-async function getChat(character, _modelName = GEMINI_MODEL, sessionKey = '', systemInstruction) {
+async function getChat(character, _modelName = GEMINI_MODEL, sessionKey = '', systemInstruction, apiKey) {
   return {
     sendMessage(message) {
-      return sendWithFallback(character, sessionKey, message, systemInstruction);
+      return sendWithFallback(character, sessionKey, message, systemInstruction, apiKey);
     },
   };
 }
 
-module.exports = { getChat, GEMINI_MODEL };
+module.exports = { getChat, GEMINI_MODEL, apiKeyFrom, keyId };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import GeminiKeyField from './GeminiKeyField';
 import StoryHeader from './StoryHeader';
 import StorySidebar from './StorySidebar';
 import ChatEntry from '@/components/chat/ChatEntry';
@@ -54,10 +55,9 @@ const StoryContainer: React.FC = () => {
   );
 
   const list = (
-    <ScrollView
-      style={[styles.list, isCompact && styles.listCompact]}
-      contentContainerStyle={styles.listContent}
-    >
+    <View style={[styles.list, isCompact && styles.listCompact]}>
+      <GeminiKeyField />
+      <ScrollView style={styles.listScroll} contentContainerStyle={styles.listContent}>
       {listPanel === 'characters' &&
         CHARACTERS.map((char) => (
           <ChatEntry
@@ -70,7 +70,8 @@ const StoryContainer: React.FC = () => {
           />
         ))}
       {listPanel === 'groups' && <GroupChatList activeRoomId={activeGroupId} onEnterRoom={openGroup} />}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 
   const detail = (
@@ -162,6 +163,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     maxWidth: undefined,
+  },
+  listScroll: {
+    flex: 1,
   },
   listContent: {
     padding: 10,

@@ -1,4 +1,5 @@
 const { getChat } = require('../services/geminiService');
+const { readKey } = require('./chatController');
 const { buildGroupSystemPrompt } = require('../config/prompts');
 const { groupRooms } = require('../constants/groupRooms');
 
@@ -12,10 +13,12 @@ function makeGroupTurnPrompt(userMessage) {
 exports.sendGroupTrigger = async (req, res) => {
   try {
     const { roomId } = req.body;
+    const apiKey = readKey(req, res);
+    if (!apiKey) return;
     const members = groupRooms[roomId];
     if (!roomId || !members) return res.status(400).json({ error: 'roomId 누락 또는 방 없음' });
 
-    const chat = await getChat('groupChat_' + roomId, undefined, '', buildGroupSystemPrompt(members));
+    const chat = await getChat('groupChat_' + roomId, undefined, '', buildGroupSystemPrompt(members), apiKey);
     const result = await chat.sendMessage(makeGroupTurnPrompt(null));
     res.json({ answer: result.response.text() });
   } catch (e) {
@@ -27,10 +30,12 @@ exports.sendGroupTrigger = async (req, res) => {
 exports.sendGroupChat = async (req, res) => {
   try {
     const { roomId, userMessage } = req.body;
+    const apiKey = readKey(req, res);
+    if (!apiKey) return;
     const members = groupRooms[roomId];
     if (!roomId || !userMessage || !members) return res.status(400).json({ error: '입력 부족' });
 
-    const chat = await getChat('groupChat_' + roomId, undefined, '', buildGroupSystemPrompt(members));
+    const chat = await getChat('groupChat_' + roomId, undefined, '', buildGroupSystemPrompt(members), apiKey);
     const result = await chat.sendMessage(makeGroupTurnPrompt(userMessage));
     const reply = result.response.text();
 

@@ -1,10 +1,13 @@
+import { getGeminiKey } from '@/services/geminiKey';
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const apiKey = getGeminiKey();
   const res = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(apiKey ? { ...body, apiKey } : body),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
