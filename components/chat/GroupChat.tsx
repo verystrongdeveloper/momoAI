@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, FlatList, Image, ImageSourcePropType, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '@/services/api';
 import { avatarOf } from '@/constants/characters';
-import { useLayout } from '@/hooks/useLayout';
 import { parseGroupChat } from '@/utils/parseGroupChat';
 
 interface Props {
@@ -25,9 +24,6 @@ interface PlayPhase {
   revealedCount: number;
 }
 
-/** 쇼츠 촬영용 폰 프레임 크기. 넓은 화면에서만 고정 크기로 가운데 배치한다. */
-const FRAME_WIDTH = 360;
-const FRAME_HEIGHT = 640;
 const TRIGGER_CHANCE = 0.5;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -35,7 +31,6 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const IDLE_PHASE: PlayPhase = { active: false, typing: false, isLast: false, revealedCount: 0 };
 
 export default function GroupChat({ groupId }: Props) {
-  const { isCompact } = useLayout();
   const [msgs, setMsgs] = useState<ChatLine[]>([]);
   const [input, setInput] = useState('');
   const listRef = useRef<FlatList<ChatLine>>(null);
@@ -235,84 +230,67 @@ export default function GroupChat({ groupId }: Props) {
     );
   };
 
-  const frameStyle = useMemo(
-    () => (isCompact ? styles.frameFill : styles.frameFixed),
-    [isCompact],
-  );
-
   return (
     <View style={styles.container}>
-      <View style={[styles.frame, frameStyle]}>
-        <FlatList
-          ref={listRef}
-          data={msgs}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
+      <FlatList
+        ref={listRef}
+        data={msgs}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+      />
+      <View style={styles.inputArea}>
+        <TextInput
+          style={styles.input}
+          placeholder="메시지를 입력하세요"
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={handleSend}
+          blurOnSubmit={false}
         />
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.input}
-            placeholder="메시지를 입력하세요"
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={handleSend}
-            blurOnSubmit={false}
-          />
-          <Button title="보내기" onPress={handleSend} />
-        </View>
+        <Button title="보내기" onPress={handleSend} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  frame: {
-    backgroundColor: '#ffffff',
-    overflow: 'hidden',
-  },
-  frameFixed: {
-    width: FRAME_WIDTH,
-    height: FRAME_HEIGHT,
-    maxHeight: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  frameFill: {
+  container: {
     flex: 1,
-    width: '100%',
+    backgroundColor: 'white',
   },
-  list: { padding: 12, flexGrow: 1 },
-  inputBar: {
+  listContent: {
+    padding: 10,
+    flexGrow: 1,
+  },
+  inputArea: {
     flexDirection: 'row',
-    padding: 8,
+    padding: 10,
     borderTopWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#ccc',
   },
   input: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#aaa',
     borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginRight: 8,
+    fontSize: 16,
   },
-  row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-end' },
+  row: { flexDirection: 'row', marginVertical: 4, alignItems: 'flex-start' },
   rowRight: { flexDirection: 'row-reverse' },
-  avatarSlot: { width: 48, marginRight: 8 },
-  avatar: { width: 48, height: 48, borderRadius: 24 },
-  chatBlock: { flexShrink: 1 },
+  avatarSlot: { width: 50, marginRight: 6 },
+  avatar: { width: 50, height: 50, borderRadius: 18 },
+  chatBlock: { flexShrink: 1, maxWidth: '85%' },
   name: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#555',
+    color: '#333',
+    fontWeight: 'bold',
     marginBottom: 2,
+    fontSize: 15,
   },
-  bubble: { padding: 8, borderRadius: 10 },
-  userBubble: { backgroundColor: '#DCF8C6', maxWidth: '80%' },
+  bubble: { padding: 10, borderRadius: 12, fontSize: 16, lineHeight: 22 },
+  userBubble: { backgroundColor: '#DCF8C6' },
   charBubble: { backgroundColor: '#44546A', color: 'white' },
 });

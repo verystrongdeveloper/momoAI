@@ -53,7 +53,7 @@ ${historyTXT}
 2. 선생 대사는 대사창에 넣지 말고 selection 태그만 쓴다.
 3. 말투·호칭·반말/존댓말은 페르소나를 지킨다. 히나와 호시노는 누구에게나 반말. 선생은 나레이션에서도 이름을 선배/님 없이 부른다.
 4. 일반 대사·나레이션·선택지를 포함해 약 300줄 내외.
-5. 결말은 deleteAll로 음악·배경을 지운 뒤 선생 시점 나레이션으로 마무리하고 endEvent.
+5. 마지막은 선생 시점 나레이션으로 여운을 준 다음, deleteAll로 배경·캐릭터·음악을 전부 지우고 바로 endEvent. deleteAll 뒤에는 bg, 대사, 나레이션을 넣지 않는다. 스토리는 반드시 검은 화면으로 끝난다.
 6. 나레이션은 선생 1인칭이거나 효과음이다. 항상 "narration :"으로 시작한다.
 7. 배경은 메인 캐릭터 소속에 맞춘다. 새 인물이 나와도 같은 배경을 다시 지정하지 않는다.
 8. 대사에 괄호 행동 지문을 넣지 않는다.
@@ -85,9 +85,8 @@ narration : (낡은 창고 문을 열었다.) [bg : BG_AbydosResidence.jpg]
 호시노(대책위원회) : 자, 여기야. [emotion : hoshino_yawn2.png]
 selection : (1)"여기는?" (2)"창고?"
 호시노(대책위원회) : 응. 아무도 안 오는 낮잠 스팟이지. [emotion : hoshino_weakLaugh.png]
-deleteAll
-waitSecond = 2
 narration : (호시노는 순식간에 잠들었다.) [music : morose_dreamer.mp3]
+deleteAll
 endEvent
 
 [사용 가능 bg]

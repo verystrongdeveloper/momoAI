@@ -30,7 +30,7 @@ const TITLE_GAP_MS = 1000;
 const EXPRESSION_SHOW_MS = 2000;
 
 const TYPEWRITER_MS = 30;
-const AUTO_READ_MS = 800;
+const AUTO_READ_MS = 2100;
 
 const EventPlayer: React.FC<Props> = ({ script }) => {
   const router = useRouter();
@@ -46,6 +46,9 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const [showTitle, setShowTitle] = useState(false);
   const [bg, setBg] = useState<string | null>(null);
   const [emo, setEmo] = useState<string | null>(null);
+  const emoRef = useRef<string | null>(null);
+  /** deleteEmotion으로 숨긴 뒤에만 투명도를 되돌린다. 대사마다 리셋하면 초상이 깜빡인다. */
+  const spriteHiddenRef = useRef(false);
   const [animation, setAnimation] = useState<SpriteAnimation | null>(null);
   const [expression, setExpression] = useState<Expression | null>(null);
   const bgOpacity = useRef(new Animated.Value(1)).current;
@@ -55,6 +58,16 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
 
   const nextLine = () => {
     if (idx + 1 < lines.length) setIdx((i) => i + 1);
+  };
+
+  const onAdvance = () => {
+    if (line?.type === 'selection') return;
+    const ended = line?.type === 'command' && line.commandType === 'endEvent';
+    if (ended || idx + 1 >= lines.length) {
+      router.replace('/');
+      return;
+    }
+    nextLine();
   };
 
   useEffect(() => {
@@ -115,8 +128,14 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
 
     if (line.bg) setBg(line.bg);
     if (line.emotion) {
-      setEmo(line.emotion);
-      emoOpacity.setValue(1);
+      if (emoRef.current !== line.emotion) {
+        emoRef.current = line.emotion;
+        setEmo(line.emotion);
+      }
+      if (spriteHiddenRef.current) {
+        emoOpacity.setValue(1);
+        spriteHiddenRef.current = false;
+      }
     }
     if (line.music !== undefined) setMusic(line.music);
 
@@ -156,6 +175,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           setTimeout(nextLine, (line.waitSecond ?? 1) * 1000);
           return;
         case 'deleteEmotion':
+          spriteHiddenRef.current = true;
+          emoRef.current = null;
           Animated.timing(emoOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
             setEmo(null);
             nextLine();
@@ -168,6 +189,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           ]).start(() => {
             setBg(null);
             setEmo(null);
+            emoRef.current = null;
+            spriteHiddenRef.current = false;
             setLast(null);
             bgOpacity.setValue(1);
             emoOpacity.setValue(1);
@@ -178,6 +201,11 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           setTimeout(nextLine, 1000);
           return;
         case 'endEvent':
+          setBg(null);
+          setEmo(null);
+          emoRef.current = null;
+          setLast(null);
+          setShowTitle(false);
           stop();
           return;
       }
@@ -197,7 +225,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           animation={animation}
         />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
-        <TextBox currentLine={line} lastSpoken={last} />
+        <TextBox currentLine={line} lastSpoken={last} onPress={onAdvance} />
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
 
         {line?.type === 'selection' && (
@@ -206,7 +234,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           </View>
         )}
 
-        <TouchableOpacity style={styles.tap} onPress={nextLine} />
+        <TouchableOpacity style={styles.tap} onPress={onAdvance} />
         {menuOpen && (
           <EventVolumeModal
             volume={volume}
@@ -234,7 +262,7 @@ const styles = StyleSheet.create({
   stage: {
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: '#091426',
+    backgroundColor: '#000000',
   },
   selection: {
     position: 'absolute',

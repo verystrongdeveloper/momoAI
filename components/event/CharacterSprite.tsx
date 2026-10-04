@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, StyleSheet } from 'react-native';
 import { emotionMap } from '@/constants/eventAssets';
 import {
@@ -29,13 +29,26 @@ interface Props {
  * A square `contain` box therefore makes wide assets look too small.
  * Normalize the rendered height and keep a common foot baseline instead.
  */
-export default function CharacterSprite({ current, fadeAnim, expression, animation }: Props) {
+type SpriteSlot = { key: string; src: any } | null;
+
+function CharacterSprite({ current, fadeAnim, expression, animation }: Props) {
   const { eventWidth, eventHeight, scale } = useLayout();
   const translate = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const src = current ? emotionMap[current] : null;
+  const currentRef = useRef(current);
+  currentRef.current = current;
+  // 두 장을 겹쳐 두고, 다음 초상이 로드된 뒤에만 보여서 교체 순간에 비지 않게 한다.
+  const [active, setActive] = useState(0);
+  const activeRef = useRef(0);
+  const [slots, setSlots] = useState<[SpriteSlot, SpriteSlot]>(() => {
+    const src = current ? emotionMap[current] : null;
+    return [current && src ? { key: current, src } : null, null];
+  });
+  const slotsRef = useRef(slots);
+  slotsRef.current = slots;
+  const shown = slots[active];
   const aspectRatio = useMemo(
-    () => (current && src ? getSpriteAspectRatio(current, src) : 1),
-    [current, src],
+    () => (shown ? getSpriteAspectRatio(shown.key, shown.src) : 1),
+    [shown],
   );
   const spriteHeight = eventHeight * SPRITE_HEIGHT_RATIO;
   const spriteWidth = spriteHeight * aspectRatio;
@@ -44,6 +57,38 @@ export default function CharacterSprite({ current, fadeAnim, expression, animati
     () => makeStyles(eventWidth, eventHeight, spriteWidth, spriteHeight, scale),
     [eventWidth, eventHeight, spriteWidth, spriteHeight, scale],
   );
+
+  useEffect(() => {
+    if (!current) {
+      activeRef.current = 0;
+      setActive(0);
+      setSlots([null, null]);
+      return;
+    }
+
+    const prev = slotsRef.current;
+    const found = prev.findIndex((slot) => slot?.key === current);
+    if (found === 0 || found === 1) {
+      if (activeRef.current !== found) {
+        activeRef.current = found;
+        setActive(found);
+      }
+      return;
+    }
+
+    const src = emotionMap[current];
+    if (!src) return;
+    const idle = prev[activeRef.current] ? (activeRef.current === 0 ? 1 : 0) : activeRef.current;
+    const next: [SpriteSlot, SpriteSlot] = [prev[0], prev[1]];
+    next[idle] = { key: current, src };
+    setSlots(next);
+  }, [current]);
+
+  const showSlot = (index: number, key: string) => {
+    if (key !== currentRef.current || activeRef.current === index) return;
+    activeRef.current = index;
+    setActive(index);
+  };
 
   useEffect(() => {
     if (!animation) {
@@ -79,7 +124,18 @@ export default function CharacterSprite({ current, fadeAnim, expression, animati
       ]}
       pointerEvents="none"
     >
-      {src ? <Image source={src} style={styles.char} resizeMode="contain" fadeDuration={0} /> : null}
+      {slots.map((slot, index) =>
+        slot ? (
+          <Image
+            key={index}
+            source={slot.src}
+            style={[styles.char, index === active ? styles.front : styles.back]}
+            resizeMode="contain"
+            fadeDuration={0}
+            onLoad={() => showSlot(index, slot.key)}
+          />
+        ) : null,
+      )}
       {expression && (
         <Animated.Image
           source={expression.image}
@@ -91,6 +147,8 @@ export default function CharacterSprite({ current, fadeAnim, expression, animati
     </Animated.View>
   );
 }
+
+export default React.memo(CharacterSprite);
 
 const makeStyles = (W: number, H: number, spriteWidth: number, spriteHeight: number, scale: number) =>
   StyleSheet.create({
@@ -107,6 +165,14 @@ const makeStyles = (W: number, H: number, spriteWidth: number, spriteHeight: num
       top: 0,
       width: '100%',
       height: '100%',
+    },
+    front: {
+      opacity: 1,
+      zIndex: 1,
+    },
+    back: {
+      opacity: 0,
+      zIndex: 0,
     },
     expression: {
       position: 'absolute',

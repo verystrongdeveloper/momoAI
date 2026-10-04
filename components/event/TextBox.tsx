@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import EventDialogue from './EventDialogue';
 import { EventLine } from '@/types/EventLine';
@@ -8,9 +8,10 @@ import { useLayout } from '@/hooks/useLayout';
 interface Props {
   currentLine: EventLine | null;
   lastSpoken: EventLine | null;
+  onPress?: () => void;
 }
 
-export default function TextBox({ currentLine, lastSpoken }: Props) {
+export default function TextBox({ currentLine, lastSpoken, onPress }: Props) {
   const { eventWidth, eventHeight } = useLayout();
   const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
 
@@ -26,16 +27,18 @@ export default function TextBox({ currentLine, lastSpoken }: Props) {
   if (!shown?.text) return null;
 
   return (
-    <LinearGradient
-      colors={['rgba(4,10,24,0.18)', 'rgba(4,10,24,0.72)', 'rgba(4,10,24,0.96)']}
-      locations={[0, 0.3, 1]}
-      style={styles.box}
-    >
+    <Pressable onPress={onPress} style={styles.box}>
+      <LinearGradient
+        colors={['rgba(4,10,24,0.18)', 'rgba(4,10,24,0.72)', 'rgba(4,10,24,0.96)']}
+        locations={[0, 0.3, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
       <EventDialogue character={shown.character ?? ''} text={shown.text} />
       <View style={styles.caretWrap} pointerEvents="none">
         <Text style={styles.caret}>▾</Text>
       </View>
-    </LinearGradient>
+    </Pressable>
   );
 }
 
