@@ -12,6 +12,7 @@ import CharacterSprite, { SpriteAnimation } from './CharacterSprite';
 import EventBackground from './EventBackground';
 import EventHud from './EventHud';
 import EventSelection from './EventSelection';
+import EventVolumeModal from './EventVolumeModal';
 import TextBox from './TextBox';
 import TitleBanner from './TitleBanner';
 
@@ -28,7 +29,8 @@ const TITLE_SHOW_MS = 3000;
 const TITLE_GAP_MS = 1000;
 const EXPRESSION_SHOW_MS = 2000;
 
-const AUTO_MS = 2800;
+const TYPEWRITER_MS = 30;
+const AUTO_READ_MS = 800;
 
 const EventPlayer: React.FC<Props> = ({ script }) => {
   const router = useRouter();
@@ -38,6 +40,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const line = lines[idx] ?? null;
   const [last, setLast] = useState<EventLine | null>(null);
   const [auto, setAuto] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [title, setTitle] = useState('');
   const [showTitle, setShowTitle] = useState(false);
@@ -48,19 +51,21 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const bgOpacity = useRef(new Animated.Value(1)).current;
   const emoOpacity = useRef(new Animated.Value(1)).current;
 
-  const { setMusic, stop } = useBGM();
+  const { setMusic, stop, volume, setVolume, muted, setMuted } = useBGM();
 
   const nextLine = () => {
     if (idx + 1 < lines.length) setIdx((i) => i + 1);
   };
 
   useEffect(() => {
-    if (!auto) return;
+    if (!auto || menuOpen) return;
+    // 선택지는 사용자가 고를 때까지 멈춘다. 타이틀·명령은 자체 타이머가 넘긴다.
     if (!line || line.type === 'selection' || line.type === '타이틀' || line.type === 'command') return;
-    const t = setTimeout(nextLine, AUTO_MS);
+    const wait = (line.text?.length ?? 0) * TYPEWRITER_MS + AUTO_READ_MS;
+    const t = setTimeout(nextLine, wait);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auto, idx, line]);
+  }, [auto, menuOpen, idx, line]);
 
   const playSFX = async (key: string) => {
     const src = sfxMap[key];
@@ -193,7 +198,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
         <TextBox currentLine={line} lastSpoken={last} />
-        <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => router.replace('/')} />
+        <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
 
         {line?.type === 'selection' && (
           <View style={styles.selection}>
@@ -202,6 +207,16 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         )}
 
         <TouchableOpacity style={styles.tap} onPress={nextLine} />
+        {menuOpen && (
+          <EventVolumeModal
+            volume={volume}
+            muted={muted}
+            onChange={setVolume}
+            onToggleMute={() => setMuted(!muted)}
+            onClose={() => setMenuOpen(false)}
+            onExit={() => router.replace('/')}
+          />
+        )}
       </View>
     </View>
   );

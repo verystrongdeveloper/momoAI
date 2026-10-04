@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Audio } from 'expo-av';
 import { musicMap } from '@/constants/eventAssets';
 
@@ -14,8 +14,47 @@ export default function useBGM() {
   /** 현재 재생 중인 파일명(중복 재생 방지) */
   const currentKey = useRef<string | null>(null);
   const isLoadingRef = useRef<boolean>(false);
+  const volumeRef = useRef(1);
+  const [volume, setVolumeState] = useState(1);
+  const mutedRef = useRef(false);
+  const [muted, setMutedState] = useState(false);
+  const resumeRef = useRef<(() => void) | null>(null);
+
+  const clearResume = useCallback(() => {
+    if (resumeRef.current && typeof window !== 'undefined') {
+      window.removeEventListener('pointerdown', resumeRef.current);
+      window.removeEventListener('keydown', resumeRef.current);
+    }
+    resumeRef.current = null;
+  }, []);
+
+  const setVolume = useCallback(async (value: number) => {
+    if (!Number.isFinite(value)) return;
+    const next = Math.min(1, Math.max(0, value));
+    volumeRef.current = next;
+    setVolumeState(next);
+    if (!soundRef.current) return;
+    try {
+      await soundRef.current.setVolumeAsync(next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setMuted = useCallback(async (value: boolean) => {
+    mutedRef.current = value;
+    setMutedState(value);
+    if (!soundRef.current) return;
+    try {
+      await soundRef.current.setIsMutedAsync(value);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   /** 모든 사운드 정지 */
   const stop = useCallback(async () => {
+    clearResume();
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -26,7 +65,7 @@ export default function useBGM() {
       soundRef.current = null;
       currentKey.current = null;
     }
-  }, []);
+  }, [clearResume]);
 
   /**
    * 새 BGM 지정
@@ -50,16 +89,37 @@ export default function useBGM() {
         }
 
         const snd = new Audio.Sound();
-        await snd.loadAsync(src, { isLooping: true });
-        await snd.playAsync();
-
+        await snd.loadAsync(src, {
+          isLooping: true,
+          volume: volumeRef.current,
+          isMuted: mutedRef.current,
+        });
         soundRef.current = snd;
         currentKey.current = key;
+
+        const armResume = () => {
+          if (typeof window === 'undefined') return;
+          clearResume();
+          const resume = () => {
+            clearResume();
+            void snd.playAsync().catch(() => {});
+          };
+          resumeRef.current = resume;
+          window.addEventListener('pointerdown', resume);
+          window.addEventListener('keydown', resume);
+        };
+
+        try {
+          await snd.playAsync();
+        } catch {
+          // 브라우저가 클릭 없이 재생을 막으면, 다음 입력에서 시작한다.
+          armResume();
+        }
       } finally {
         isLoadingRef.current = false; // 해제
       }
     },
-    [stop],
+    [clearResume, stop],
   );
 
   /** 언마운트 시 안전하게 정리 */
@@ -69,5 +129,5 @@ export default function useBGM() {
     };
   }, [stop]);
 
-  return { setMusic, stop };
+  return { setMusic, stop, volume, setVolume, muted, setMuted };
 }
