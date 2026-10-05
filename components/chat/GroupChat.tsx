@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, FlatList, Image, ImageSourcePropType, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '@/services/api';
+import { getGreetMode } from '@/services/greetMode';
 import { avatarOf } from '@/constants/characters';
 import { parseGroupChat } from '@/utils/parseGroupChat';
 
@@ -23,8 +24,6 @@ interface PlayPhase {
   isLast: boolean;
   revealedCount: number;
 }
-
-const TRIGGER_CHANCE = 0.5;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -146,7 +145,7 @@ export default function GroupChat({ groupId }: Props) {
     if (aliveRef.current) playingRef.current = false;
   };
 
-  /* 입장 시 일정 확률로 멤버들이 먼저 떠든다 */
+  /* 먼저 말 걸기가 켜져 있으면 입장 시 멤버들이 먼저 떠든다 */
   useEffect(() => {
     aliveRef.current = true;
     playingRef.current = false;
@@ -154,7 +153,7 @@ export default function GroupChat({ groupId }: Props) {
     prefetchRef.current = null;
     phaseRef.current = IDLE_PHASE;
 
-    if (Math.random() >= TRIGGER_CHANCE) {
+    if (!getGreetMode()) {
       return () => {
         aliveRef.current = false;
       };

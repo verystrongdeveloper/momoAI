@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
+import GreetModeToggle from './GreetModeToggle';
 import StoryHeader from './StoryHeader';
 import StorySidebar from './StorySidebar';
 import ChatEntry from '@/components/chat/ChatEntry';
@@ -57,6 +58,7 @@ const StoryContainer: React.FC = () => {
   const list = (
     <View style={[styles.list, isCompact && styles.listCompact]}>
       <GeminiKeyField />
+      <GreetModeToggle />
       <ScrollView style={styles.listScroll} contentContainerStyle={styles.listContent}>
       {listPanel === 'characters' &&
         CHARACTERS.map((char) => (

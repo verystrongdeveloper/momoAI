@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '@/services/api';
+import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
 
 interface Props {
@@ -27,7 +28,6 @@ interface Chat {
 }
 
 const TYPING_DELAY_MS = 1500;
-const TRIGGER_CHANCE = 0.5;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -73,9 +73,9 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     }
   };
 
-  /* 입장 시 일정 확률로 캐릭터가 먼저 말을 건다 */
+  /* 먼저 말 걸기가 켜져 있으면 입장 시 캐릭터가 먼저 말을 건다 */
   useEffect(() => {
-    if (Math.random() >= TRIGGER_CHANCE) return;
+    if (!getGreetMode()) return;
 
     let cancelled = false;
     (async () => {
