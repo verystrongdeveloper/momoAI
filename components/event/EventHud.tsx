@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLayout } from '@/hooks/useLayout';
 
 interface Props {
@@ -10,7 +11,11 @@ interface Props {
 
 const EventHud: React.FC<Props> = ({ auto, onToggleAuto, onMenu }) => {
   const { eventWidth, eventHeight } = useLayout();
-  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(
+    () => makeStyles(eventWidth, eventHeight, insets.top),
+    [eventWidth, eventHeight, insets.top],
+  );
 
   return (
     <View style={styles.row}>
@@ -26,11 +31,11 @@ const EventHud: React.FC<Props> = ({ auto, onToggleAuto, onMenu }) => {
 
 export default EventHud;
 
-const makeStyles = (W: number, H: number) =>
+const makeStyles = (W: number, H: number, topInset: number) =>
   StyleSheet.create({
     row: {
       position: 'absolute',
-      top: H * 0.042,
+      top: Math.max(H * 0.042, topInset + 8),
       right: W * 0.03,
       flexDirection: 'row',
       gap: W * 0.014,

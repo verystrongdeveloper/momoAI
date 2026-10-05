@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { bgMap, emotionMap, expressionMap, sfxMap } from '@/constants/eventAssets';
 import useBGM from '@/hooks/useBGM';
 import useEventParser from '@/hooks/useEventParser';
-import { useLayout } from '@/hooks/useLayout';
+import { EventFrame } from '@/hooks/useLayout';
 import { EventLine } from '@/types/EventLine';
 import CharacterSprite, { SpriteAnimation } from './CharacterSprite';
 import EventBackground from './EventBackground';
@@ -41,7 +41,6 @@ const isEndingCaption = (lines: EventLine[], index: number) => {
 
 const EventPlayer: React.FC<Props> = ({ script }) => {
   const router = useRouter();
-  const { eventWidth, eventHeight } = useLayout();
   const lines = useEventParser(script);
   const [idx, setIdx] = useState(0);
   const line = lines[idx] ?? null;
@@ -228,8 +227,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   }, [line]);
 
   return (
-    <View style={styles.full}>
-      <View style={[styles.stage, { width: eventWidth, height: eventHeight }]}>
+    <EventFrame>
+      <View style={styles.stage}>
         <TitleBanner title={title} visible={showTitle} />
         <EventBackground bgKey={bg} fadeAnim={bgOpacity} />
         <CharacterSprite
@@ -260,20 +259,15 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           />
         )}
       </View>
-    </View>
+    </EventFrame>
   );
 };
 
 export default EventPlayer;
 
 const styles = StyleSheet.create({
-  full: {
-    flex: 1,
-    backgroundColor: '#13243f',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   stage: {
+    flex: 1,
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#000000',
