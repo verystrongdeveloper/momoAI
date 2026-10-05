@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import GeminiKeyField from './GeminiKeyField';
 import GreetModeToggle from './GreetModeToggle';
 import StoryHeader from './StoryHeader';
 import StorySidebar from './StorySidebar';
@@ -9,12 +8,13 @@ import CharacterChat from '@/components/chat/CharacterChat';
 import GroupChat from '@/components/chat/GroupChat';
 import GroupChatList from '@/components/chat/GroupChatList';
 import StoryLibraryList from '@/components/chat/StoryLibraryList';
+import SettingsPanel from './SettingsPanel';
 import { CHARACTERS, Character } from '@/constants/characters';
 import { findRoom } from '@/constants/groupChatRooms';
 import { useLayout } from '@/hooks/useLayout';
 
-/** characters: 1:1 캐릭터 목록  |  groups: 단톡방 목록  |  library: 저장된 스토리 */
-type ListPanel = 'characters' | 'groups' | 'library';
+/** characters: 1:1 캐릭터 목록  |  groups: 단톡방 목록  |  library: 저장된 스토리  |  settings: 설정 */
+type ListPanel = 'characters' | 'groups' | 'library' | 'settings';
 
 const StoryContainer: React.FC = () => {
   const { isCompact } = useLayout();
@@ -57,14 +57,20 @@ const StoryContainer: React.FC = () => {
         setListPanel('library');
         if (isCompact) closeDetail();
       }}
+      onOpenSettings={() => {
+        setListPanel('settings');
+        if (isCompact) closeDetail();
+      }}
     />
   );
 
   const libraryOpen = listPanel === 'library';
+  const settingsOpen = listPanel === 'settings';
+  const fullPane = libraryOpen || settingsOpen;
+  const fullPaneView = settingsOpen ? <SettingsPanel /> : <StoryLibraryList />;
 
   const list = (
     <View style={[styles.list, isCompact && styles.listCompact]}>
-      <GeminiKeyField />
       <GreetModeToggle />
       <ScrollView style={styles.listScroll} contentContainerStyle={styles.listContent}>
       {listPanel === 'characters' &&
@@ -83,8 +89,8 @@ const StoryContainer: React.FC = () => {
     </View>
   );
 
-  const detail = libraryOpen ? (
-    <StoryLibraryList />
+  const detail = fullPane ? (
+    fullPaneView
   ) : (
     <View style={styles.detail}>
       {selectedCharacter && (
@@ -113,10 +119,10 @@ const StoryContainer: React.FC = () => {
 
       {isCompact ? (
         <View style={styles.bodyColumn}>
-          {libraryOpen ? (
+          {fullPane ? (
             <>
               {sidebar}
-              <StoryLibraryList />
+              {fullPaneView}
             </>
           ) : hasDetail ? detail : (
             <>
@@ -128,7 +134,7 @@ const StoryContainer: React.FC = () => {
       ) : (
         <View style={styles.bodyRow}>
           {sidebar}
-          {!libraryOpen && list}
+          {!fullPane && list}
           {detail}
         </View>
       )}

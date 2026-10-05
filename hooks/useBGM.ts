@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Audio } from 'expo-av';
 import { musicMap } from '@/constants/eventAssets';
+import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 
 /**
  * BGM 재생 전용 훅
@@ -14,8 +15,8 @@ export default function useBGM() {
   /** 현재 재생 중인 파일명(중복 재생 방지) */
   const currentKey = useRef<string | null>(null);
   const isLoadingRef = useRef<boolean>(false);
-  const volumeRef = useRef(1);
-  const [volume, setVolumeState] = useState(1);
+  const volumeRef = useRef(getBgmVolume());
+  const [volume, setVolumeState] = useState(getBgmVolume);
   const mutedRef = useRef(false);
   const [muted, setMutedState] = useState(false);
   const resumeRef = useRef<(() => void) | null>(null);
@@ -28,9 +29,7 @@ export default function useBGM() {
     resumeRef.current = null;
   }, []);
 
-  const setVolume = useCallback(async (value: number) => {
-    if (!Number.isFinite(value)) return;
-    const next = Math.min(1, Math.max(0, value));
+  const applyVolume = useCallback(async (next: number) => {
     volumeRef.current = next;
     setVolumeState(next);
     if (!soundRef.current) return;
@@ -40,6 +39,16 @@ export default function useBGM() {
       /* ignore */
     }
   }, []);
+
+  const setVolume = useCallback(
+    async (value: number) => {
+      if (!Number.isFinite(value)) return;
+      await applyVolume(setBgmVolume(value));
+    },
+    [applyVolume],
+  );
+
+  useEffect(() => subscribeBgmVolume((next) => void applyVolume(next)), [applyVolume]);
 
   const setMuted = useCallback(async (value: boolean) => {
     mutedRef.current = value;

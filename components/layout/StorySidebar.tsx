@@ -5,10 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 interface Props {
   /** 좁은 화면에서는 가로 탭 바로 표시 */
   horizontal?: boolean;
-  active: 'characters' | 'groups' | 'library';
+  active: 'characters' | 'groups' | 'library' | 'settings';
   onOpenCharacterList: () => void;
   onOpenGroupChatList: () => void;
   onOpenLibrary: () => void;
+  onOpenSettings: () => void;
 }
 
 const StorySidebar: React.FC<Props> = ({
@@ -17,6 +18,7 @@ const StorySidebar: React.FC<Props> = ({
   onOpenCharacterList,
   onOpenGroupChatList,
   onOpenLibrary,
+  onOpenSettings,
 }) => {
   return (
     <View style={[styles.sidebar, horizontal && styles.sidebarHorizontal]}>
@@ -40,6 +42,15 @@ const StorySidebar: React.FC<Props> = ({
       >
         <View style={styles.libraryIcon}>
           <Ionicons name="library-outline" size={28} color="#ffffff" />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={onOpenSettings}
+        style={[styles.iconBtn, active === 'settings' && styles.iconBtnActive]}
+      >
+        <View style={styles.libraryIcon}>
+          <Ionicons name="settings-outline" size={28} color="#ffffff" />
         </View>
       </TouchableOpacity>
     </View>
