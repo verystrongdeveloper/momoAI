@@ -59,6 +59,11 @@ export function updateStory(id: string, script: string): SavedStory | null {
   return next;
 }
 
+/** 이 브라우저에 저장된 스토리 하나만 지운다. */
+export function deleteStory(id: string) {
+  writeStored(readStored().filter((story) => story.id !== id));
+}
+
 /** 생성된 스크립트를 라이브러리에 넣는다. 재생은 그대로 이어진다. */
 export function saveStory(character: string, script: string): SavedStory {
   const story: SavedStory = {

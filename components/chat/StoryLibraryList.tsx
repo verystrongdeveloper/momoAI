@@ -3,7 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
-import { listStories, SavedStory, updateStory } from '@/store/storyLibrary';
+import { deleteStory, listStories, SavedStory, updateStory } from '@/store/storyLibrary';
 import { setPendingEvent } from '@/store/eventStore';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 
@@ -22,6 +22,7 @@ export default function StoryLibraryList() {
   const [editing, setEditing] = useState<SavedStory | null>(null);
   const [draft, setDraft] = useState('');
   const [notice, setNotice] = useState('');
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const selectionRef = useRef({ start: 0, end: 0 });
 
   const open = (story: SavedStory) => {
@@ -41,6 +42,12 @@ export default function StoryLibraryList() {
     updateStory(editing.id, draft);
     setStories(listStories());
     setEditing(null);
+  };
+
+  const remove = (id: string) => {
+    deleteStory(id);
+    setConfirmId(null);
+    setStories(listStories());
   };
 
   const insertAsset = (kind: AssetKind, file: string) => {
@@ -119,9 +126,26 @@ export default function StoryLibraryList() {
                       <Text style={styles.meta}>{formatWhen(story.createdAt)}</Text>
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => startEdit(story)} style={styles.editBtn}>
-                    <Text style={styles.editText}>수정</Text>
-                  </TouchableOpacity>
+                  {confirmId === story.id ? (
+                    <View style={styles.actions}>
+                      <Text style={styles.confirmText}>지울까요?</Text>
+                      <TouchableOpacity onPress={() => remove(story.id)} style={styles.deleteBtn}>
+                        <Text style={styles.deleteText}>삭제</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setConfirmId(null)} style={styles.keepBtn}>
+                        <Text style={styles.keepText}>취소</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View style={styles.actions}>
+                      <TouchableOpacity onPress={() => startEdit(story)} style={styles.editBtn}>
+                        <Text style={styles.editText}>수정</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setConfirmId(story.id)} style={styles.deleteBtn}>
+                        <Text style={styles.deleteText}>삭제</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               );
             })}
@@ -174,6 +198,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
+  actions: {
+    alignItems: 'stretch',
+    gap: 6,
+  },
   editBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -184,6 +212,37 @@ const styles = StyleSheet.create({
     color: '#e06a86',
     fontSize: 13,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  deleteBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f0c9d1',
+  },
+  deleteText: {
+    color: '#c45b73',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  confirmText: {
+    color: '#c45b73',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  keepBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  keepText: {
+    color: '#666',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   editorHeader: {
     flexDirection: 'row',
