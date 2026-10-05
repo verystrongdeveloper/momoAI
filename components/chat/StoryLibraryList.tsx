@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
+import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
 import { deleteStory, listStories, SavedStory, updateStory } from '@/store/storyLibrary';
 import { setPendingEvent } from '@/store/eventStore';
@@ -18,6 +19,7 @@ const formatWhen = (createdAt: number) => {
 
 export default function StoryLibraryList() {
   const router = useRouter();
+  const { isCompact } = useLayout();
   const [stories, setStories] = useState<SavedStory[]>(() => listStories());
   const [editing, setEditing] = useState<SavedStory | null>(null);
   const [draft, setDraft] = useState('');
@@ -98,7 +100,7 @@ export default function StoryLibraryList() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.title}>라이브러리</Text>
         {stories.length === 0 ? (
           <Text style={styles.empty}>저장된 스토리가 없습니다.</Text>
@@ -107,7 +109,7 @@ export default function StoryLibraryList() {
             {stories.map((story) => {
               const portrait = avatarOf(story.character);
               return (
-                <View key={story.id} style={styles.card}>
+                <View key={story.id} style={[styles.card, isCompact && styles.cardFill]}>
                   <TouchableOpacity style={styles.cardMain} onPress={() => open(story)}>
                     {portrait ? (
                       <Image source={portrait} style={styles.portrait} />
@@ -159,11 +161,21 @@ export default function StoryLibraryList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    minWidth: 0,
     backgroundColor: '#f7f8fa',
   },
+  scroll: {
+    flex: 1,
+    width: '100%',
+  },
   content: {
-    padding: 28,
+    width: '100%',
+    maxWidth: '100%',
+    paddingHorizontal: 28,
+    paddingVertical: 28,
     flexGrow: 1,
+    boxSizing: 'border-box',
   },
   title: {
     fontSize: 22,
@@ -177,12 +189,15 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   grid: {
+    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
   },
   card: {
     width: 360,
+    maxWidth: '100%',
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -191,22 +206,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#eceff3',
+    boxSizing: 'border-box',
+  },
+  cardFill: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   cardMain: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
   actions: {
+    width: 76,
+    flexShrink: 0,
     alignItems: 'stretch',
     gap: 6,
   },
   editBtn: {
+    width: '100%',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#fff0f3',
+    boxSizing: 'border-box',
   },
   editText: {
     color: '#e06a86',
@@ -215,12 +240,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   deleteBtn: {
+    width: '100%',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#f0c9d1',
+    boxSizing: 'border-box',
   },
   deleteText: {
     color: '#c45b73',
@@ -235,8 +262,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   keepBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    boxSizing: 'border-box',
   },
   keepText: {
     color: '#666',
@@ -306,6 +335,7 @@ const styles = StyleSheet.create({
   portrait: {
     width: 88,
     height: 88,
+    flexShrink: 0,
     borderRadius: 14,
     backgroundColor: '#f3d5dc',
   },
@@ -320,6 +350,7 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
   },
   name: {

@@ -3,7 +3,7 @@ import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
-  /** 좁은 화면에서는 가로 탭 바로 표시 */
+  /** 좁은 화면에서는 아래쪽 가로 탭 바로 표시 */
   horizontal?: boolean;
   active: 'characters' | 'groups' | 'library' | 'settings';
   onOpenCharacterList: () => void;
@@ -70,8 +70,11 @@ const styles = StyleSheet.create({
   sidebarHorizontal: {
     width: '100%',
     flexDirection: 'row',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    flexShrink: 0,
   },
   iconBtn: {
     padding: 6,

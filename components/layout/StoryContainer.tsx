@@ -119,17 +119,8 @@ const StoryContainer: React.FC = () => {
 
       {isCompact ? (
         <View style={styles.bodyColumn}>
-          {fullPane ? (
-            <>
-              {sidebar}
-              {fullPaneView}
-            </>
-          ) : hasDetail ? detail : (
-            <>
-              {sidebar}
-              {list}
-            </>
-          )}
+          {fullPane ? fullPaneView : hasDetail ? detail : list}
+          {(fullPane || !hasDetail) && sidebar}
         </View>
       ) : (
         <View style={styles.bodyRow}>
@@ -163,6 +154,8 @@ const styles = StyleSheet.create({
   },
   containerCompact: {
     margin: 0,
+    marginVertical: 0,
+    marginHorizontal: 0,
     borderRadius: 0,
     borderWidth: 0,
   },
@@ -184,7 +177,7 @@ const styles = StyleSheet.create({
   listCompact: {
     flex: 1,
     width: '100%',
-    maxWidth: undefined,
+    maxWidth: '100%',
   },
   listScroll: {
     flex: 1,
