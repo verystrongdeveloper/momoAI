@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
@@ -8,6 +9,7 @@ import { deleteStory, importStory, listStories, SavedStory, updateStory } from '
 import { setPendingEvent } from '@/store/eventStore';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 import { downloadStory, pickStoryFile } from '@/utils/storyFile';
+import { buildStoryPrompt } from '@/utils/storyPrompt';
 
 const formatWhen = (createdAt: number) => {
   const d = new Date(createdAt);
@@ -26,15 +28,46 @@ export default function StoryLibraryList() {
   const [draft, setDraft] = useState('');
   const [notice, setNotice] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState('');
   const selectionRef = useRef({ start: 0, end: 0 });
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const id = 'momo-story-card-hover';
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent =
+      '[data-story-card]:hover,[data-story-card]:focus-within{border-color:#f4d3dc !important;box-shadow:0 6px 14px rgba(36,48,68,0.10) !important;}';
+    document.head.appendChild(style);
+  }, []);
+
+  useEffect(() => {
+    if (menuId == null || typeof document === 'undefined') return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-story-menu]')) return;
+      setMenuId(null);
+      setConfirmId(null);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [menuId]);
+
   const open = (story: SavedStory) => {
+    setMenuId(null);
     setPendingEvent(story.script);
     router.push('/event');
   };
 
+  const toggleMenu = (id: string) => {
+    setConfirmId(null);
+    setMenuId((current) => (current === id ? null : id));
+  };
+
   const startEdit = (story: SavedStory) => {
+    setMenuId(null);
     setEditing(story);
     setDraft(story.script);
     setNotice('');
@@ -52,6 +85,25 @@ export default function StoryLibraryList() {
     deleteStory(id);
     setConfirmId(null);
     setStories(listStories());
+  };
+
+  const copyPrompt = async () => {
+    const text = buildStoryPrompt();
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else if (typeof document !== 'undefined') {
+        const area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+      setListNotice('프롬프트를 복사했습니다.');
+    } catch {
+      setListNotice('복사에 실패했습니다.');
+    }
   };
 
   const loadFile = async () => {
@@ -116,60 +168,90 @@ export default function StoryLibraryList() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <View style={styles.shelf}>
         <View style={styles.header}>
           <Text style={styles.libraryTitle}>라이브러리</Text>
-          <TouchableOpacity onPress={loadFile} style={styles.loadBtn}>
-            <Text style={styles.loadText}>불러오기</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={copyPrompt} style={styles.copyBtn}>
+              <Text style={styles.copyText}>프롬프트 복사</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={loadFile} style={styles.loadBtn}>
+              <Text style={styles.loadText}>불러오기</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         {!!listNotice && <Text style={styles.listNotice}>{listNotice}</Text>}
         {stories.length === 0 ? (
           <Text style={styles.empty}>저장된 스토리가 없습니다.</Text>
         ) : (
-          <View style={styles.grid}>
+          <View style={[styles.grid, isCompact && styles.gridCompact]}>
             {stories.map((story) => {
               const portrait = avatarOf(story.character);
+              const menuOpen = menuId === story.id;
               return (
-                <View key={story.id} style={[styles.card, isCompact && styles.cardFill]}>
-                  <TouchableOpacity style={styles.cardMain} onPress={() => open(story)}>
+                <View
+                  key={story.id}
+                  dataSet={{ storyCard: 'true' }}
+                  style={[styles.card, menuOpen && styles.cardMenuOpen]}
+                >
+                  <TouchableOpacity style={styles.coverHit} onPress={() => open(story)} activeOpacity={0.92}>
                     {portrait ? (
-                      <Image source={portrait} style={styles.portrait} />
+                      <Image source={portrait} style={styles.portrait} resizeMode="cover" />
                     ) : (
                       <View style={[styles.portrait, styles.portraitFallback]}>
                         <Text style={styles.fallbackText}>{story.character.slice(0, 1)}</Text>
                       </View>
                     )}
-                    <View style={styles.body}>
-                      <Text style={styles.name} numberOfLines={2}>
-                        {story.title}
-                      </Text>
-                      <Text style={styles.character} numberOfLines={1}>
-                        {story.character}
-                      </Text>
-                      <Text style={styles.meta}>{formatWhen(story.createdAt)}</Text>
-                    </View>
                   </TouchableOpacity>
-                  {confirmId === story.id ? (
-                    <View style={styles.actions}>
-                      <Text style={styles.confirmText}>지울까요?</Text>
-                      <TouchableOpacity onPress={() => remove(story.id)} style={styles.deleteBtn}>
-                        <Text style={styles.deleteText}>삭제</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => setConfirmId(null)} style={styles.keepBtn}>
-                        <Text style={styles.keepText}>취소</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.actions}>
-                      <TouchableOpacity onPress={() => startEdit(story)} style={styles.editBtn}>
-                        <Text style={styles.editText}>수정</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => downloadStory(story)} style={styles.exportBtn}>
-                        <Text style={styles.exportText}>추출</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => setConfirmId(story.id)} style={styles.deleteBtn}>
-                        <Text style={styles.deleteText}>삭제</Text>
-                      </TouchableOpacity>
+                  <TouchableOpacity
+                    dataSet={{ storyMenu: 'true' }}
+                    accessibilityLabel="스토리 관리"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    onPress={() => toggleMenu(story.id)}
+                    style={[styles.moreBtn, menuOpen && styles.moreBtnOpen]}
+                  >
+                    <Ionicons name="ellipsis-horizontal" size={16} color="#5c6570" />
+                  </TouchableOpacity>
+                  <View style={styles.body}>
+                    <Text style={styles.name} numberOfLines={2}>
+                      {story.title}
+                    </Text>
+                    <Text style={styles.character} numberOfLines={1}>
+                      {story.character}
+                    </Text>
+                    <Text style={styles.meta}>{formatWhen(story.createdAt)}</Text>
+                  </View>
+                  {menuOpen && (
+                    <View dataSet={{ storyMenu: 'true' }} style={styles.menu}>
+                      {confirmId === story.id ? (
+                        <>
+                          <Text style={styles.confirmText}>지울까요?</Text>
+                          <TouchableOpacity onPress={() => remove(story.id)} style={styles.menuItem}>
+                            <Text style={styles.menuDelete}>삭제</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => setConfirmId(null)} style={styles.menuItem}>
+                            <Text style={styles.menuKeep}>취소</Text>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <>
+                          <TouchableOpacity onPress={() => startEdit(story)} style={styles.menuItem}>
+                            <Text style={styles.menuText}>수정</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setMenuId(null);
+                              downloadStory(story);
+                            }}
+                            style={styles.menuItem}
+                          >
+                            <Text style={styles.menuText}>추출</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => setConfirmId(story.id)} style={[styles.menuItem, styles.menuItemLast]}>
+                            <Text style={styles.menuDelete}>삭제</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
                     </View>
                   )}
                 </View>
@@ -177,6 +259,7 @@ export default function StoryLibraryList() {
             })}
           </View>
         )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -201,12 +284,24 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     boxSizing: 'border-box',
   },
+  shelf: {
+    width: '100%',
+    maxWidth: 1040,
+    alignSelf: 'flex-start',
+  },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 18,
+    marginBottom: 22,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
   },
   title: {
     fontSize: 22,
@@ -219,6 +314,17 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#222',
+  },
+  copyBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#e7f1fa',
+  },
+  copyText: {
+    color: '#2d6ea8',
+    fontSize: 14,
+    fontWeight: '700',
   },
   loadBtn: {
     paddingVertical: 8,
@@ -244,102 +350,103 @@ const styles = StyleSheet.create({
   },
   grid: {
     width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+    gap: 20,
+    justifyContent: 'start',
+    alignItems: 'stretch',
+  },
+  gridCompact: {
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))',
   },
   card: {
-    width: 360,
-    maxWidth: '100%',
+    width: '100%',
     minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 14,
-    borderRadius: 16,
+    borderRadius: 18,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#eceff3',
+    borderColor: '#e6ebf0',
+    overflow: 'visible',
     boxSizing: 'border-box',
+    shadowColor: '#243044',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  cardFill: {
+  cardMenuOpen: {
+    zIndex: 4,
+  },
+  coverHit: {
     width: '100%',
-    alignSelf: 'stretch',
+    aspectRatio: 1.55,
+    borderTopLeftRadius: 17,
+    borderTopRightRadius: 17,
+    overflow: 'hidden',
+    backgroundColor: '#f3d5dc',
   },
-  cardMain: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
+  moreBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    zIndex: 2,
   },
-  actions: {
-    width: 76,
-    flexShrink: 0,
-    alignItems: 'stretch',
-    gap: 6,
+  moreBtnOpen: {
+    backgroundColor: '#ffffff',
   },
-  editBtn: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: '#fff0f3',
-    boxSizing: 'border-box',
-  },
-  editText: {
-    color: '#e06a86',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  exportBtn: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: '#e7f1fa',
-    boxSizing: 'border-box',
-  },
-  exportText: {
-    color: '#2d6ea8',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  deleteBtn: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+  menu: {
+    position: 'absolute',
+    top: 40,
+    right: 8,
+    width: 132,
+    paddingVertical: 4,
+    borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#f0c9d1',
-    boxSizing: 'border-box',
+    borderColor: '#e6ebf0',
+    zIndex: 3,
+    shadowColor: '#243044',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  deleteText: {
-    color: '#c45b73',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
+  menuItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  menuItemLast: {
+    borderTopWidth: 1,
+    borderTopColor: '#f1f3f6',
+  },
+  menuText: {
+    color: '#3a4150',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  menuDelete: {
+    color: '#a36a78',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  menuKeep: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '600',
   },
   confirmText: {
-    color: '#c45b73',
+    paddingTop: 8,
+    paddingHorizontal: 14,
+    color: '#8a9199',
     fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  keepBtn: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    boxSizing: 'border-box',
-  },
-  keepText: {
-    color: '#666',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: '600',
+    lineHeight: 16,
   },
   editorHeader: {
     flexDirection: 'row',
@@ -401,10 +508,9 @@ const styles = StyleSheet.create({
     color: '#222',
   },
   portrait: {
-    width: 88,
-    height: 88,
-    flexShrink: 0,
-    borderRadius: 14,
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
     backgroundColor: '#f3d5dc',
   },
   portraitFallback: {
@@ -412,30 +518,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fallbackText: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 40,
+    fontWeight: '800',
     color: '#FB94A7',
   },
   body: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 18,
   },
   name: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
-    lineHeight: 23,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#16181d',
+    lineHeight: 27,
   },
   character: {
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FB94A7',
+    lineHeight: 20,
   },
   meta: {
-    marginTop: 2,
-    fontSize: 13,
-    color: '#8a9199',
+    marginTop: 12,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#9aa3ad',
+    lineHeight: 16,
   },
 });
