@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'momo.bgmVolume';
+const DEFAULT_VOLUME = 0.5;
 
-let memory = 1;
+let memory = DEFAULT_VOLUME;
 const listeners = new Set<(volume: number) => void>();
 
 function clamp(value: number): number | null {
@@ -13,14 +14,14 @@ function readStored(): number {
   if (typeof localStorage === 'undefined') return memory;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw == null || raw === '') return 1;
-    return clamp(Number(raw)) ?? 1;
+    if (raw == null || raw === '') return DEFAULT_VOLUME;
+    return clamp(Number(raw)) ?? DEFAULT_VOLUME;
   } catch {
     return memory;
   }
 }
 
-/** 이 브라우저에 저장해 둔 BGM 볼륨. 0~1, 기본값 1. */
+/** 이 브라우저에 저장해 둔 BGM 볼륨. 0~1, 저장된 값이 없으면 50%. */
 export function getBgmVolume(): number {
   return readStored();
 }

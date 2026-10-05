@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
-import { deleteStory, listStories, SavedStory, updateStory } from '@/store/storyLibrary';
+import { deleteStory, importStory, listStories, SavedStory, updateStory } from '@/store/storyLibrary';
 import { setPendingEvent } from '@/store/eventStore';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
+import { downloadStory, pickStoryFile } from '@/utils/storyFile';
 
 const formatWhen = (createdAt: number) => {
   const d = new Date(createdAt);
@@ -25,6 +26,7 @@ export default function StoryLibraryList() {
   const [draft, setDraft] = useState('');
   const [notice, setNotice] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [listNotice, setListNotice] = useState('');
   const selectionRef = useRef({ start: 0, end: 0 });
 
   const open = (story: SavedStory) => {
@@ -50,6 +52,19 @@ export default function StoryLibraryList() {
     deleteStory(id);
     setConfirmId(null);
     setStories(listStories());
+  };
+
+  const loadFile = async () => {
+    const text = await pickStoryFile();
+    if (text == null) return;
+    const script = text.trim();
+    if (!script) {
+      setListNotice('파일에 대본이 없습니다.');
+      return;
+    }
+    importStory(script);
+    setStories(listStories());
+    setListNotice('');
   };
 
   const insertAsset = (kind: AssetKind, file: string) => {
@@ -101,7 +116,13 @@ export default function StoryLibraryList() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>라이브러리</Text>
+        <View style={styles.header}>
+          <Text style={styles.libraryTitle}>라이브러리</Text>
+          <TouchableOpacity onPress={loadFile} style={styles.loadBtn}>
+            <Text style={styles.loadText}>불러오기</Text>
+          </TouchableOpacity>
+        </View>
+        {!!listNotice && <Text style={styles.listNotice}>{listNotice}</Text>}
         {stories.length === 0 ? (
           <Text style={styles.empty}>저장된 스토리가 없습니다.</Text>
         ) : (
@@ -143,6 +164,9 @@ export default function StoryLibraryList() {
                       <TouchableOpacity onPress={() => startEdit(story)} style={styles.editBtn}>
                         <Text style={styles.editText}>수정</Text>
                       </TouchableOpacity>
+                      <TouchableOpacity onPress={() => downloadStory(story)} style={styles.exportBtn}>
+                        <Text style={styles.exportText}>추출</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => setConfirmId(story.id)} style={styles.deleteBtn}>
                         <Text style={styles.deleteText}>삭제</Text>
                       </TouchableOpacity>
@@ -177,11 +201,41 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     boxSizing: 'border-box',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 18,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#222',
-    marginBottom: 18,
+  },
+  libraryTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  loadBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#FB94A7',
+  },
+  loadText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  listNotice: {
+    marginTop: -8,
+    marginBottom: 12,
+    color: '#c45b73',
+    fontSize: 13,
   },
   empty: {
     color: '#999',
@@ -235,6 +289,20 @@ const styles = StyleSheet.create({
   },
   editText: {
     color: '#e06a86',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  exportBtn: {
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#e7f1fa',
+    boxSizing: 'border-box',
+  },
+  exportText: {
+    color: '#2d6ea8',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
