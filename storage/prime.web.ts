@@ -7,6 +7,7 @@ import {
   PREFERENCES_KEY,
   WEB_API_KEY,
   parsePreferences,
+  DEFAULT_PREFERENCES,
   parseStories,
   parseVolume,
   StorageSnapshot,
@@ -27,6 +28,7 @@ export function readInitialSync(): StorageSnapshot | null {
       apiKey,
       rememberApiKey: apiKey.length > 0,
       bgmVolume: parseVolume(localStorage.getItem(OLD_VOLUME)),
+      sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: localStorage.getItem(OLD_GREET) === '1',
       stories: parseStories(localStorage.getItem(OLD_STORIES)) ?? [],
     };

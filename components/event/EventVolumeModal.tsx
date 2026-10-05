@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureResponderEvent, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLayout } from '@/hooks/useLayout';
+import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
 
 interface Props {
   volume: number;
@@ -16,11 +17,21 @@ const clamp = (value: number) => {
   return Math.min(1, Math.max(0, value));
 };
 
-export default function EventVolumeModal({ volume, muted, onChange, onToggleMute, onClose, onExit }: Props) {
-  const { eventWidth, eventHeight } = useLayout();
-  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
+function VolumeSlider({
+  label,
+  value,
+  muted,
+  onChange,
+  styles,
+}: {
+  label: string;
+  value: number;
+  muted: boolean;
+  onChange: (volume: number) => void;
+  styles: ReturnType<typeof makeStyles>;
+}) {
   const trackRef = useRef<View>(null);
-  const shown = Number.isFinite(volume) ? volume : 1;
+  const shown = Number.isFinite(value) ? value : 1;
 
   const setFromPress = (e: GestureResponderEvent) => {
     const pageX = e.nativeEvent.pageX;
@@ -47,23 +58,42 @@ export default function EventVolumeModal({ volume, muted, onChange, onToggleMute
   };
 
   return (
+    <View style={styles.group}>
+      <Text style={styles.title}>{label}</Text>
+      <Text style={styles.value}>{muted ? '음소거' : `${Math.round(shown * 100)}%`}</Text>
+      <Pressable ref={trackRef} style={styles.track} onPress={setFromPress}>
+        <View pointerEvents="none" style={[styles.fill, muted && styles.fillMuted, { width: `${shown * 100}%` }]} />
+      </Pressable>
+      <View style={styles.stepRow}>
+        <TouchableOpacity style={styles.step} onPress={() => step(-0.1)}>
+          <Text style={styles.stepText}>-</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.step} onPress={() => step(0.1)}>
+          <Text style={styles.stepText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+export default function EventVolumeModal({ volume, muted, onChange, onToggleMute, onClose, onExit }: Props) {
+  const { eventWidth, eventHeight } = useLayout();
+  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
+  const [sfx, setSfx] = useState(getSfxVolume);
+
+  useEffect(() => subscribeSfxVolume(setSfx), []);
+
+  return (
     <View style={styles.backdrop}>
       <View style={styles.card}>
-        <Text style={styles.title}>BGM 볼륨</Text>
-        <Text style={styles.value}>{muted ? '음소거' : `${Math.round(shown * 100)}%`}</Text>
-
-        <Pressable ref={trackRef} style={styles.track} onPress={setFromPress}>
-          <View pointerEvents="none" style={[styles.fill, muted && styles.fillMuted, { width: `${shown * 100}%` }]} />
-        </Pressable>
-
-        <View style={styles.stepRow}>
-          <TouchableOpacity style={styles.step} onPress={() => step(-0.1)}>
-            <Text style={styles.stepText}>-</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.step} onPress={() => step(0.1)}>
-            <Text style={styles.stepText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <VolumeSlider label="BGM" value={volume} muted={muted} onChange={onChange} styles={styles} />
+        <VolumeSlider
+          label="효과음"
+          value={sfx}
+          muted={muted}
+          onChange={(next) => setSfx(setSfxVolume(next))}
+          styles={styles}
+        />
 
         <TouchableOpacity style={[styles.mute, muted && styles.muteOn]} onPress={onToggleMute}>
           <Text style={[styles.muteText, muted && styles.muteTextOn]}>{muted ? '음소거 해제' : '음소거'}</Text>
@@ -93,9 +123,14 @@ const makeStyles = (W: number, H: number) =>
       width: Math.min(W * 0.42, 420),
       backgroundColor: 'rgba(255,255,255,0.97)',
       borderRadius: 18,
-      paddingVertical: H * 0.035,
+      paddingVertical: H * 0.03,
       paddingHorizontal: W * 0.03,
       alignItems: 'center',
+    },
+    group: {
+      width: '100%',
+      alignItems: 'center',
+      marginBottom: 8,
     },
     title: {
       fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
@@ -104,8 +139,8 @@ const makeStyles = (W: number, H: number) =>
       color: '#243e5c',
     },
     value: {
-      marginTop: 8,
-      marginBottom: 16,
+      marginTop: 6,
+      marginBottom: 10,
       fontSize: Math.max(16, Math.round(H * 0.024)),
       color: '#3d6288',
     },
@@ -126,7 +161,7 @@ const makeStyles = (W: number, H: number) =>
     stepRow: {
       flexDirection: 'row',
       gap: 12,
-      marginTop: 16,
+      marginTop: 12,
     },
     step: {
       width: 48,
@@ -142,7 +177,7 @@ const makeStyles = (W: number, H: number) =>
       color: '#2d6ea8',
     },
     mute: {
-      marginTop: 16,
+      marginTop: 8,
       minWidth: 140,
       height: 40,
       borderRadius: 20,
@@ -164,7 +199,7 @@ const makeStyles = (W: number, H: number) =>
       color: '#5c7388',
     },
     close: {
-      marginTop: 18,
+      marginTop: 14,
       minWidth: 120,
       height: 40,
       borderRadius: 20,

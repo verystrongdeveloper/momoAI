@@ -2,32 +2,25 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GestureResponderEvent, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
+import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
 
 const clamp = (value: number) => {
   if (!Number.isFinite(value)) return null;
   return Math.min(1, Math.max(0, value));
 };
 
-export default function SettingsPanel() {
-  const [volume, setVolume] = useState(getBgmVolume);
-  const volumeRef = useRef(volume);
+function VolumeControl({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const valueRef = useRef(value);
   const trackRef = useRef<View>(null);
-  volumeRef.current = volume;
-
-  useEffect(
-    () =>
-      subscribeBgmVolume((next) => {
-        volumeRef.current = next;
-        setVolume(next);
-      }),
-    [],
-  );
-
-  const apply = (value: number) => {
-    const next = setBgmVolume(value);
-    volumeRef.current = next;
-    setVolume(next);
-  };
+  valueRef.current = value;
 
   const setFromPress = (e: GestureResponderEvent) => {
     const pageX = e.nativeEvent.pageX;
@@ -38,34 +31,49 @@ export default function SettingsPanel() {
       const rect = node.getBoundingClientRect();
       const scrollX = typeof window === 'undefined' ? 0 : window.scrollX;
       const next = clamp((pageX - (rect.left + scrollX)) / rect.width);
-      if (next != null) apply(next);
+      if (next != null) onChange(next);
       return;
     }
 
     node.measureInWindow((left, _top, width) => {
       const next = clamp((pageX - left) / width);
-      if (next != null) apply(next);
+      if (next != null) onChange(next);
     });
   };
+
+  return (
+    <View style={styles.control}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.value}>{Math.round(value * 100)}%</Text>
+      <Pressable ref={trackRef} style={styles.track} onPress={setFromPress}>
+        <View pointerEvents="none" style={[styles.fill, { width: `${value * 100}%` }]} />
+      </Pressable>
+      <View style={styles.stepRow}>
+        <TouchableOpacity style={styles.step} onPress={() => onChange(valueRef.current - 0.1)}>
+          <Text style={styles.stepText}>-</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.step} onPress={() => onChange(valueRef.current + 0.1)}>
+          <Text style={styles.stepText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+export default function SettingsPanel() {
+  const [volume, setVolume] = useState(getBgmVolume);
+  const [sfx, setSfx] = useState(getSfxVolume);
+
+  useEffect(() => subscribeBgmVolume(setVolume), []);
+  useEffect(() => subscribeSfxVolume(setSfx), []);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>설정</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>BGM 볼륨</Text>
-        <Text style={styles.value}>{Math.round(volume * 100)}%</Text>
-        <Pressable ref={trackRef} style={styles.track} onPress={setFromPress}>
-          <View pointerEvents="none" style={[styles.fill, { width: `${volume * 100}%` }]} />
-        </Pressable>
-        <View style={styles.stepRow}>
-          <TouchableOpacity style={styles.step} onPress={() => apply(volumeRef.current - 0.1)}>
-            <Text style={styles.stepText}>-</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.step} onPress={() => apply(volumeRef.current + 0.1)}>
-            <Text style={styles.stepText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <VolumeControl label="BGM 볼륨" value={volume} onChange={(next) => setVolume(setBgmVolume(next))} />
+        <VolumeControl label="효과음 볼륨" value={sfx} onChange={(next) => setSfx(setSfxVolume(next))} />
         <Text style={styles.hint}>스토리 안에서 바꾼 볼륨과 같습니다.</Text>
       </View>
 
@@ -105,6 +113,9 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  control: {
+    marginBottom: 8,
   },
   label: {
     fontSize: 15,

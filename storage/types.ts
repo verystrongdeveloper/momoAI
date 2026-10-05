@@ -1,5 +1,6 @@
 export type Preferences = {
   bgmVolume: number;
+  sfxVolume: number;
   greetMode: boolean;
   rememberApiKey: boolean;
 };
@@ -19,6 +20,7 @@ export type StorageSnapshot = Preferences & {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   bgmVolume: 0.5,
+  sfxVolume: 0.5,
   greetMode: false,
   rememberApiKey: false,
 };
@@ -75,6 +77,7 @@ export function parsePreferences(raw: string | null): Preferences {
     const parsed = JSON.parse(raw) as Partial<Preferences>;
     return {
       bgmVolume: clampVolume(Number(parsed.bgmVolume)) ?? DEFAULT_PREFERENCES.bgmVolume,
+      sfxVolume: clampVolume(Number(parsed.sfxVolume)) ?? DEFAULT_PREFERENCES.sfxVolume,
       greetMode: parsed.greetMode === true,
       rememberApiKey: parsed.rememberApiKey === true,
     };

@@ -4,6 +4,7 @@ import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
 import { useRouter } from 'expo-router';
 import { bgMap, emotionMap, expressionMap, sfxMap } from '@/constants/eventAssets';
+import { getSfxVolume } from '@/services/sfxVolume';
 import useBGM from '@/hooks/useBGM';
 import useEventParser from '@/hooks/useEventParser';
 import { EventFrame } from '@/hooks/useLayout';
@@ -61,6 +62,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const emoOpacity = useRef(new Animated.Value(1)).current;
 
   const { setMusic, stop, volume, setVolume, muted, setMuted } = useBGM();
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
 
   const nextLine = () => {
     if (idx + 1 < lines.length) setIdx((i) => i + 1);
@@ -96,7 +99,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     const src = sfxMap[key];
     if (!src) return;
     const snd = new Audio.Sound();
-    await snd.loadAsync(src);
+    await snd.loadAsync(src, { volume: mutedRef.current ? 0 : getSfxVolume() });
     await snd.playAsync();
   };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Audio } from 'expo-av';
 import { bgMap, emotionMap, expressionMap, musicMap, sfxMap } from '@/constants/eventAssets';
+import { getSfxVolume } from '@/services/sfxVolume';
 import { AssetKind } from '@/utils/insertStoryAsset';
 
 type Category = AssetKind;
@@ -103,7 +104,10 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
     previewSound.current = snd;
     void (async () => {
       try {
-        await snd.loadAsync(src, { isLooping: category === 'music', volume: 1 });
+        await snd.loadAsync(src, {
+          isLooping: category === 'music',
+          volume: category === 'sound' ? getSfxVolume() : 1,
+        });
         if (cancelled) {
           await stop(snd);
           return;

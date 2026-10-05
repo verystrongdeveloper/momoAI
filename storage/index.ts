@@ -5,7 +5,7 @@ import { migrateLegacyStorage } from './migrate';
 import { readInitialSync } from './prime';
 import { DEFAULT_PREFERENCES, Preferences, StoryRecord, clampVolume } from './types';
 
-type SettingKey = 'bgmVolume' | 'greetMode' | 'rememberApiKey';
+type SettingKey = 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey';
 
 let memory: Preferences & { apiKey: string; stories: StoryRecord[] } = {
   apiKey: '',
@@ -40,7 +40,7 @@ export function getRememberApiKey() {
   return memory.rememberApiKey;
 }
 
-export function getSetting(key: 'bgmVolume'): number;
+export function getSetting(key: 'bgmVolume' | 'sfxVolume'): number;
 export function getSetting(key: 'greetMode' | 'rememberApiKey'): boolean;
 export function getSetting(key: SettingKey): number | boolean {
   return memory[key];
@@ -53,6 +53,7 @@ export function loadStories(): StoryRecord[] {
 async function persistAll() {
   const prefs: Preferences = {
     bgmVolume: memory.bgmVolume,
+    sfxVolume: memory.sfxVolume,
     greetMode: memory.greetMode,
     rememberApiKey: memory.rememberApiKey,
   };
@@ -70,11 +71,11 @@ export function saveApiKey(key: string, remember = memory.rememberApiKey) {
 }
 
 export function saveSetting(key: SettingKey, value: number | boolean) {
-  if (key === 'bgmVolume') {
+  if (key === 'bgmVolume' || key === 'sfxVolume') {
     if (typeof value !== 'number') return;
     const next = clampVolume(value);
-    if (next == null || next === memory.bgmVolume) return;
-    memory.bgmVolume = next;
+    if (next == null || next === memory[key]) return;
+    memory[key] = next;
   } else if (key === 'greetMode') {
     const next = value === true;
     if (next === memory.greetMode) return;
@@ -104,6 +105,7 @@ async function pullAll() {
   memory = {
     apiKey,
     bgmVolume: prefs.bgmVolume,
+    sfxVolume: prefs.sfxVolume,
     greetMode: prefs.greetMode,
     rememberApiKey: prefs.rememberApiKey,
     stories,

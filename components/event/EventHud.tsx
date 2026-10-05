@@ -18,14 +18,19 @@ const EventHud: React.FC<Props> = ({ auto, onToggleAuto, onMenu }) => {
   );
 
   return (
-    <View style={styles.row}>
-      <TouchableOpacity style={[styles.btn, auto && styles.btnOn]} onPress={onToggleAuto}>
-        <Text style={[styles.text, auto && styles.textOn]}>AUTO</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.btn} onPress={onMenu}>
-        <Text style={styles.text}>MENU</Text>
-      </TouchableOpacity>
-    </View>
+    <>
+      <View style={styles.markWrap} pointerEvents="none">
+        <Text style={styles.mark}>MomoStory</Text>
+      </View>
+      <View style={styles.row}>
+        <TouchableOpacity style={[styles.btn, auto && styles.btnOn]} onPress={onToggleAuto}>
+          <Text style={[styles.text, auto && styles.textOn]}>AUTO</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={onMenu}>
+          <Text style={styles.text}>MENU</Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 };
 
@@ -33,6 +38,23 @@ export default EventHud;
 
 const makeStyles = (W: number, H: number, topInset: number) =>
   StyleSheet.create({
+    markWrap: {
+      position: 'absolute',
+      top: Math.max(H * 0.042, topInset + 8),
+      left: W * 0.03,
+      height: Math.max(32, H * 0.055),
+      justifyContent: 'center',
+      zIndex: 20,
+    },
+    mark: {
+      color: 'rgba(255,255,255,0.88)',
+      fontSize: Math.max(14, Math.round(H * 0.024)),
+      fontWeight: '700',
+      letterSpacing: 0.6,
+      textShadowColor: 'rgba(0,0,0,0.55)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
     row: {
       position: 'absolute',
       top: Math.max(H * 0.042, topInset + 8),

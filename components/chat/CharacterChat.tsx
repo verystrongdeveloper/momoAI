@@ -48,6 +48,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
 
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<FlatList<Chat>>(null);
+  const waitingRef = useRef(false);
 
   useEffect(() => {
     // 아이템 렌더 → 레이아웃 계산이 끝난 뒤 스크롤해야 끝까지 내려간다.
@@ -79,15 +80,18 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     if (!getGreetMode()) return;
 
     let cancelled = false;
+    waitingRef.current = true;
     (async () => {
       setMessages((prev) => [...prev, { sender: 'typing', text: '···', showImage: true }]);
       try {
         const { triggerLine } = await geminiClient.trigger(characterName);
+        if (!cancelled) waitingRef.current = false;
         await sleep(TYPING_DELAY_MS);
         if (!cancelled) await playReply(triggerLine ?? '');
       } catch (e) {
         console.error('[CharacterChat] trigger 실패:', e);
         if (!cancelled) {
+          waitingRef.current = false;
           setMessages((prev) =>
             removeTyping(prev).concat({ sender: 'character', text: geminiFailureText(e), showImage: true }),
           );
@@ -103,19 +107,28 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text) return;
+    if (!text || waitingRef.current) return;
 
-    setMessages((prev) => [...prev, { sender: 'user', text }]);
+    waitingRef.current = true;
+    setMessages((prev) => [
+      ...prev,
+      { sender: 'user', text },
+      { sender: 'typing', text: '···', showImage: true },
+    ]);
     setInput('');
     setTimeout(() => inputRef.current?.focus(), 100);
 
     try {
       const { reply, eventReady: ready } = await geminiClient.chat(characterName, text);
+      waitingRef.current = false;
       await playReply(reply);
       setEventReady(ready);
     } catch (err) {
       console.error('[CharacterChat] chat 실패:', err);
-      setMessages((prev) => [...prev, { sender: 'character', text: geminiFailureText(err) }]);
+      waitingRef.current = false;
+      setMessages((prev) =>
+        removeTyping(prev).concat({ sender: 'character', text: geminiFailureText(err), showImage: true }),
+      );
     }
   };
 

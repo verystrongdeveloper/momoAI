@@ -150,8 +150,9 @@ tasks.matching { it.name == "mergeReleaseResources" }.configureEach {
     doFirst {
         def generated = file("$buildDir/generated/res/createBundleReleaseJsAndAssets")
         if (generated.exists()) {
+            def converter = new File(rootDir.parentFile, "scripts/convert-drawables.js")
             exec {
-                commandLine "node", "E:\\webp-tools\\convert-drawables.js", generated.absolutePath
+                commandLine "node", converter.absolutePath, generated.absolutePath
             }
         }
     }

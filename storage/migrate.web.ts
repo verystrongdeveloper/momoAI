@@ -7,6 +7,7 @@ import {
   OLD_GREET,
   OLD_STORIES,
   OLD_VOLUME,
+  DEFAULT_PREFERENCES,
   parseStories,
   parseVolume,
 } from './types';
@@ -43,6 +44,7 @@ export async function migrateLegacyStorage(): Promise<boolean> {
     const rememberApiKey = apiKey.length > 0;
     const prefs = {
       bgmVolume: parseVolume(oldVolumeRaw),
+      sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: oldGreetRaw === '1',
       rememberApiKey,
     };
@@ -58,6 +60,7 @@ export async function migrateLegacyStorage(): Promise<boolean> {
     const ok =
       (!rememberApiKey || readKey === apiKey) &&
       readPrefs.bgmVolume === prefs.bgmVolume &&
+      readPrefs.sfxVolume === prefs.sfxVolume &&
       readPrefs.greetMode === prefs.greetMode &&
       readPrefs.rememberApiKey === prefs.rememberApiKey &&
       sameStories(readStories, stories);
