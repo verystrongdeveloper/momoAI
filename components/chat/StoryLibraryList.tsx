@@ -168,10 +168,9 @@ export default function StoryLibraryList() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <View style={styles.shelf}>
-        <View style={styles.header}>
+        <View style={[styles.header, isCompact && styles.headerCompact]}>
           <Text style={styles.libraryTitle}>라이브러리</Text>
-          <View style={styles.headerActions}>
+          <View style={[styles.headerActions, isCompact && styles.headerActionsCompact]}>
             <TouchableOpacity onPress={copyPrompt} style={styles.copyBtn}>
               <Text style={styles.copyText}>프롬프트 복사</Text>
             </TouchableOpacity>
@@ -180,6 +179,7 @@ export default function StoryLibraryList() {
             </TouchableOpacity>
           </View>
         </View>
+        <View style={styles.shelf}>
         {!!listNotice && <Text style={styles.listNotice}>{listNotice}</Text>}
         {stories.length === 0 ? (
           <Text style={styles.empty}>저장된 스토리가 없습니다.</Text>
@@ -290,18 +290,27 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   header: {
+    width: '100%',
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 22,
+    gap: 16,
+    marginBottom: 16,
+  },
+  headerCompact: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 10,
   },
   headerActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexShrink: 0,
     alignItems: 'center',
+    marginLeft: 'auto',
     gap: 8,
+  },
+  headerActionsCompact: {
+    alignSelf: 'flex-end',
   },
   title: {
     fontSize: 22,
@@ -309,16 +318,19 @@ const styles = StyleSheet.create({
     color: '#222',
   },
   libraryTitle: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     fontSize: 22,
     fontWeight: 'bold',
     color: '#222',
   },
   copyBtn: {
+    minHeight: 36,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#e7f1fa',
   },
   copyText: {
@@ -327,9 +339,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   loadBtn: {
+    minHeight: 36,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#FB94A7',
   },
   loadText: {
