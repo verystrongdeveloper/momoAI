@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, FlatList, Image, ImageSourcePropType, StyleSheet, Text, TextInput, View } from 'react-native';
-import { api } from '@/services/api';
+import { geminiClient, geminiFailureText } from '@/services/geminiClient';
 import { getGreetMode } from '@/services/greetMode';
 import { avatarOf } from '@/constants/characters';
 import { parseGroupChat } from '@/utils/parseGroupChat';
@@ -54,11 +54,14 @@ export default function GroupChat({ groupId }: Props) {
   }, [msgs]);
 
   const requestReply = (texts: string[]) =>
-    api
+    geminiClient
       .groupChat(groupId, texts.join('\n'))
       .then((res) => res.answer || null)
       .catch((err) => {
         console.error('[GroupChat] chat 실패:', err);
+        if (aliveRef.current) {
+          setMsgs((prev) => [...prev, { id: nextId(), sender: '안내', text: geminiFailureText(err) }]);
+        }
         return null;
       });
 
@@ -163,10 +166,13 @@ export default function GroupChat({ groupId }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const { answer } = await api.groupTrigger(groupId);
+        const { answer } = await geminiClient.groupTrigger(groupId);
         if (!cancelled && answer) await playChain(answer);
       } catch (e) {
         console.warn('[GroupChat] trigger 실패:', e);
+        if (!cancelled) {
+          setMsgs((prev) => [...prev, { id: nextId(), sender: '안내', text: geminiFailureText(e) }]);
+        }
       } finally {
         if (!cancelled) await releasePlayback();
       }
@@ -197,10 +203,13 @@ export default function GroupChat({ groupId }: Props) {
     playingRef.current = true;
 
     try {
-      const { answer } = await api.groupChat(groupId, text);
+      const { answer } = await geminiClient.groupChat(groupId, text);
       if (aliveRef.current && answer) await playChain(answer);
     } catch (e) {
       console.error('[GroupChat] chat 실패:', e);
+      if (aliveRef.current) {
+        setMsgs((prev) => [...prev, { id: nextId(), sender: '안내', text: geminiFailureText(e) }]);
+      }
     } finally {
       if (aliveRef.current) await releasePlayback();
     }

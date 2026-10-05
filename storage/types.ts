@@ -1,0 +1,84 @@
+export type Preferences = {
+  bgmVolume: number;
+  greetMode: boolean;
+  rememberApiKey: boolean;
+};
+
+export type StoryRecord = {
+  id: string;
+  title: string;
+  character: string;
+  script: string;
+  createdAt: number;
+};
+
+export type StorageSnapshot = Preferences & {
+  apiKey: string;
+  stories: StoryRecord[];
+};
+
+export const DEFAULT_PREFERENCES: Preferences = {
+  bgmVolume: 0.5,
+  greetMode: false,
+  rememberApiKey: false,
+};
+
+export const MIGRATION_FLAG = 'momo.migration.v1';
+export const PREFERENCES_KEY = 'momo.preferences';
+export const WEB_API_KEY = 'momo.secure.apiKey';
+export const NATIVE_API_KEY = 'momo.geminiApiKey';
+export const NATIVE_PREFERENCES_KEY = 'momo.preferences';
+export const NATIVE_STORIES_KEY = 'momo.stories';
+
+export const OLD_API_KEY = 'momo.geminiApiKey';
+export const OLD_VOLUME = 'momo.bgmVolume';
+export const OLD_GREET = 'momo.greetMode';
+export const OLD_STORIES = 'momo.storyLibrary';
+
+export function clampVolume(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+  const next = Math.min(1, Math.max(0, value));
+  return Math.round(next * 100) / 100;
+}
+
+export function parseVolume(raw: string | null): number {
+  if (raw == null || raw === '') return DEFAULT_PREFERENCES.bgmVolume;
+  return clampVolume(Number(raw)) ?? DEFAULT_PREFERENCES.bgmVolume;
+}
+
+export function sanitizeStories(input: unknown): StoryRecord[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((item) => item && typeof item.id === 'string' && typeof item.script === 'string')
+    .map((item) => ({
+      id: item.id,
+      script: item.script,
+      title: typeof item.title === 'string' ? item.title : '스토리',
+      character: typeof item.character === 'string' ? item.character : '스토리',
+      createdAt: typeof item.createdAt === 'number' ? item.createdAt : 0,
+    }));
+}
+
+/** JSON이 깨져 있으면 null. 마이그레이션은 그때 옛 값을 지우지 않는다. */
+export function parseStories(raw: string | null): StoryRecord[] | null {
+  if (raw == null || raw === '') return [];
+  try {
+    return sanitizeStories(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function parsePreferences(raw: string | null): Preferences {
+  if (!raw) return { ...DEFAULT_PREFERENCES };
+  try {
+    const parsed = JSON.parse(raw) as Partial<Preferences>;
+    return {
+      bgmVolume: clampVolume(Number(parsed.bgmVolume)) ?? DEFAULT_PREFERENCES.bgmVolume,
+      greetMode: parsed.greetMode === true,
+      rememberApiKey: parsed.rememberApiKey === true,
+    };
+  } catch {
+    return { ...DEFAULT_PREFERENCES };
+  }
+}

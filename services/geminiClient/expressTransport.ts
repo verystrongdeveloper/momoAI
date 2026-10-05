@@ -1,0 +1,42 @@
+import { getGeminiKey } from '@/services/geminiKey';
+import { GEMINI_OFFLINE_MESSAGE, throwIfOffline } from './errors';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+
+async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  throwIfOffline();
+  const apiKey = getGeminiKey();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiKey ? { ...body, apiKey } : body),
+    });
+  } catch {
+    throw new Error(GEMINI_OFFLINE_MESSAGE);
+  }
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`[api] ${path} ${res.status} ${detail}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+/** 기존 Express /api. 직접 호출이 production web에서 확인되기 전까지 기본 경로다. */
+export const expressTransport = {
+  trigger: (character: string) =>
+    post<{ triggerLine: string }>('/api/trigger', { character }),
+
+  chat: (character: string, message: string) =>
+    post<{ reply: string; eventReady: boolean }>('/api/chat', { character, message }),
+
+  createEvent: (character: string) =>
+    post<{ eventScript: string }>('/api/event', { character }),
+
+  groupTrigger: (roomId: string) =>
+    post<{ answer: string }>('/api/group/trigger', { roomId }),
+
+  groupChat: (roomId: string, userMessage: string) =>
+    post<{ answer: string }>('/api/group/chat', { roomId, userMessage }),
+};

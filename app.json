@@ -10,9 +10,12 @@
     "ios": {
       "supportsTablet": true
     },
+    "icon": "./public/icon-512.png",
     "android": {
+      "package": "com.momostory.app",
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./public/icon-512.png",
+        "backgroundColor": "#FB94A7"
       }
     },
     "web": {
@@ -28,7 +31,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

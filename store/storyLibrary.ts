@@ -1,38 +1,18 @@
-const STORAGE_KEY = 'momo.storyLibrary';
+import { loadStories, saveStories, subscribeStorage } from '@/storage';
+import type { StoryRecord } from '@/storage/types';
 
-export interface SavedStory {
-  id: string;
-  title: string;
-  character: string;
-  script: string;
-  createdAt: number;
+export type SavedStory = StoryRecord;
+
+export function subscribeStories(listener: () => void) {
+  return subscribeStorage(listener);
 }
 
-let memory: SavedStory[] = [];
-
 function readStored(): SavedStory[] {
-  if (typeof localStorage === 'undefined') return memory;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item) => item && typeof item.id === 'string' && typeof item.script === 'string',
-    );
-  } catch {
-    return memory;
-  }
+  return loadStories().slice();
 }
 
 function writeStored(stories: SavedStory[]) {
-  memory = stories;
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stories));
-  } catch {
-    // 용량이 가득 찬 브라우저에서는 이번 탭 메모리만 유지한다.
-  }
+  saveStories(stories);
 }
 
 const SKIP_SPEAKER = /^(타이틀|narration|selection|deleteAll|deleteEmotion|endEvent|waitSecond|bg|music|sound|animation)/;

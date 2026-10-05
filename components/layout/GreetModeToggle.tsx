@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import { getGreetMode, setGreetMode } from '@/services/greetMode';
+import { getGreetMode, setGreetMode, subscribeGreetMode } from '@/services/greetMode';
 
 export default function GreetModeToggle() {
-  const [on, setOn] = useState(getGreetMode);
+  const on = useSyncExternalStore(subscribeGreetMode, getGreetMode, () => false);
 
   const toggle = (next: boolean) => {
     setGreetMode(next);
-    setOn(next);
   };
 
   return (

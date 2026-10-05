@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
-import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
-import { getGeminiKey, setGeminiKey } from '@/services/geminiKey';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
+import { Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { getGeminiKey, getRememberApiKey, setGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
 
 export default function GeminiKeyField() {
-  const [value, setValue] = useState(getGeminiKey);
-  const [stored, setStored] = useState(getGeminiKey);
-  const dirty = value.trim() !== stored;
+  const stored = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
+  const storedRemember = useSyncExternalStore(subscribeGeminiKey, getRememberApiKey, () => false);
+  const [value, setValue] = useState(stored);
+  const [remember, setRemember] = useState(storedRemember);
+  const [touched, setTouched] = useState(false);
+  const dirty = value.trim() !== stored || remember !== storedRemember;
+
+  useEffect(() => {
+    if (touched) return;
+    setValue(stored);
+    setRemember(storedRemember);
+  }, [stored, storedRemember, touched]);
 
   const save = () => {
     const next = value.trim();
-    setGeminiKey(next);
-    setValue(next);
-    setStored(next);
+    setGeminiKey(next, remember);
+    setTouched(false);
   };
 
   return (
@@ -21,7 +29,10 @@ export default function GeminiKeyField() {
         <TextInput
           style={styles.input}
           value={value}
-          onChangeText={setValue}
+          onChangeText={(next) => {
+            setTouched(true);
+            setValue(next);
+          }}
           placeholder="본인 키를 입력하세요"
           secureTextEntry
           autoCapitalize="none"
@@ -30,8 +41,22 @@ export default function GeminiKeyField() {
         />
         <Button title="저장" onPress={save} disabled={!dirty} />
       </View>
+      <View style={styles.rememberRow}>
+        <Text style={styles.hint}>API 키 기억하기</Text>
+        <Switch
+          value={remember}
+          onValueChange={(next) => {
+            setTouched(true);
+            setRemember(next);
+          }}
+        />
+      </View>
       <Text style={styles.hint}>
-        {stored ? '이 브라우저에 저장됨. 이 키로 대화합니다.' : '저장하면 채팅과 스토리에 이 키를 사용합니다.'}
+        {stored && remember
+          ? '이 기기에 저장됨. 이 키로 대화합니다.'
+          : stored
+            ? '이번 실행에서만 사용합니다.'
+            : '저장하면 채팅과 스토리에 이 키를 사용합니다.'}
       </Text>
     </View>
   );
@@ -66,6 +91,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: '#fff',
     fontSize: 14,
+  },
+  rememberRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   hint: {
     marginTop: 6,

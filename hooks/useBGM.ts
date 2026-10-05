@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Audio } from 'expo-av';
 import { musicMap } from '@/constants/eventAssets';
+import { listenForPlaybackFocus, listenForPlaybackUnlock } from '@/platform/audio';
+import { playbackOnFocusChange } from '@/platform/playbackFocus';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 
 /**
@@ -20,12 +22,10 @@ export default function useBGM() {
   const mutedRef = useRef(false);
   const [muted, setMutedState] = useState(false);
   const resumeRef = useRef<(() => void) | null>(null);
+  const pausedByLifecycle = useRef(false);
 
   const clearResume = useCallback(() => {
-    if (resumeRef.current && typeof window !== 'undefined') {
-      window.removeEventListener('pointerdown', resumeRef.current);
-      window.removeEventListener('keydown', resumeRef.current);
-    }
+    resumeRef.current?.();
     resumeRef.current = null;
   }, []);
 
@@ -64,6 +64,7 @@ export default function useBGM() {
   /** 모든 사운드 정지 */
   const stop = useCallback(async () => {
     clearResume();
+    pausedByLifecycle.current = false;
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -107,15 +108,11 @@ export default function useBGM() {
         currentKey.current = key;
 
         const armResume = () => {
-          if (typeof window === 'undefined') return;
           clearResume();
-          const resume = () => {
-            clearResume();
+          resumeRef.current = listenForPlaybackUnlock(() => {
+            resumeRef.current = null;
             void snd.playAsync().catch(() => {});
-          };
-          resumeRef.current = resume;
-          window.addEventListener('pointerdown', resume);
-          window.addEventListener('keydown', resume);
+          });
         };
 
         try {
@@ -137,6 +134,23 @@ export default function useBGM() {
       void stop();
     };
   }, [stop]);
+
+  useEffect(() => {
+    return listenForPlaybackFocus(
+      () => {
+        const snd = soundRef.current;
+        const next = playbackOnFocusChange('active', snd != null, pausedByLifecycle.current);
+        pausedByLifecycle.current = next.pausedByLifecycle;
+        if (next.command === 'resume' && snd) void snd.playAsync().catch(() => {});
+      },
+      () => {
+        const snd = soundRef.current;
+        const next = playbackOnFocusChange('background', snd != null, pausedByLifecycle.current);
+        pausedByLifecycle.current = next.pausedByLifecycle;
+        if (next.command === 'pause' && snd) void snd.pauseAsync().catch(() => {});
+      },
+    );
+  }, []);
 
   return { setMusic, stop, volume, setVolume, muted, setMuted };
 }

@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { api } from '@/services/api';
+import { geminiClient, geminiFailureText } from '@/services/geminiClient';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
 import { saveStory } from '@/store/storyLibrary';
@@ -82,12 +82,16 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     (async () => {
       setMessages((prev) => [...prev, { sender: 'typing', text: '···', showImage: true }]);
       try {
-        const { triggerLine } = await api.trigger(characterName);
+        const { triggerLine } = await geminiClient.trigger(characterName);
         await sleep(TYPING_DELAY_MS);
         if (!cancelled) await playReply(triggerLine ?? '');
       } catch (e) {
         console.error('[CharacterChat] trigger 실패:', e);
-        if (!cancelled) setMessages(removeTyping);
+        if (!cancelled) {
+          setMessages((prev) =>
+            removeTyping(prev).concat({ sender: 'character', text: geminiFailureText(e), showImage: true }),
+          );
+        }
       }
     })();
 
@@ -106,24 +110,25 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     setTimeout(() => inputRef.current?.focus(), 100);
 
     try {
-      const { reply, eventReady: ready } = await api.chat(characterName, text);
+      const { reply, eventReady: ready } = await geminiClient.chat(characterName, text);
       await playReply(reply);
       setEventReady(ready);
     } catch (err) {
       console.error('[CharacterChat] chat 실패:', err);
-      setMessages((prev) => [...prev, { sender: 'character', text: '에러가 발생했어요.' }]);
+      setMessages((prev) => [...prev, { sender: 'character', text: geminiFailureText(err) }]);
     }
   };
 
   const handleEventStart = async () => {
     setGlobalLoading?.(true);
     try {
-      const { eventScript } = await api.createEvent(characterName);
+      const { eventScript } = await geminiClient.createEvent(characterName);
       saveStory(characterName, eventScript);
       setPendingEvent(eventScript);
       router.push('/event');
     } catch (e) {
       console.error('[CharacterChat] 이벤트 생성 실패:', e);
+      setMessages((prev) => [...prev, { sender: 'character', text: geminiFailureText(e) }]);
     } finally {
       setGlobalLoading?.(false);
     }

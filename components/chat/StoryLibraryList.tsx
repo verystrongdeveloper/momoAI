@@ -5,9 +5,10 @@ import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
-import { deleteStory, importStory, listStories, SavedStory, updateStory } from '@/store/storyLibrary';
+import { deleteStory, importStory, listStories, SavedStory, subscribeStories, updateStory } from '@/store/storyLibrary';
 import { setPendingEvent } from '@/store/eventStore';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
+import { copyText } from '@/platform/clipboard';
 import { downloadStory, pickStoryFile } from '@/utils/storyFile';
 import { buildStoryPrompt } from '@/utils/storyPrompt';
 
@@ -31,6 +32,8 @@ export default function StoryLibraryList() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState('');
   const selectionRef = useRef({ start: 0, end: 0 });
+
+  useEffect(() => subscribeStories(() => setStories(listStories())), []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -88,18 +91,8 @@ export default function StoryLibraryList() {
   };
 
   const copyPrompt = async () => {
-    const text = buildStoryPrompt();
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else if (typeof document !== 'undefined') {
-        const area = document.createElement('textarea');
-        area.value = text;
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand('copy');
-        area.remove();
-      }
+      await copyText(buildStoryPrompt());
       setListNotice('프롬프트를 복사했습니다.');
     } catch {
       setListNotice('복사에 실패했습니다.');
@@ -241,7 +234,7 @@ export default function StoryLibraryList() {
                           <TouchableOpacity
                             onPress={() => {
                               setMenuId(null);
-                              downloadStory(story);
+                              void Promise.resolve(downloadStory(story)).catch(() => undefined);
                             }}
                             style={styles.menuItem}
                           >
