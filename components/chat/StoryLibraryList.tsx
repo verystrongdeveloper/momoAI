@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { avatarOf } from '@/constants/characters';
+import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
 import { listStories, SavedStory, updateStory } from '@/store/storyLibrary';
 import { setPendingEvent } from '@/store/eventStore';
+import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 
 const formatWhen = (createdAt: number) => {
   const d = new Date(createdAt);
@@ -19,6 +21,8 @@ export default function StoryLibraryList() {
   const [stories, setStories] = useState<SavedStory[]>(() => listStories());
   const [editing, setEditing] = useState<SavedStory | null>(null);
   const [draft, setDraft] = useState('');
+  const [notice, setNotice] = useState('');
+  const selectionRef = useRef({ start: 0, end: 0 });
 
   const open = (story: SavedStory) => {
     setPendingEvent(story.script);
@@ -28,6 +32,8 @@ export default function StoryLibraryList() {
   const startEdit = (story: SavedStory) => {
     setEditing(story);
     setDraft(story.script);
+    setNotice('');
+    selectionRef.current = { start: 0, end: 0 };
   };
 
   const saveEdit = () => {
@@ -35,6 +41,18 @@ export default function StoryLibraryList() {
     updateStory(editing.id, draft);
     setStories(listStories());
     setEditing(null);
+  };
+
+  const insertAsset = (kind: AssetKind, file: string) => {
+    const cursor = selectionRef.current.start;
+    const next = insertAssetIntoScript(draft, cursor, kind, file);
+    if (!next.ok) {
+      setNotice(next.notice);
+      return;
+    }
+    selectionRef.current = { start: next.cursor, end: next.cursor };
+    setDraft(next.script);
+    setNotice('');
   };
 
   if (editing) {
@@ -51,15 +69,22 @@ export default function StoryLibraryList() {
             </TouchableOpacity>
           </View>
         </View>
-        <TextInput
-          style={styles.editor}
-          value={draft}
-          onChangeText={setDraft}
-          multiline
-          textAlignVertical="top"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+        {!!notice && <Text style={styles.notice}>{notice}</Text>}
+        <View style={styles.editorBody}>
+          <TextInput
+            style={styles.editor}
+            value={draft}
+            onChangeText={setDraft}
+            onSelectionChange={(e) => {
+              selectionRef.current = e.nativeEvent.selection;
+            }}
+            multiline
+            textAlignVertical="top"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <StoryAssetPanel character={editing.character} onInsert={insertAsset} />
+        </View>
       </View>
     );
   }
@@ -194,10 +219,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  notice: {
+    paddingHorizontal: 28,
+    paddingBottom: 8,
+    color: '#c45b73',
+    fontSize: 13,
+  },
+  editorBody: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 16,
+    paddingHorizontal: 28,
+    paddingBottom: 28,
+    overflow: 'visible',
+  },
   editor: {
     flex: 1,
-    marginHorizontal: 28,
-    marginBottom: 28,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
