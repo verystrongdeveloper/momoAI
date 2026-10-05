@@ -71,6 +71,9 @@ android/app/build/
 android/build/
 .gradle/
 
+# Desktop
+src-tauri/target/
+
 # iOS
 ios/build/
 ios/Pods/

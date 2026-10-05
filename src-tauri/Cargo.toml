@@ -1,0 +1,21 @@
+[package]
+name = "momostory"
+version = "1.0.0"
+description = "MomoStory"
+edition = "2021"
+
+[lib]
+name = "momostory_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "momostory"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

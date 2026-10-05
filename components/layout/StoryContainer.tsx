@@ -111,7 +111,7 @@ const StoryContainer: React.FC = () => {
   );
 
   return (
-    <View style={[styles.container, isCompact && styles.containerCompact]}>
+    <View style={styles.container}>
       <StoryHeader
         title={isCompact ? detailTitle : undefined}
         onBack={isCompact && hasDetail ? closeDetail : undefined}
@@ -145,19 +145,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FB94A7',
-    marginVertical: 20,
-    marginHorizontal: 10,
-    borderRadius: 10,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  containerCompact: {
-    margin: 0,
-    marginVertical: 0,
-    marginHorizontal: 0,
-    borderRadius: 0,
-    borderWidth: 0,
   },
   bodyRow: {
     flex: 1,
