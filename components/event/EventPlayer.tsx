@@ -32,6 +32,13 @@ const EXPRESSION_SHOW_MS = 2000;
 const TYPEWRITER_MS = 30;
 const AUTO_READ_MS = 2100;
 
+/** deleteAll 뒤, endEvent 직전의 나레이션. 검은 화면에 남는 선생의 한 줄. */
+const isEndingCaption = (lines: EventLine[], index: number) => {
+  const current = lines[index];
+  const next = lines[index + 1];
+  return current?.type === 'narration' && next?.type === 'command' && next.commandType === 'endEvent';
+};
+
 const EventPlayer: React.FC<Props> = ({ script }) => {
   const router = useRouter();
   const { eventWidth, eventHeight } = useLayout();
@@ -60,11 +67,13 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     if (idx + 1 < lines.length) setIdx((i) => i + 1);
   };
 
+  const goHome = () => router.replace('/');
+
   const onAdvance = () => {
     if (line?.type === 'selection') return;
     const ended = line?.type === 'command' && line.commandType === 'endEvent';
-    if (ended || idx + 1 >= lines.length) {
-      router.replace('/');
+    if (ended || isEndingCaption(lines, idx) || idx + 1 >= lines.length) {
+      goHome();
       return;
     }
     nextLine();
@@ -74,8 +83,12 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     if (!auto || menuOpen) return;
     // 선택지는 사용자가 고를 때까지 멈춘다. 타이틀·명령은 자체 타이머가 넘긴다.
     if (!line || line.type === 'selection' || line.type === '타이틀' || line.type === 'command') return;
+    const ending = isEndingCaption(lines, idx);
     const wait = (line.text?.length ?? 0) * TYPEWRITER_MS + AUTO_READ_MS;
-    const t = setTimeout(nextLine, wait);
+    const t = setTimeout(() => {
+      if (ending) goHome();
+      else nextLine();
+    }, wait);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto, menuOpen, idx, line]);
@@ -124,6 +137,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
     if (line.type === 'dialogue' || line.type === 'narration') {
       setLast(line);
       if (line.soundFile) playSFX(line.soundFile);
+      if (isEndingCaption(lines, idx)) stop();
     }
 
     if (line.bg) setBg(line.bg);

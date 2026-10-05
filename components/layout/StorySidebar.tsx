@@ -1,15 +1,23 @@
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   /** 좁은 화면에서는 가로 탭 바로 표시 */
   horizontal?: boolean;
-  active: 'characters' | 'groups';
+  active: 'characters' | 'groups' | 'library';
   onOpenCharacterList: () => void;
   onOpenGroupChatList: () => void;
+  onOpenLibrary: () => void;
 }
 
-const StorySidebar: React.FC<Props> = ({ horizontal, active, onOpenCharacterList, onOpenGroupChatList }) => {
+const StorySidebar: React.FC<Props> = ({
+  horizontal,
+  active,
+  onOpenCharacterList,
+  onOpenGroupChatList,
+  onOpenLibrary,
+}) => {
   return (
     <View style={[styles.sidebar, horizontal && styles.sidebarHorizontal]}>
       <TouchableOpacity
@@ -24,6 +32,15 @@ const StorySidebar: React.FC<Props> = ({ horizontal, active, onOpenCharacterList
         style={[styles.iconBtn, active === 'groups' && styles.iconBtnActive]}
       >
         <Image source={require('../../assets/images/message.jpg')} style={styles.icon} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={onOpenLibrary}
+        style={[styles.iconBtn, active === 'library' && styles.iconBtnActive]}
+      >
+        <View style={styles.libraryIcon}>
+          <Ionicons name="library-outline" size={28} color="#ffffff" />
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -56,5 +73,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+  libraryIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

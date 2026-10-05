@@ -8,12 +8,13 @@ import ChatEntry from '@/components/chat/ChatEntry';
 import CharacterChat from '@/components/chat/CharacterChat';
 import GroupChat from '@/components/chat/GroupChat';
 import GroupChatList from '@/components/chat/GroupChatList';
+import StoryLibraryList from '@/components/chat/StoryLibraryList';
 import { CHARACTERS, Character } from '@/constants/characters';
 import { findRoom } from '@/constants/groupChatRooms';
 import { useLayout } from '@/hooks/useLayout';
 
-/** characters: 1:1 캐릭터 목록  |  groups: 단톡방 목록 */
-type ListPanel = 'characters' | 'groups';
+/** characters: 1:1 캐릭터 목록  |  groups: 단톡방 목록  |  library: 저장된 스토리 */
+type ListPanel = 'characters' | 'groups' | 'library';
 
 const StoryContainer: React.FC = () => {
   const { isCompact } = useLayout();
@@ -52,8 +53,14 @@ const StoryContainer: React.FC = () => {
         setListPanel('groups');
         if (isCompact) closeDetail();
       }}
+      onOpenLibrary={() => {
+        setListPanel('library');
+        if (isCompact) closeDetail();
+      }}
     />
   );
+
+  const libraryOpen = listPanel === 'library';
 
   const list = (
     <View style={[styles.list, isCompact && styles.listCompact]}>
@@ -76,7 +83,9 @@ const StoryContainer: React.FC = () => {
     </View>
   );
 
-  const detail = (
+  const detail = libraryOpen ? (
+    <StoryLibraryList />
+  ) : (
     <View style={styles.detail}>
       {selectedCharacter && (
         <CharacterChat
@@ -104,7 +113,12 @@ const StoryContainer: React.FC = () => {
 
       {isCompact ? (
         <View style={styles.bodyColumn}>
-          {hasDetail ? detail : (
+          {libraryOpen ? (
+            <>
+              {sidebar}
+              <StoryLibraryList />
+            </>
+          ) : hasDetail ? detail : (
             <>
               {sidebar}
               {list}
@@ -114,7 +128,7 @@ const StoryContainer: React.FC = () => {
       ) : (
         <View style={styles.bodyRow}>
           {sidebar}
-          {list}
+          {!libraryOpen && list}
           {detail}
         </View>
       )}

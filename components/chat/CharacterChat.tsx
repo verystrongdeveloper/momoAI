@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { api } from '@/services/api';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
+import { saveStory } from '@/store/storyLibrary';
 
 interface Props {
   characterName: string;
@@ -118,6 +119,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     setGlobalLoading?.(true);
     try {
       const { eventScript } = await api.createEvent(characterName);
+      saveStory(characterName, eventScript);
       setPendingEvent(eventScript);
       router.push('/event');
     } catch (e) {
