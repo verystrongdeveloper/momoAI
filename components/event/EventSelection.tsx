@@ -13,13 +13,13 @@ interface Props {
 const labelOf = (opt: string) => opt.trim().replace(/^["“”]+|["“”]+$/g, '');
 
 const EventSelection: React.FC<Props> = ({ options, onSelect }) => {
-  const { eventWidth, eventHeight } = useLayout();
+  const { eventWidth, eventHeight, isCompact } = useLayout();
   const [fontLoaded] = useFonts({
     PretendardSemiBold: require('../../assets/fonts/Pretendard-SemiBold.ttf'),
   });
   const styles = useMemo(
-    () => makeStyles(eventWidth, eventHeight, fontLoaded),
-    [eventWidth, eventHeight, fontLoaded]
+    () => makeStyles(eventWidth, eventHeight, fontLoaded, isCompact),
+    [eventWidth, eventHeight, fontLoaded, isCompact]
   );
 
   return (
@@ -49,11 +49,12 @@ const EventSelection: React.FC<Props> = ({ options, onSelect }) => {
 
 export default EventSelection;
 
-const makeStyles = (W: number, H: number, fontLoaded: boolean) =>
+const makeStyles = (W: number, H: number, fontLoaded: boolean, isCompact: boolean) =>
   {
     // 짧은 변을 기준으로 잡아, 세로로 긴 화면에서 박스가 캐릭터를 덮지 않게 한다.
     const short = Math.min(W, H);
-    const cardWidth = Math.min(W * 0.62, short * 1.7);
+    // 모바일은 화면의 78%. 좌우에 11%씩 남아 끝까지 붙지 않는다.
+    const cardWidth = isCompact ? Math.round(W * 0.78) : Math.min(W * 0.62, short * 1.7);
 
     return StyleSheet.create({
     container: {
