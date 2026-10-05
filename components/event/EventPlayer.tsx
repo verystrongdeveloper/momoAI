@@ -243,7 +243,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
 
         {line?.type === 'selection' && (
-          <View style={styles.selection}>
+          <View pointerEvents="box-none" style={styles.selection}>
             <EventSelection options={line.options ?? []} onSelect={nextLine} />
           </View>
         )}
@@ -280,10 +280,12 @@ const styles = StyleSheet.create({
   },
   selection: {
     position: 'absolute',
-    top: '25.5%',
-    left: 0,
+    top: 0,
     right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 16,
   },
   selectionDim: {

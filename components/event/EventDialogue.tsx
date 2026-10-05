@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useLayout } from '@/hooks/useLayout';
+import { storyFont, useLayout } from '@/hooks/useLayout';
 
 interface Props {
   character: string;
@@ -16,8 +16,8 @@ const parseSpeaker = (character: string) => {
 };
 
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
-  const { eventHeight } = useLayout();
-  const styles = useMemo(() => makeStyles(eventHeight), [eventHeight]);
+  const { eventWidth, eventHeight } = useLayout();
+  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
   const { name, affiliation } = parseSpeaker(character);
 
   const [shown, setShown] = useState(0);
@@ -46,7 +46,7 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
 
 export default EventDialogue;
 
-const makeStyles = (H: number) =>
+const makeStyles = (W: number, H: number) =>
   StyleSheet.create({
     wrap: {
       flex: 1,
@@ -57,13 +57,13 @@ const makeStyles = (H: number) =>
       gap: 8,
     },
     name: {
-      fontSize: Math.max(22, Math.round(H * 0.044)),
+      fontSize: storyFont(W, H, 0.044, 22),
       fontWeight: '800',
       color: '#ffffff',
       letterSpacing: 0.2,
     },
     affiliation: {
-      fontSize: Math.max(16, Math.round(H * 0.027)),
+      fontSize: storyFont(W, H, 0.027, 16),
       fontWeight: '800',
       color: '#6fc5ee',
     },
@@ -75,8 +75,8 @@ const makeStyles = (H: number) =>
       backgroundColor: 'rgba(255,255,255,0.5)',
     },
     text: {
-      fontSize: Math.max(20, Math.round(H * 0.04)),
-      lineHeight: Math.max(28, Math.round(H * 0.056)),
+      fontSize: storyFont(W, H, 0.04, 20),
+      lineHeight: storyFont(W, H, 0.056, 28),
       color: '#ffffff',
       textShadowColor: 'rgba(0,0,0,0.35)',
       textShadowOffset: { width: 0, height: 1 },

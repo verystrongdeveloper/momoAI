@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import { useLayout } from '@/hooks/useLayout';
+import { storyFont, useLayout } from '@/hooks/useLayout';
 
 const SELECTION_BACKGROUND = require('../../assets/ui/selection_bg.png');
 
@@ -10,10 +10,7 @@ interface Props {
   onSelect: (option: string) => void;
 }
 
-const labelOf = (opt: string) => {
-  const text = opt.trim().replace(/^"|"$/g, '');
-  return `"${text}"`;
-};
+const labelOf = (opt: string) => opt.trim().replace(/^["“”]+|["“”]+$/g, '');
 
 const EventSelection: React.FC<Props> = ({ options, onSelect }) => {
   const { eventWidth, eventHeight } = useLayout();
@@ -54,19 +51,19 @@ export default EventSelection;
 
 const makeStyles = (W: number, H: number, fontLoaded: boolean) =>
   {
-    // Choice cards use the 16:9 scene's safe width, even when the background
-    // fills an ultrawide browser window.
-    const cardWidth = Math.min(W * 0.72, H * 1.29);
+    // 짧은 변을 기준으로 잡아, 세로로 긴 화면에서 박스가 캐릭터를 덮지 않게 한다.
+    const short = Math.min(W, H);
+    const cardWidth = Math.min(W * 0.62, short * 1.7);
 
     return StyleSheet.create({
     container: {
       width: '100%',
       alignItems: 'center',
+      gap: Math.max(4, Math.round(short * 0.012)),
     },
     btn: {
       width: cardWidth,
-      height: Math.max(54, Math.round(H * 0.092)),
-      marginVertical: Math.round(H * 0.016),
+      height: Math.max(40, Math.round(short * 0.068)),
     },
     buttonSurface: {
       flex: 1,
@@ -85,7 +82,7 @@ const makeStyles = (W: number, H: number, fontLoaded: boolean) =>
       fontFamily: fontLoaded
         ? 'PretendardSemiBold, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif'
         : '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
-      fontSize: Math.max(16, Math.round(H * 0.026)),
+      fontSize: storyFont(W, H, 0.026, 16),
       fontWeight: '400',
       color: '#263f5d',
       textAlign: 'center',

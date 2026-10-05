@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import EventDialogue from './EventDialogue';
 import { EventLine } from '@/types/EventLine';
-import { useLayout } from '@/hooks/useLayout';
+import { storyFont, useLayout } from '@/hooks/useLayout';
 
 interface Props {
   currentLine: EventLine | null;
@@ -61,7 +61,7 @@ const makeStyles = (W: number, H: number) =>
     },
     caret: {
       color: 'rgba(255,255,255,0.82)',
-      fontSize: Math.max(16, Math.round(H * 0.026)),
+      fontSize: storyFont(W, H, 0.026, 16),
       fontWeight: '800',
     },
   });
