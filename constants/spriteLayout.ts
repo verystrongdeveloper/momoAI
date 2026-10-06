@@ -9,7 +9,7 @@ const FALLBACK_ASPECT_RATIO = 717 / 1280;
  */
 const ASPECT_RULES: Array<[RegExp, number]> = [
   [/^hoshino_swimsuit_/, 800 / 1002],
-  [/^hoshino_/, 717 / 1280],
+  [/^hoshino_/, 373 / 668],
   [/^hina_swimsuit_/, 780 / 1280],
   [/^hina_/, 1280 / 863],
   [/^aris_/, 800 / 904],

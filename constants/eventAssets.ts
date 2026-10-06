@@ -82,18 +82,18 @@ export const bgMap: Record<string, any> = {
 /* 표정 */
 export const emotionMap: Record<string, any> = {
   // 호시노 기본
-  hoshino_angry: require('../assets/images/hoshino/hoshino_angry.png'),
   hoshino_bigLaugh: require('../assets/images/hoshino/hoshino_bigLaugh.png'),
-  hoshino_dontknowAnything: require('../assets/images/hoshino/hoshino_dontknowAnything.png'),
-  hoshino_feelGood: require('../assets/images/hoshino/hoshino_feelGood.png'),
-  hoshino_makebigEye: require('../assets/images/hoshino/hoshino_makebigEye.png'),
-  hoshino_serious: require('../assets/images/hoshino/hoshino_serious.png'),
-  hoshino_strongSurprised: require('../assets/images/hoshino/hoshino_strongSurprised.png'),
+  hoshino_confidence: require('../assets/images/hoshino/hoshino_confidence.png'),
+  hoshino_difficult: require('../assets/images/hoshino/hoshino_difficult.png'),
+  hoshino_feelgood: require('../assets/images/hoshino/hoshino_feelgood.png'),
+  hoshino_getserious: require('../assets/images/hoshino/hoshino_getserious.png'),
+  hoshino_kawaiiface: require('../assets/images/hoshino/hoshino_kawaiiface.png'),
+  hoshino_kidding: require('../assets/images/hoshino/hoshino_kidding.png'),
+  hoshino_reluctant: require('../assets/images/hoshino/hoshino_reluctant.png'),
+  hoshino_smallsmile: require('../assets/images/hoshino/hoshino_smallsmile.png'),
+  hoshino_smile: require('../assets/images/hoshino/hoshino_smile.png'),
   hoshino_surprised: require('../assets/images/hoshino/hoshino_surprised.png'),
-  hoshino_suspicious: require('../assets/images/hoshino/hoshino_suspicious.png'),
-  hoshino_weakLaugh: require('../assets/images/hoshino/hoshino_weakLaugh.png'),
   hoshino_yawn: require('../assets/images/hoshino/hoshino_yawn.png'),
-  hoshino_yawn2: require('../assets/images/hoshino/hoshino_yawn2.png'),
 
   // 호시노 수영복
   hoshino_swimsuit_angry: require('../assets/images/hoshino/hoshino_swimsuit_angry.png'),

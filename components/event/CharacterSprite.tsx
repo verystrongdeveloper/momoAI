@@ -78,10 +78,16 @@ function CharacterSprite({ current, fadeAnim, expression, animation }: Props) {
 
     const src = emotionMap[current];
     if (!src) return;
-    const idle = prev[activeRef.current] ? (activeRef.current === 0 ? 1 : 0) : activeRef.current;
+    const showing = prev[activeRef.current];
+    const idle = showing ? (activeRef.current === 0 ? 1 : 0) : activeRef.current;
     const next: [SpriteSlot, SpriteSlot] = [prev[0], prev[1]];
     next[idle] = { key: current, src };
     setSlots(next);
+    // 빈 화면의 첫 초상은 로드 이벤트를 기다리지 않는다. 기다리면 배경만 먼저 보이고 캐릭터는 다음 표정까지 안 나온다.
+    if (!showing) {
+      activeRef.current = idle;
+      setActive(idle);
+    }
   }, [current]);
 
   const showSlot = (index: number, key: string) => {
@@ -158,6 +164,7 @@ const makeStyles = (W: number, H: number, spriteWidth: number, spriteHeight: num
       bottom: H * SPRITE_BASELINE_RATIO,
       width: spriteWidth,
       height: spriteHeight,
+      zIndex: 2,
     },
     char: {
       position: 'absolute',

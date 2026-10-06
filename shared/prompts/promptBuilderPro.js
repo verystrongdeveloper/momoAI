@@ -77,14 +77,14 @@ endEvent
 타이틀 : 잠자는 고래
 호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. [emotion : hoshino_bigLaugh.png, sound : SE_Confirm_01.mp3, bg : BG_AbydosCouncilRoom.jpg, music : walkthrough.mp3]
 selection : (1)"갑자기 웬 고래 얘기?" (2)"도움이 필요하다는 건 뭐야?"
-호시노(대책위원회) : 아아. 낭만이 없구만, 선생도. [emotion : hoshino_dontknowAnything.png]
-호시노(대책위원회) : 힘쓰는 일이 필요해서 말이지. [emotion : hoshino_serious.png]
+호시노(대책위원회) : 아아. 낭만이 없구만, 선생도. [emotion : hoshino_kidding.png]
+호시노(대책위원회) : 힘쓰는 일이 필요해서 말이지. [emotion : hoshino_getserious.png]
 deleteAll
 waitSecond = 2
 narration : (낡은 창고 문을 열었다.) [bg : BG_AbydosResidence.jpg]
-호시노(대책위원회) : 자, 여기야. [emotion : hoshino_yawn2.png]
+호시노(대책위원회) : 자, 여기야. [emotion : hoshino_yawn.png]
 selection : (1)"여기는?" (2)"창고?"
-호시노(대책위원회) : 응. 아무도 안 오는 낮잠 스팟이지. [emotion : hoshino_weakLaugh.png]
+호시노(대책위원회) : 응. 아무도 안 오는 낮잠 스팟이지. [emotion : hoshino_smallsmile.png]
 narration : (호시노는 순식간에 잠들었다.) [music : morose_dreamer.mp3]
 deleteAll
 narration : 결국 호시노의 낮잠 자리를 봐 주고 말았다.

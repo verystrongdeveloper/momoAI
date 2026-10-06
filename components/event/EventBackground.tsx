@@ -19,5 +19,5 @@ export default function EventBackground({ bgKey, fadeAnim }: Props) {
 }
 
 const styles = StyleSheet.create({
-  bg: { position: 'absolute', width: '100%', height: '100%' },
+  bg: { position: 'absolute', width: '100%', height: '100%', zIndex: 0 },
 });
