@@ -187,5 +187,6 @@ const makeStyles = (W: number, H: number, spriteWidth: number, spriteHeight: num
       right: Math.min(W * 0.02, spriteWidth * 0.08),
       width: 80 * scale,
       height: 80 * scale,
+      zIndex: 2,
     },
   });
