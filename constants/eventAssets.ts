@@ -393,23 +393,14 @@ export const emotionMap: Record<string, any> = {
 
 /* BGM */
 export const musicMap: Record<string, any> = {
-  'aira.mp3': require('../assets/music/aira.mp3'),
-  'crossfire.mp3': require('../assets/music/crossfire.mp3'),
-  'formless_dream.mp3': require('../assets/music/formless_dream.mp3'),
-  'funky_road.mp3': require('../assets/music/funky_road.mp3'),
-  'future_bossa.mp3': require('../assets/music/future_bossa.mp3'),
-  'honey_jam.mp3': require('../assets/music/honey_jam.mp3'),
-  'koi_is_love.mp3': require('../assets/music/koi_is_love.mp3'),
-  'lovely_picnic.mp3': require('../assets/music/lovely_picnic.mp3'),
-  'luminous_memory.mp3': require('../assets/music/luminous_memory.mp3'),
-  'mechanical_jungle.mp3': require('../assets/music/mechanical_jungle.mp3'),
-  'midnight_trip.mp3': require('../assets/music/midnight_trip.mp3'),
-  'midsummer_cat.mp3': require('../assets/music/midsummer_cat.mp3'),
-  'mischievous_step.mp3': require('../assets/music/mischievous_step.mp3'),
-  'morose_dreamer.mp3': require('../assets/music/morose_dreamer.mp3'),
-  'shady_girls.mp3': require('../assets/music/shady_girls.mp3'),
-  'unwelcome_school.mp3': require('../assets/music/unwelcome_school.mp3'),
-  'walkthrough.mp3': require('../assets/music/walkthrough.mp3'),
+  'Aira.mp3': require('../assets/music/Aira.mp3'),
+  'Aoharu.mp3': require('../assets/music/Aoharu.mp3'),
+  'honeyjam.mp3': require('../assets/music/honeyjam.mp3'),
+  'Love Story.mp3': require('../assets/music/Love Story.mp3'),
+  'Luminous memory.mp3': require('../assets/music/Luminous memory.mp3'),
+  'Midnight Trip.mp3': require('../assets/music/Midnight Trip.mp3'),
+  'Signal of Abydos.mp3': require('../assets/music/Signal of Abydos.mp3'),
+  'Usagi Flap.mp3': require('../assets/music/Usagi Flap.mp3'),
 } as const;
 
 /* SFX */

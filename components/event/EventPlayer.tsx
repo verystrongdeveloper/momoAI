@@ -76,7 +76,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const onAdvance = () => {
     // 타이핑 중이면 문장만 끝까지 보여주고, 끝난 뒤에 누르면 다음으로 넘어간다.
     if (dialogueRef.current?.finish()) return;
-    if (line?.type === 'selection') return;
+    if (line?.type === 'selection' && (line.options?.length ?? 0) > 0) return;
     const ended = line?.type === 'command' && line.commandType === 'endEvent';
     if (ended || isEndingCaption(lines, idx) || idx + 1 >= lines.length) {
       goHome();

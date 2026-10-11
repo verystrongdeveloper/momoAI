@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { EventLine } from '@/types/EventLine';
 
+/** 파일명에 공백이 있어도 쉼표나 ] 앞에서 끊는다. */
+const musicOf = (line: string) => line.match(/music\s*:\s*([^,\]\n]+?\.mp3|none)/)?.[1]?.trim();
+
 /**  
  * 스크립트 문자열 → EventLine[]  
  * useMemo로 래핑해 script가 변할 때만 재계산  
@@ -21,10 +24,13 @@ export default function useEventParser(script: string) {
         }
 
         if (l.startsWith('selection')) {
-          const opts = [...l.matchAll(/\(\d+\)"(.*?)"/g)].map(m => m[1]);
+          // (1)"대사" 와 (1)(행동) 둘 다 선택지로 읽는다. 따옴표가 없으면 버튼이 안 생겨 진행이 멈춘다.
+          const opts = [...l.matchAll(/\(\d+\)\s*(?:"([^"]*)"|\(([^)]*)\))/g)].map(
+            (m) => (m[1] ?? m[2] ?? '').trim(),
+          );
           const emo = l.match(/emotion\s*:\s*([A-Za-z0-9_]+)(?:\.png)?/)?.[1];
           const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
-          const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+          const mus = musicOf(l);
           const speaker = l.match(/speaker\s*:\s*([^,\]]+)/)?.[1]?.trim();
           const dialogue = l
             .match(/dialogue\s*:\s*(.*?)(?=,\s*(?:emotion|bg|music|sound|speaker)\s*:|\])/i)?.[1]
@@ -45,11 +51,12 @@ export default function useEventParser(script: string) {
           const rawNar = l.replace(/^narration\s*:\s*/i, '');
           const txt = rawNar
             .replace(/\[.*?]/g, '')
-            .replace(/,?\s*(bg|sound|music)\s*:\s*\S+/gi, '')
+            .replace(/,?\s*(bg|sound)\s*:\s*\S+/gi, '')
+            .replace(/,?\s*music\s*:\s*(?:none|[^,\]\n]+?\.mp3)/gi, '')
             .replace(/[,\s]+$/, '')
             .trim();
           const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
-          const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+          const mus = musicOf(l);
           const snd = l.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
           out.push({ type: 'narration', character: '', text: txt, bg, music: mus, soundFile: snd });
           return;
@@ -86,13 +93,14 @@ export default function useEventParser(script: string) {
 
             const emo = rest.match(/emotion\s*:\s*([A-Za-z0-9_]+)(?:\.png)?/)?.[1];
             const bg = rest.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
-            const mus = rest.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+            const mus = musicOf(rest);
             const snd = rest.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
             const exp = rest.match(/expression\s*:\s*([\w_.-]+\.png)/)?.[1];
             const anim = rest.match(/animation\s*:\s*(\w+)/)?.[1];
             const txt = rest
               .replace(/\[.*?]/g, '')
-              .replace(/,?\s*(emotion|bg|sound|music|expression|animation)\s*:\s*\S+/gi, '')
+              .replace(/,?\s*(emotion|bg|sound|expression|animation)\s*:\s*\S+/gi, '')
+              .replace(/,?\s*music\s*:\s*(?:none|[^,\]\n]+?\.mp3)/gi, '')
               .replace(/[,\s]+$/, '')
               .trim();
 
@@ -114,11 +122,11 @@ export default function useEventParser(script: string) {
         // ✅ bg나 music, sound만 있는 줄 처리
         if (
           /\bbg\s*:\s*BG_[\w]+\.jpg\b/i.test(l) ||
-          /\bmusic\s*:\s*[\w_-]+\.mp3\b/i.test(l) ||
+          /\bmusic\s*:\s*(?:none|[^,\]\n]+?\.mp3)/i.test(l) ||
           /\bsound\s*:\s*[\w'_.-]+\.mp3\b/i.test(l)
         ) {
           const bg = l.match(/bg\s*:\s*(BG_[\w]+\.jpg)/)?.[1]?.replace('.jpg', '');
-          const mus = l.match(/music\s*:\s*([\w_-]+\.mp3|none)/)?.[1];
+          const mus = musicOf(l);
           const snd = l.match(/sound\s*:\s*([\w'_.-]+\.mp3)/)?.[1];
           out.push({
             type: 'command',
