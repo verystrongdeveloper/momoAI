@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 import { storyFont, useLayout } from '@/hooks/useLayout';
-
-const SELECTION_BACKGROUND = require('../../assets/ui/selection_bg.png');
 
 interface Props {
   options: string[];
@@ -31,16 +30,17 @@ const EventSelection: React.FC<Props> = ({ options, onSelect }) => {
           onPress={() => onSelect(opt)}
           activeOpacity={0.82}
         >
-          <ImageBackground
-            source={SELECTION_BACKGROUND}
-            resizeMode="stretch"
+          <LinearGradient
+            colors={['#b9d8f3', '#eef6fc', '#ffffff', '#eef6fc', '#b9d8f3']}
+            locations={[0, 0.18, 0.5, 0.82, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
             style={styles.buttonSurface}
-            imageStyle={styles.buttonImage}
           >
             <Text style={styles.text} numberOfLines={2}>
               {labelOf(opt)}
             </Text>
-          </ImageBackground>
+          </LinearGradient>
         </TouchableOpacity>
       ))}
     </View>
@@ -73,9 +73,9 @@ const makeStyles = (W: number, H: number, fontLoaded: boolean, isCompact: boolea
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: cardWidth * 0.05,
-    },
-    buttonImage: {
-      borderRadius: 3,
+      borderWidth: 2,
+      borderColor: '#ffffff',
+      backgroundColor: '#e7f3fb',
     },
     text: {
       // SemiBold 파일 자체를 쓴다. fontWeight를 올리면 윈도우가 굵기를 합성해
