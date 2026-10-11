@@ -16,8 +16,11 @@ const parseSpeaker = (character: string) => {
 };
 
 const EventDialogue: React.FC<Props> = ({ character, text }) => {
-  const { eventWidth, eventHeight } = useLayout();
-  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
+  const { eventWidth, eventHeight, isCompact } = useLayout();
+  const styles = useMemo(
+    () => makeStyles(eventWidth, eventHeight, isCompact),
+    [eventWidth, eventHeight, isCompact],
+  );
   const { name, affiliation } = parseSpeaker(character);
 
   const [shown, setShown] = useState(0);
@@ -46,14 +49,16 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
 
 export default EventDialogue;
 
-const makeStyles = (W: number, H: number) =>
+const makeStyles = (W: number, H: number, isCompact: boolean) =>
   StyleSheet.create({
     wrap: {
       flex: 1,
+      alignItems: 'stretch',
     },
     nameRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
+      justifyContent: isCompact ? 'center' : 'flex-start',
       gap: 8,
     },
     name: {
@@ -72,12 +77,15 @@ const makeStyles = (W: number, H: number) =>
       marginBottom: Math.round(H * 0.018),
       height: 1,
       width: '42%',
+      alignSelf: isCompact ? 'center' : 'flex-start',
       backgroundColor: 'rgba(255,255,255,0.5)',
     },
     text: {
+      width: '100%',
       fontSize: storyFont(W, H, 0.04, 20),
       lineHeight: storyFont(W, H, 0.056, 28),
       color: '#ffffff',
+      textAlign: isCompact ? 'center' : 'left',
       textShadowColor: 'rgba(0,0,0,0.35)',
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 2,
