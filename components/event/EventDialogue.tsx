@@ -1,10 +1,15 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { storyFont, useLayout } from '@/hooks/useLayout';
 
 interface Props {
   character: string;
   text: string;
+}
+
+export interface DialogueHandle {
+  /** 타이핑 중이면 문장을 끝까지 보여주고 true. 이미 끝났으면 false. */
+  finish: () => boolean;
 }
 
 const TYPEWRITER_MS = 30;
@@ -15,7 +20,7 @@ const parseSpeaker = (character: string) => {
   return match ? { name: match[1], affiliation: match[2] } : { name: character, affiliation: '' };
 };
 
-const EventDialogue: React.FC<Props> = ({ character, text }) => {
+const EventDialogue = forwardRef<DialogueHandle, Props>(function EventDialogue({ character, text }, ref) {
   const { eventWidth, eventHeight, isCompact } = useLayout();
   const styles = useMemo(
     () => makeStyles(eventWidth, eventHeight, isCompact),
@@ -24,14 +29,34 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
   const { name, affiliation } = parseSpeaker(character);
 
   const [shown, setShown] = useState(0);
+  const shownRef = useRef(0);
 
-  useLayoutEffect(() => setShown(0), [text]);
+  useLayoutEffect(() => {
+    shownRef.current = 0;
+    setShown(0);
+  }, [text]);
 
   useEffect(() => {
     if (shown >= text.length) return;
-    const t = setTimeout(() => setShown((n) => n + 1), TYPEWRITER_MS);
+    const t = setTimeout(() => {
+      setShown((n) => {
+        if (shownRef.current >= text.length) return text.length;
+        const next = Math.min(text.length, n + 1);
+        shownRef.current = next;
+        return next;
+      });
+    }, TYPEWRITER_MS);
     return () => clearTimeout(t);
   }, [shown, text]);
+
+  useImperativeHandle(ref, () => ({
+    finish() {
+      if (shownRef.current >= text.length) return false;
+      shownRef.current = text.length;
+      setShown(text.length);
+      return true;
+    },
+  }), [text]);
 
   return (
     <View style={styles.wrap}>
@@ -45,7 +70,7 @@ const EventDialogue: React.FC<Props> = ({ character, text }) => {
       <Text style={styles.text}>{text.slice(0, shown)}</Text>
     </View>
   );
-};
+});
 
 export default EventDialogue;
 

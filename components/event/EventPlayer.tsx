@@ -15,6 +15,7 @@ import EventHud from './EventHud';
 import EventSelection from './EventSelection';
 import EventVolumeModal from './EventVolumeModal';
 import TextBox from './TextBox';
+import { DialogueHandle } from './EventDialogue';
 import TitleBanner from './TitleBanner';
 
 interface Props {
@@ -60,6 +61,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const [expression, setExpression] = useState<Expression | null>(null);
   const bgOpacity = useRef(new Animated.Value(1)).current;
   const emoOpacity = useRef(new Animated.Value(1)).current;
+  const dialogueRef = useRef<DialogueHandle>(null);
 
   const { setMusic, stop, volume, setVolume, muted, setMuted } = useBGM();
   const mutedRef = useRef(muted);
@@ -72,6 +74,8 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const goHome = () => router.replace('/');
 
   const onAdvance = () => {
+    // 타이핑 중이면 문장만 끝까지 보여주고, 끝난 뒤에 누르면 다음으로 넘어간다.
+    if (dialogueRef.current?.finish()) return;
     if (line?.type === 'selection') return;
     const ended = line?.type === 'command' && line.commandType === 'endEvent';
     if (ended || isEndingCaption(lines, idx) || idx + 1 >= lines.length) {
@@ -241,7 +245,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           animation={animation}
         />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
-        <TextBox currentLine={line} lastSpoken={last} onPress={onAdvance} />
+        <TextBox ref={dialogueRef} currentLine={line} lastSpoken={last} onPress={onAdvance} />
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
 
         {line?.type === 'selection' && (

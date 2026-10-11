@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import EventDialogue from './EventDialogue';
+import EventDialogue, { DialogueHandle } from './EventDialogue';
 import { EventLine } from '@/types/EventLine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { storyFont, useLayout } from '@/hooks/useLayout';
@@ -12,7 +12,7 @@ interface Props {
   onPress?: () => void;
 }
 
-export default function TextBox({ currentLine, lastSpoken, onPress }: Props) {
+const TextBox = forwardRef<DialogueHandle, Props>(function TextBox({ currentLine, lastSpoken, onPress }, ref) {
   const { eventWidth, eventHeight } = useLayout();
   const insets = useSafeAreaInsets();
   const styles = useMemo(
@@ -39,13 +39,15 @@ export default function TextBox({ currentLine, lastSpoken, onPress }: Props) {
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
-      <EventDialogue character={shown.character ?? ''} text={shown.text} />
+      <EventDialogue ref={ref} character={shown.character ?? ''} text={shown.text} />
       <View style={styles.caretWrap} pointerEvents="none">
         <Text style={styles.caret}>▾</Text>
       </View>
     </Pressable>
   );
-}
+});
+
+export default TextBox;
 
 const makeStyles = (W: number, H: number, bottomInset: number) =>
   StyleSheet.create({
