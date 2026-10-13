@@ -26,7 +26,7 @@ ${historyTXT}
 이 목록에 없는 이름은 고르지 않는다.
 
 출력 예시:
-{"characters":[{"name":"시로코"}],"reason":"대화에서 언급됨","direction":"시놉시스 3~4문장"}
+{"characters":[{"name":"히나"}],"reason":"대화에서 언급됨","direction":"시놉시스 3~4문장"}
 `;
 }
 

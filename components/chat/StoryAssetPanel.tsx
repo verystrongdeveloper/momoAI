@@ -47,9 +47,11 @@ const MUSIC_FILES = ['none', ...Object.keys(musicMap)];
 const SOUND_FILES = Object.keys(sfxMap);
 const EXPRESSION_FILES = Object.keys(expressionMap);
 
+const emotionExt = (key: string) => (key.startsWith('hina_') ? '.jpg' : '.png');
+
 const imageOf = (category: Category, file: string) => {
   if (category === 'bg') return bgMap[file.replace(/\.jpg$/i, '')];
-  if (category === 'emotion') return emotionMap[file.replace(/\.png$/i, '')];
+  if (category === 'emotion') return emotionMap[file.replace(/\.(png|jpe?g)$/i, '')];
   if (category === 'expression') return expressionMap[file];
   return undefined;
 };
@@ -58,7 +60,7 @@ const emotionGroups = EMOTION_GROUPS.map((group) => ({
   label: group.label,
   files: Object.keys(emotionMap)
     .filter((key) => group.prefixes.some((prefix) => key.startsWith(prefix)))
-    .map((key) => fileName(key, '.png')),
+    .map((key) => fileName(key, emotionExt(key))),
 })).filter((group) => group.files.length > 0);
 
 interface Props {

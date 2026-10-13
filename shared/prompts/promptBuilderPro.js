@@ -37,7 +37,7 @@ ${COMMON_RULES}
 
 메인 캐릭터: '${mainChar}'
 등장 인물: ${allCharsWithEmotions.map((c) => c.name).join(', ')}
-등장 인물은 위 목록에만 있어야 한다. NPC(로봇·시민동물 등)를 쓸 때는 캐릭터명에 역할을 적는다. (예: 레스토랑 주인)
+등장 인물은 위 목록에만 있어야 한다. 목록에 없는 인물은 대사로 등장시키지 않는다.
 
 [스토리 전개 방향]
 ${direction}
@@ -57,7 +57,7 @@ ${historyTXT}
 6. 나레이션은 선생 1인칭이거나 효과음이다. 항상 "narration :"으로 시작한다.
 7. 배경은 메인 캐릭터 소속에 맞춘다. 새 인물이 나와도 같은 배경을 다시 지정하지 않는다.
 8. 대사에 괄호 행동 지문을 넣지 않는다.
-9. emotion은 그 대사를 한 캐릭터의 PNG만 쓴다. 파일명은 목록의 철자·확장자 그대로. 없는 파일명 금지.
+9. emotion은 그 대사를 한 캐릭터의 파일만 쓴다. 파일명은 목록의 철자·확장자 그대로. 없는 파일명 금지. sound와 expression은 목록에 있을 때만 쓴다.
 10. 이벤트 시작 시 bg와 music을 반드시 하나 지정한다. music : none 으로 끌 수 있다.
 
 [출력 형식]
@@ -75,7 +75,7 @@ endEvent
 
 [형식 예시]
 타이틀 : 잠자는 고래
-호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. [emotion : hoshino_bigLaugh.png, sound : SE_Confirm_01.mp3, bg : BG_AbydosCouncilRoom.jpg, music : Aira.mp3]
+호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. [emotion : hoshino_bigLaugh.png, bg : BG_AbydosCouncilRoom.jpg, music : Aira.mp3]
 selection : (1)"갑자기 웬 고래 얘기?" (2)"도움이 필요하다는 건 뭐야?"
 호시노(대책위원회) : 아아. 낭만이 없구만, 선생도. [emotion : hoshino_kidding.png]
 호시노(대책위원회) : 힘쓰는 일이 필요해서 말이지. [emotion : hoshino_getserious.png]

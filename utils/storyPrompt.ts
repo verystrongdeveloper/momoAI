@@ -3,12 +3,16 @@ import { bgMap, emotionMap, expressionMap, musicMap, sfxMap } from '@/constants/
 
 const join = (items: string[]) => items.join(', ');
 
+function emotionFile(key: string) {
+  return key.startsWith('hina_') ? `${key}.jpg` : `${key}.png`;
+}
+
 function emotionLines() {
   const groups = new Map<string, string[]>();
   for (const key of Object.keys(emotionMap)) {
     const owner = key.split('_')[0];
     const list = groups.get(owner) ?? [];
-    list.push(`${key}.png`);
+    list.push(emotionFile(key));
     groups.set(owner, list);
   }
   return [...groups.entries()].map(([owner, files]) => `- ${owner}: ${files.join(', ')}`).join('\n');
@@ -42,7 +46,7 @@ export function buildStoryPrompt() {
 
 [형식 예시]
 타이틀 : 잠자는 고래
-호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. [emotion : hoshino_bigLaugh.png, sound : SE_Confirm_01.mp3, bg : BG_AbydosCouncilRoom.jpg, music : Aira.mp3]
+호시노(대책위원회) : 그러니까 고래는 잘 때도 숨을 참고 있다는 얘기잖아. [emotion : hoshino_bigLaugh.png, bg : BG_AbydosCouncilRoom.jpg, music : Aira.mp3]
 selection : (1)"갑자기 웬 고래 얘기?" (2)"도움이 필요하다는 건 뭐야?"
 호시노(대책위원회) : 아아. 낭만이 없구만, 선생도. [emotion : hoshino_kidding.png]
 deleteAll
