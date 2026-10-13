@@ -84,7 +84,7 @@ export const emotionMap: Record<string, any> = {
   hoshino_bigLaugh: require('../assets/images/hoshino/hoshino_bigLaugh.png'),
   hoshino_confidence: require('../assets/images/hoshino/hoshino_confidence.png'),
   hoshino_difficult: require('../assets/images/hoshino/hoshino_difficult.png'),
-  hoshino_feelGood: require('../assets/images/hoshino/hoshino_feelGood.png'),
+  hoshino_feelGood: require('../assets/images/hoshino/hoshino_feelgood.png'),
   hoshino_getserious: require('../assets/images/hoshino/hoshino_getserious.png'),
   hoshino_kawaiiface: require('../assets/images/hoshino/hoshino_kawaiiface.png'),
   hoshino_kidding: require('../assets/images/hoshino/hoshino_kidding.png'),
@@ -111,7 +111,7 @@ export const emotionMap: Record<string, any> = {
 
 /* BGM */
 export const musicMap: Record<string, any> = {
-  'Aira.mp3': require('../assets/music/aira.mp3'),
+  'Aira.mp3': require('../assets/music/Aira.mp3'),
   'Aoharu.mp3': require('../assets/music/Aoharu.mp3'),
   'honeyjam.mp3': require('../assets/music/honeyjam.mp3'),
   'Love Story.mp3': require('../assets/music/Love Story.mp3'),

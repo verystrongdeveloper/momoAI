@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "desktop:web": "node scripts/export-desktop.js",
     "desktop": "tauri build",
+    "desktop:exe": "tauri build --no-bundle && node scripts/place-desktop-exe.js",
     "test": "jest --watchAll",
     "lint": "expo lint"
   },
