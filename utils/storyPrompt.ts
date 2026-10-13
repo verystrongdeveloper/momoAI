@@ -43,6 +43,7 @@ export function buildStoryPrompt() {
 - 대본에 쓸 수 있는 명령은 deleteEmotion, deleteAll, waitSecond = 숫자, endEvent.
 - 캐릭터는 짧은 이름만 쓴다. 선생은 선배나 님 없이 이름만 부른다.
 - 등장시킬 학생: ${names}
+- 대사 화자는 위 학생만 쓴다. 그 외 이름은 화자도, 현장에 있는 인물도 되지 않는다.
 
 [형식 예시]
 타이틀 : 잠자는 고래

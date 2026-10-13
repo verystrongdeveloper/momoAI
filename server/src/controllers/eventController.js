@@ -4,6 +4,7 @@ const { buildSelectionPrompt } = require('../utils/selectionPromptBuilder');
 const { buildEventPromptPro } = require('../utils/promptBuilderPro');
 const { getDialogHistory, readKey } = require('./chatController');
 const { resources } = require('../config/prompts');
+const { getAvailableCharacters, hasStoryAssets, keepAssetSpeakers } = require('../utils/characterList');
 
 const SELECTOR_SYSTEM = `너는 스토리 기획자다. 캐릭터처럼 말하지 않는다. 요청한 JSON만 출력한다. 대사·거절·설명 금지.`;
 const EVENT_WRITER_SYSTEM = `너는 블루 아카이브 인연 스토리 스크립트 작성기다. 캐릭터처럼 대답하지 말고, 요청한 출력 형식 그대로 스크립트만 작성한다.`;
@@ -65,11 +66,10 @@ exports.createEvent = async (req, res) => {
 
     // 선택된 추가 캐릭터들을 순회하며 emotions 정보 추가
     selectedExtraChars.forEach(selectedChar => {
-      // 메인 캐릭터와 중복되지 않도록 방지
-      if (selectedChar.name !== character) {
+      if (selectedChar.name && selectedChar.name !== character && hasStoryAssets(selectedChar.name)) {
         allCharsWithEmotions.push({
           name: selectedChar.name,
-          emotions: resources[selectedChar.name]?.emotions || []
+          emotions: resources[selectedChar.name].emotions,
         });
       }
     });
@@ -92,7 +92,7 @@ exports.createEvent = async (req, res) => {
     const rawScript = typeof eventRes.response.text === 'function'
       ? await eventRes.response.text()
       : eventRes.response.text;
-    const script = rawScript.trim();
+    const script = keepAssetSpeakers(rawScript.trim(), getAvailableCharacters());
 
     if (!script.includes('endEvent')) {
       console.warn(`[${character}] 이벤트 스크립트 형식 경고`);

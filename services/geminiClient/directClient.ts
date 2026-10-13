@@ -2,6 +2,7 @@ import rooms from '../../shared/groupRooms.json';
 import { buildGroupSystemPrompt, resources } from '../../shared/prompts';
 import { buildEventPromptPro } from '../../shared/prompts/promptBuilderPro';
 import { buildSelectionPrompt } from '../../shared/prompts/selectionPromptBuilder';
+import { getAvailableCharacters, hasStoryAssets, keepAssetSpeakers } from '../../shared/prompts/characterList';
 import { getGeminiKey } from '@/services/geminiKey';
 import { dialogKey, sendWithFallback, userApiKey } from './rest';
 
@@ -83,7 +84,7 @@ export const directClient = {
       { name: character, emotions: resources[character]?.emotions ?? [] },
     ];
     for (const selectedChar of selection.characters ?? []) {
-      if (selectedChar.name && selectedChar.name !== character) {
+      if (selectedChar.name && selectedChar.name !== character && hasStoryAssets(selectedChar.name)) {
         allCharsWithEmotions.push({
           name: selectedChar.name,
           emotions: resources[selectedChar.name]?.emotions ?? [],
@@ -92,7 +93,10 @@ export const directClient = {
     }
 
     const eventPrompt = buildEventPromptPro(character, dialogHistory, allCharsWithEmotions, selection.direction ?? '');
-    const script = (await sendWithFallback(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, apiKey)).trim();
+    const script = keepAssetSpeakers(
+      (await sendWithFallback(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, apiKey)).trim(),
+      getAvailableCharacters(),
+    );
     return { eventScript: script };
   },
 

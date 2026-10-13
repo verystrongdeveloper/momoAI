@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -26,21 +26,25 @@ const StorySidebar: React.FC<Props> = ({
         onPress={onOpenCharacterList}
         style={[styles.iconBtn, active === 'characters' && styles.iconBtnActive]}
       >
-        <Image source={require('../../assets/images/list.jpg')} style={styles.icon} />
+        <View style={styles.iconWrap}>
+          <Ionicons name="person-outline" size={28} color="#ffffff" />
+        </View>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={onOpenGroupChatList}
         style={[styles.iconBtn, active === 'groups' && styles.iconBtnActive]}
       >
-        <Image source={require('../../assets/images/message.jpg')} style={styles.icon} />
+        <View style={styles.iconWrap}>
+          <Ionicons name="chatbubbles-outline" size={28} color="#ffffff" />
+        </View>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={onOpenLibrary}
         style={[styles.iconBtn, active === 'library' && styles.iconBtnActive]}
       >
-        <View style={styles.libraryIcon}>
+        <View style={styles.iconWrap}>
           <Ionicons name="library-outline" size={28} color="#ffffff" />
         </View>
       </TouchableOpacity>
@@ -49,7 +53,7 @@ const StorySidebar: React.FC<Props> = ({
         onPress={onOpenSettings}
         style={[styles.iconBtn, active === 'settings' && styles.iconBtnActive]}
       >
-        <View style={styles.libraryIcon}>
+        <View style={styles.iconWrap}>
           <Ionicons name="settings-outline" size={28} color="#ffffff" />
         </View>
       </TouchableOpacity>
@@ -83,12 +87,7 @@ const styles = StyleSheet.create({
   iconBtnActive: {
     backgroundColor: 'rgba(255,255,255,0.18)',
   },
-  icon: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
-  },
-  libraryIcon: {
+  iconWrap: {
     width: 40,
     height: 40,
     alignItems: 'center',

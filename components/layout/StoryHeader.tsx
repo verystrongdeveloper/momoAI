@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   /** 좁은 화면에서 채팅을 열었을 때 표시할 제목 */
@@ -15,9 +15,7 @@ const StoryHeader: React.FC<Props> = ({ title, onBack }) => {
         <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={8}>
           <Text style={styles.backText}>‹</Text>
         </TouchableOpacity>
-      ) : (
-        <Image source={require('../../assets/images/logo.jpg')} style={styles.logo} />
-      )}
+      ) : null}
 
       {title ? (
         <Text style={styles.title} numberOfLines={1}>
@@ -42,12 +40,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 56,
     backgroundColor: '#FB94A7',
-  },
-  logo: {
-    width: 140,
-    height: 40,
-    resizeMode: 'contain',
-    borderRadius: 5,
   },
   backBtn: {
     paddingHorizontal: 6,
