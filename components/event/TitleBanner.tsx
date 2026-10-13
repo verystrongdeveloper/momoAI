@@ -8,8 +8,10 @@ interface Props {
 }
 
 const TitleBanner: React.FC<Props> = ({ title, visible }) => {
-  const { eventHeight, scale } = useLayout();
-  const styles = useMemo(() => makeStyles(scale), [scale]);
+  const { eventWidth, eventHeight, scale, isCompact } = useLayout();
+  const fontSize = isCompact ? Math.min(36, Math.max(28, Math.round(eventWidth * 0.082))) : 48 * scale;
+  const bannerHeight = isCompact ? Math.round(fontSize * 2.6 + 28) : eventHeight / 4;
+  const styles = useMemo(() => makeStyles(fontSize), [fontSize]);
   const opacity = useRef(new Animated.Value(0)).current;
   const boxHeight = useRef(new Animated.Value(0)).current;
 
@@ -17,12 +19,12 @@ const TitleBanner: React.FC<Props> = ({ title, visible }) => {
     if (visible) {
       Animated.parallel([
         Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: false }),
-        Animated.timing(boxHeight, { toValue: eventHeight / 4, duration: 500, useNativeDriver: false }),
+        Animated.timing(boxHeight, { toValue: bannerHeight, duration: 500, useNativeDriver: false }),
       ]).start();
     } else {
       Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: false }).start();
     }
-  }, [visible, eventHeight, opacity, boxHeight]);
+  }, [visible, bannerHeight, opacity, boxHeight]);
 
   return (
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
@@ -35,7 +37,7 @@ const TitleBanner: React.FC<Props> = ({ title, visible }) => {
 
 export default TitleBanner;
 
-const makeStyles = (scale: number) =>
+const makeStyles = (fontSize: number) =>
   StyleSheet.create({
     overlay: {
       ...StyleSheet.absoluteFillObject,
@@ -55,7 +57,8 @@ const makeStyles = (scale: number) =>
       paddingHorizontal: 16,
     },
     text: {
-      fontSize: 48 * scale,
+      fontSize,
+      lineHeight: Math.round(fontSize * 1.35),
       fontWeight: 'bold',
       color: '#556390',
       textAlign: 'center',

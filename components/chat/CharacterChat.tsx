@@ -4,6 +4,7 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -58,6 +59,13 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
     const t = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(t);
   }, [messages]);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    });
+    return () => show.remove();
+  }, []);
 
   const removeTyping = (prev: Chat[]) => prev.filter((m) => m.sender !== 'typing');
 
