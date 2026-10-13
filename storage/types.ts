@@ -3,6 +3,8 @@ export type Preferences = {
   sfxVolume: number;
   greetMode: boolean;
   rememberApiKey: boolean;
+  termsAccepted: boolean;
+  tutorialSeen: boolean;
 };
 
 export type StoryRecord = {
@@ -23,6 +25,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   sfxVolume: 0.5,
   greetMode: false,
   rememberApiKey: false,
+  termsAccepted: false,
+  tutorialSeen: false,
 };
 
 export const MIGRATION_FLAG = 'momo.migration.v1';
@@ -80,6 +84,8 @@ export function parsePreferences(raw: string | null): Preferences {
       sfxVolume: clampVolume(Number(parsed.sfxVolume)) ?? DEFAULT_PREFERENCES.sfxVolume,
       greetMode: parsed.greetMode === true,
       rememberApiKey: parsed.rememberApiKey === true,
+      termsAccepted: parsed.termsAccepted === true,
+      tutorialSeen: parsed.tutorialSeen === true,
     };
   } catch {
     return { ...DEFAULT_PREFERENCES };

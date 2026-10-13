@@ -47,6 +47,8 @@ export async function migrateLegacyStorage(): Promise<boolean> {
       sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: oldGreetRaw === '1',
       rememberApiKey,
+      termsAccepted: false,
+      tutorialSeen: false,
     };
 
     if (rememberApiKey) await saveApiKey(apiKey);

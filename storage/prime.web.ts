@@ -30,6 +30,8 @@ export function readInitialSync(): StorageSnapshot | null {
       bgmVolume: parseVolume(localStorage.getItem(OLD_VOLUME)),
       sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: localStorage.getItem(OLD_GREET) === '1',
+      termsAccepted: false,
+      tutorialSeen: false,
       stories: parseStories(localStorage.getItem(OLD_STORIES)) ?? [],
     };
   } catch {

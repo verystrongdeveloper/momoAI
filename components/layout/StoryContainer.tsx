@@ -9,6 +9,7 @@ import GroupChat from '@/components/chat/GroupChat';
 import GroupChatList from '@/components/chat/GroupChatList';
 import StoryLibraryList from '@/components/chat/StoryLibraryList';
 import SettingsPanel from './SettingsPanel';
+import AppGuide, { GuideMode } from '@/components/guide/AppGuide';
 import { CHARACTERS, Character } from '@/constants/characters';
 import { findRoom } from '@/constants/groupChatRooms';
 import { useLayout } from '@/hooks/useLayout';
@@ -22,6 +23,7 @@ const StoryContainer: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [guide, setGuide] = useState<GuideMode | null>(null);
 
   const hasDetail = selectedCharacter !== null || activeGroupId !== null;
   const detailTitle = selectedCharacter?.name ?? (activeGroupId ? findRoom(activeGroupId)?.name : undefined);
@@ -67,7 +69,11 @@ const StoryContainer: React.FC = () => {
   const libraryOpen = listPanel === 'library';
   const settingsOpen = listPanel === 'settings';
   const fullPane = libraryOpen || settingsOpen;
-  const fullPaneView = settingsOpen ? <SettingsPanel /> : <StoryLibraryList />;
+  const fullPaneView = settingsOpen ? (
+    <SettingsPanel onOpenTutorial={() => setGuide('tutorial')} onOpenTerms={() => setGuide('terms')} />
+  ) : (
+    <StoryLibraryList />
+  );
 
   const list = (
     <View style={[styles.list, isCompact && styles.listCompact]}>
@@ -129,6 +135,8 @@ const StoryContainer: React.FC = () => {
           {detail}
         </View>
       )}
+
+      <AppGuide manual={guide} onManualClose={() => setGuide(null)} />
 
       {globalLoading && (
         <View style={styles.loadingOverlay}>

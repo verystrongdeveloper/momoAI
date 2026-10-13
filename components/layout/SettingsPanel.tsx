@@ -60,7 +60,13 @@ function VolumeControl({
   );
 }
 
-export default function SettingsPanel() {
+export default function SettingsPanel({
+  onOpenTutorial,
+  onOpenTerms,
+}: {
+  onOpenTutorial: () => void;
+  onOpenTerms: () => void;
+}) {
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
 
@@ -79,6 +85,18 @@ export default function SettingsPanel() {
 
       <View style={styles.keyWrap}>
         <GeminiKeyField />
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>안내</Text>
+        <View style={styles.guideRow}>
+          <TouchableOpacity style={styles.guideBtn} onPress={onOpenTutorial}>
+            <Text style={styles.guideText}>사용 방법</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.guideBtn} onPress={onOpenTerms}>
+            <Text style={styles.guideText}>이용 약관</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -161,5 +179,21 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 13,
     color: '#6a8298',
+  },
+  guideRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  guideBtn: {
+    borderRadius: 12,
+    backgroundColor: '#f6eef1',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  guideText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6d5360',
   },
 });

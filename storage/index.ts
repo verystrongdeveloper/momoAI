@@ -5,7 +5,13 @@ import { migrateLegacyStorage } from './migrate';
 import { readInitialSync } from './prime';
 import { DEFAULT_PREFERENCES, Preferences, StoryRecord, clampVolume } from './types';
 
-type SettingKey = 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey';
+type SettingKey = 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen';
+
+let synced = readInitialSync() != null;
+
+export function isStorageSynced() {
+  return synced;
+}
 
 let memory: Preferences & { apiKey: string; stories: StoryRecord[] } = {
   apiKey: '',
@@ -41,7 +47,7 @@ export function getRememberApiKey() {
 }
 
 export function getSetting(key: 'bgmVolume' | 'sfxVolume'): number;
-export function getSetting(key: 'greetMode' | 'rememberApiKey'): boolean;
+export function getSetting(key: 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen'): boolean;
 export function getSetting(key: SettingKey): number | boolean {
   return memory[key];
 }
@@ -56,6 +62,8 @@ async function persistAll() {
     sfxVolume: memory.sfxVolume,
     greetMode: memory.greetMode,
     rememberApiKey: memory.rememberApiKey,
+    termsAccepted: memory.termsAccepted,
+    tutorialSeen: memory.tutorialSeen,
   };
   const keyTask = memory.rememberApiKey && memory.apiKey ? writeApiKey(memory.apiKey) : clearApiKey();
   await Promise.all([keyTask, savePreferences(prefs), writeStoryRecords(memory.stories)]);
@@ -76,14 +84,17 @@ export function saveSetting(key: SettingKey, value: number | boolean) {
     const next = clampVolume(value);
     if (next == null || next === memory[key]) return;
     memory[key] = next;
-  } else if (key === 'greetMode') {
+  } else if (
+    key === 'greetMode' ||
+    key === 'rememberApiKey' ||
+    key === 'termsAccepted' ||
+    key === 'tutorialSeen'
+  ) {
     const next = value === true;
-    if (next === memory.greetMode) return;
-    memory.greetMode = next;
+    if (next === memory[key]) return;
+    memory[key] = next;
   } else {
-    const next = value === true;
-    if (next === memory.rememberApiKey) return;
-    memory.rememberApiKey = next;
+    return;
   }
   dirty = true;
   emit();
@@ -108,6 +119,8 @@ async function pullAll() {
     sfxVolume: prefs.sfxVolume,
     greetMode: prefs.greetMode,
     rememberApiKey: prefs.rememberApiKey,
+    termsAccepted: prefs.termsAccepted,
+    tutorialSeen: prefs.tutorialSeen,
     stories,
   };
 }
@@ -123,6 +136,7 @@ export function hydrateStorage() {
       } catch {
         hydrated = true;
       } finally {
+        synced = true;
         emit();
       }
     })();
