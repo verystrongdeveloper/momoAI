@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Button,
   FlatList,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { geminiClient, geminiFailureText } from '@/services/geminiClient';
+import { getGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
 import { saveStory } from '@/store/storyLibrary';
@@ -42,6 +43,8 @@ const splitSentences = (text: string) =>
 const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlobalLoading }) => {
   const router = useRouter();
 
+  const apiKey = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
+  const hasKey = apiKey.trim().length > 0;
   const [messages, setMessages] = useState<Chat[]>([]);
   const [input, setInput] = useState('');
   const [eventReady, setEventReady] = useState(false);
@@ -77,7 +80,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
 
   /* 먼저 말 걸기가 켜져 있으면 입장 시 캐릭터가 먼저 말을 건다 */
   useEffect(() => {
-    if (!getGreetMode()) return;
+    if (!getGreetMode() || !getGeminiKey().trim()) return;
 
     let cancelled = false;
     waitingRef.current = true;
@@ -103,11 +106,11 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterName]);
+  }, [characterName, hasKey]);
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || waitingRef.current) return;
+    if (!hasKey || !text || waitingRef.current) return;
 
     waitingRef.current = true;
     setMessages((prev) => [
@@ -190,14 +193,15 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
       <View style={styles.inputArea}>
         <TextInput
           ref={inputRef}
-          style={styles.input}
-          placeholder="메시지를 입력하세요"
-          value={input}
+          style={[styles.input, !hasKey && styles.inputLocked]}
+          placeholder={hasKey ? '메시지를 입력하세요' : '설정에서 API 키를 입력해 주세요'}
+          value={hasKey ? input : ''}
+          editable={hasKey}
           onChangeText={setInput}
           onSubmitEditing={handleSend}
           blurOnSubmit={false}
         />
-        <Button title="보내기" onPress={handleSend} />
+        <Button title="보내기" onPress={handleSend} disabled={!hasKey} />
       </View>
     </View>
   );
@@ -272,6 +276,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     fontSize: 16,
+  },
+  inputLocked: {
+    backgroundColor: '#f3f3f3',
+    color: '#888',
   },
   eventContainer: {
     alignItems: 'center',

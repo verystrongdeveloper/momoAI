@@ -26,6 +26,4 @@ export const geminiClient = {
   trigger: (character: string) => current().trigger(character),
   chat: (character: string, message: string) => current().chat(character, message),
   createEvent: (character: string) => current().createEvent(character),
-  groupTrigger: (roomId: string) => current().groupTrigger(roomId),
-  groupChat: (roomId: string, userMessage: string) => current().groupChat(roomId, userMessage),
 };

@@ -78,7 +78,6 @@ function tutorialSteps(): Step[] {
     body: (
       <>
         <IconLine name="person-outline" label="사람 아이콘" text="은 캐릭터와 1:1로 이야기합니다." />
-        <IconLine name="chatbubbles-outline" label="말풍선 아이콘" text="은 여러 캐릭터가 있는 단톡방입니다." />
         <Text style={styles.body}>목록에서 상대를 고른 뒤 메시지를 보내고, 보내기를 누릅니다.</Text>
         <Text style={styles.body}>목록 위의 먼저 말 걸기를 켜면, 방에 들어갈 때 상대가 먼저 말을 겁니다.</Text>
       </>

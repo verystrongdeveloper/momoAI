@@ -5,7 +5,6 @@
 ## 주요 기능
 
 - **1:1 캐릭터 채팅**: 캐릭터 페르소나에 맞춰 대화
-- **그룹 채팅**: 여러 캐릭터가 참여하는 단톡방
 - **인연 이벤트**: 대화가 쌓이면 시작되는 인터랙티브 스토리
 - **멀티미디어**: 배경, 표정, BGM, 효과음
 
@@ -48,7 +47,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000
 ```
 ├── app/                    # Expo Router 화면
 ├── components/
-│   ├── chat/               # 1:1 · 단톡 채팅
+│   ├── chat/               # 1:1 채팅
 │   ├── event/              # 인연 이벤트 플레이어
 │   └── layout/             # 헤더 · 사이드바 · 컨테이너
 ├── constants/              # 캐릭터 · 에셋 매핑
@@ -58,7 +57,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000
 │   ├── personas.js         # 캐릭터 고유 페르소나
 │   ├── npcs.js             # 이벤트 엑스트라
 │   └── resources.js        # bg / music / emotion 목록
-└── shared/                 # 프론트·서버 공유 단톡방 정의
+└── shared/                 # 프론트·서버 공유 정의
 ```
 
 캐릭터를 추가할 때는 `personas.js`(또는 `npcs.js`)와 `resources.js`, 프론트 `constants/characters.ts`만 맞추면 됩니다.

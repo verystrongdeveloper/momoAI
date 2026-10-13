@@ -5,42 +5,31 @@ import StoryHeader from './StoryHeader';
 import StorySidebar from './StorySidebar';
 import ChatEntry from '@/components/chat/ChatEntry';
 import CharacterChat from '@/components/chat/CharacterChat';
-import GroupChat from '@/components/chat/GroupChat';
-import GroupChatList from '@/components/chat/GroupChatList';
 import StoryLibraryList from '@/components/chat/StoryLibraryList';
 import SettingsPanel from './SettingsPanel';
 import AppGuide, { GuideMode } from '@/components/guide/AppGuide';
 import { CHARACTERS, Character } from '@/constants/characters';
-import { findRoom } from '@/constants/groupChatRooms';
 import { useLayout } from '@/hooks/useLayout';
 
-/** characters: 1:1 캐릭터 목록  |  groups: 단톡방 목록  |  library: 저장된 스토리  |  settings: 설정 */
-type ListPanel = 'characters' | 'groups' | 'library' | 'settings';
+/** characters: 1:1 캐릭터 목록  |  library: 저장된 스토리  |  settings: 설정 */
+type ListPanel = 'characters' | 'library' | 'settings';
 
 const StoryContainer: React.FC = () => {
   const { isCompact } = useLayout();
   const [listPanel, setListPanel] = useState<ListPanel>('characters');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [guide, setGuide] = useState<GuideMode | null>(null);
 
-  const hasDetail = selectedCharacter !== null || activeGroupId !== null;
-  const detailTitle = selectedCharacter?.name ?? (activeGroupId ? findRoom(activeGroupId)?.name : undefined);
+  const hasDetail = selectedCharacter !== null;
+  const detailTitle = selectedCharacter?.name;
 
   const closeDetail = () => {
     setSelectedCharacter(null);
-    setActiveGroupId(null);
   };
 
   const openCharacter = (char: Character) => {
-    setActiveGroupId(null);
     setSelectedCharacter(char);
-  };
-
-  const openGroup = (groupId: string) => {
-    setSelectedCharacter(null);
-    setActiveGroupId(groupId);
   };
 
   const sidebar = (
@@ -49,10 +38,6 @@ const StoryContainer: React.FC = () => {
       active={listPanel}
       onOpenCharacterList={() => {
         setListPanel('characters');
-        if (isCompact) closeDetail();
-      }}
-      onOpenGroupChatList={() => {
-        setListPanel('groups');
         if (isCompact) closeDetail();
       }}
       onOpenLibrary={() => {
@@ -90,7 +75,6 @@ const StoryContainer: React.FC = () => {
             onSelect={() => openCharacter(char)}
           />
         ))}
-      {listPanel === 'groups' && <GroupChatList activeRoomId={activeGroupId} onEnterRoom={openGroup} />}
       </ScrollView>
     </View>
   );
@@ -107,7 +91,6 @@ const StoryContainer: React.FC = () => {
           setGlobalLoading={setGlobalLoading}
         />
       )}
-      {activeGroupId && <GroupChat key={activeGroupId} groupId={activeGroupId} />}
       {!hasDetail && (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>대화할 상대를 선택하세요.</Text>

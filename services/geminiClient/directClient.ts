@@ -1,5 +1,4 @@
-import rooms from '../../shared/groupRooms.json';
-import { buildGroupSystemPrompt, resources } from '../../shared/prompts';
+import { resources } from '../../shared/prompts';
 import { buildEventPromptPro } from '../../shared/prompts/promptBuilderPro';
 import { buildSelectionPrompt } from '../../shared/prompts/selectionPromptBuilder';
 import { getAvailableCharacters, hasStoryAssets, keepAssetSpeakers } from '../../shared/prompts/characterList';
@@ -17,8 +16,6 @@ const TRIGGER_MESSAGE = `
 const SELECTOR_SYSTEM = '너는 스토리 기획자다. 캐릭터처럼 말하지 않는다. 요청한 JSON만 출력한다. 대사·거절·설명 금지.';
 const EVENT_WRITER_SYSTEM = '너는 블루 아카이브 인연 스토리 스크립트 작성기다. 캐릭터처럼 대답하지 말고, 요청한 출력 형식 그대로 스크립트만 작성한다.';
 
-const groupRooms = Object.fromEntries(rooms.map((room) => [room.id, room.members]));
-
 function readKey(): string {
   return userApiKey(getGeminiKey());
 }
@@ -30,19 +27,6 @@ function pushLog(character: string, apiKey: string, pair: DialogPair): boolean {
   if (log.length > 3) log.shift();
   chatLogs.set(slot, log);
   return log.length >= 3;
-}
-
-function makeGroupTurnPrompt(userMessage: string | null): string {
-  if (!userMessage) {
-    return '선생이 단톡방에 들어왔다. 멤버 2~4명이 먼저 떠들어라. 출력 형식을 지켜라.';
-  }
-  return `선생: "${userMessage}"\n위 말에 멤버들이 단톡방처럼 반응하라. 출력 형식을 지켜라.`;
-}
-
-function membersOf(roomId: string): string[] {
-  const members = groupRooms[roomId];
-  if (!members) throw new Error('roomId 누락 또는 방 없음');
-  return members;
 }
 
 export const directClient = {
@@ -98,32 +82,5 @@ export const directClient = {
       getAvailableCharacters(),
     );
     return { eventScript: script };
-  },
-
-  async groupTrigger(roomId: string) {
-    const apiKey = readKey();
-    const members = membersOf(roomId);
-    const answer = await sendWithFallback(
-      `groupChat_${roomId}`,
-      '',
-      makeGroupTurnPrompt(null),
-      buildGroupSystemPrompt(members),
-      apiKey,
-    );
-    return { answer };
-  },
-
-  async groupChat(roomId: string, userMessage: string) {
-    const apiKey = readKey();
-    if (!userMessage) throw new Error('입력 부족');
-    const members = membersOf(roomId);
-    const answer = await sendWithFallback(
-      `groupChat_${roomId}`,
-      '',
-      makeGroupTurnPrompt(userMessage),
-      buildGroupSystemPrompt(members),
-      apiKey,
-    );
-    return { answer };
   },
 };

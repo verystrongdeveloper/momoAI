@@ -5,9 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 interface Props {
   /** 좁은 화면에서는 아래쪽 가로 탭 바로 표시 */
   horizontal?: boolean;
-  active: 'characters' | 'groups' | 'library' | 'settings';
+  active: 'characters' | 'library' | 'settings';
   onOpenCharacterList: () => void;
-  onOpenGroupChatList: () => void;
   onOpenLibrary: () => void;
   onOpenSettings: () => void;
 }
@@ -16,7 +15,6 @@ const StorySidebar: React.FC<Props> = ({
   horizontal,
   active,
   onOpenCharacterList,
-  onOpenGroupChatList,
   onOpenLibrary,
   onOpenSettings,
 }) => {
@@ -28,15 +26,6 @@ const StorySidebar: React.FC<Props> = ({
       >
         <View style={styles.iconWrap}>
           <Ionicons name="person-outline" size={28} color="#ffffff" />
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={onOpenGroupChatList}
-        style={[styles.iconBtn, active === 'groups' && styles.iconBtnActive]}
-      >
-        <View style={styles.iconWrap}>
-          <Ionicons name="chatbubbles-outline" size={28} color="#ffffff" />
         </View>
       </TouchableOpacity>
 

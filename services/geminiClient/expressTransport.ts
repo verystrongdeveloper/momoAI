@@ -33,10 +33,4 @@ export const expressTransport = {
 
   createEvent: (character: string) =>
     post<{ eventScript: string }>('/api/event', { character }),
-
-  groupTrigger: (roomId: string) =>
-    post<{ answer: string }>('/api/group/trigger', { roomId }),
-
-  groupChat: (roomId: string, userMessage: string) =>
-    post<{ answer: string }>('/api/group/chat', { roomId, userMessage }),
 };
