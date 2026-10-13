@@ -1,21 +1,33 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StoryContainer from '@/components/layout/StoryContainer';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 
 export default function Home() {
+  const insets = useSafeAreaInsets();
   const keyboardInset = useKeyboardInset();
 
   return (
-    <SafeAreaView style={[styles.container, { paddingBottom: keyboardInset }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          paddingBottom: Math.max(insets.bottom, keyboardInset),
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
       <StoryContainer />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#FB94A7',
   },
 });

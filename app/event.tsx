@@ -1,5 +1,8 @@
 import { Redirect } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import EventPlayer from '@/components/event/EventPlayer';
 import { consumePendingEvent } from '@/store/eventStore';
 
@@ -11,7 +14,38 @@ const PREVIEW = `selection : (1)"오늘은 무슨 일이야?" (2)"잠깐 쉬러 
 export default function EventScreen() {
   const [script] = useState(() => consumePendingEvent() ?? PREVIEW);
 
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.ALL).catch(() => undefined);
+    return () => {
+      void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
+    };
+  }, []);
+
+  const insets = useSafeAreaInsets();
+
   if (!script) return <Redirect href="/" />;
 
-  return <EventPlayer script={script} />;
+  return (
+    <View
+      style={[
+        styles.safe,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
+      <EventPlayer script={script} />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+});

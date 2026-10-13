@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { bgMap, emotionMap, expressionMap, musicMap, sfxMap } from '@/constants/eventAssets';
 import { getSfxVolume } from '@/services/sfxVolume';
 import { AssetKind } from '@/utils/insertStoryAsset';
@@ -74,10 +74,9 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
   const [query, setQuery] = useState('');
   const [hovered, setHovered] = useState<string | null>(null);
   const preview = hovered ? imageOf(category, hovered) : undefined;
-  const previewSound = useRef<Audio.Sound | null>(null);
+  const previewSound = useRef<AudioPlayer | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
     const src =
       category === 'music' && hovered && hovered !== 'none'
         ? musicMap[hovered as keyof typeof musicMap]
@@ -85,11 +84,11 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
           ? sfxMap[hovered as keyof typeof sfxMap]
           : undefined;
 
-    const stop = async (snd: Audio.Sound | null) => {
-      if (!snd) return;
+    const stop = (player: AudioPlayer | null) => {
+      if (!player) return;
       try {
-        await snd.stopAsync();
-        await snd.unloadAsync();
+        player.pause();
+        player.remove();
       } catch {
         /* 이미 정리된 소리 */
       }
@@ -98,32 +97,23 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
     if (!src) {
       const prev = previewSound.current;
       previewSound.current = null;
-      void stop(prev);
+      stop(prev);
       return;
     }
 
-    const snd = new Audio.Sound();
-    previewSound.current = snd;
-    void (async () => {
-      try {
-        await snd.loadAsync(src, {
-          isLooping: category === 'music',
-          volume: category === 'sound' ? getSfxVolume() : 1,
-        });
-        if (cancelled) {
-          await stop(snd);
-          return;
-        }
-        await snd.playAsync();
-      } catch {
-        /* 브라우저가 재생을 막으면 미리듣기를 건너뛴다 */
-      }
-    })();
+    const player = createAudioPlayer(src);
+    player.loop = category === 'music';
+    player.volume = category === 'sound' ? getSfxVolume() : 1;
+    previewSound.current = player;
+    try {
+      player.play();
+    } catch {
+      /* 브라우저가 재생을 막으면 미리듣기를 건너뛴다 */
+    }
 
     return () => {
-      cancelled = true;
-      if (previewSound.current === snd) previewSound.current = null;
-      void stop(snd);
+      if (previewSound.current === player) previewSound.current = null;
+      stop(player);
     };
   }, [category, hovered]);
 

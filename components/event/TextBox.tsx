@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import EventDialogue, { DialogueHandle } from './EventDialogue';
 import { EventLine } from '@/types/EventLine';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { storyFont, useLayout } from '@/hooks/useLayout';
 
 interface Props {
@@ -14,11 +13,7 @@ interface Props {
 
 const TextBox = forwardRef<DialogueHandle, Props>(function TextBox({ currentLine, lastSpoken, onPress }, ref) {
   const { eventWidth, eventHeight } = useLayout();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(
-    () => makeStyles(eventWidth, eventHeight, insets.bottom),
-    [eventWidth, eventHeight, insets.bottom],
-  );
+  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
 
   const shown =
     currentLine?.type === 'narration'
@@ -49,7 +44,7 @@ const TextBox = forwardRef<DialogueHandle, Props>(function TextBox({ currentLine
 
 export default TextBox;
 
-const makeStyles = (W: number, H: number, bottomInset: number) =>
+const makeStyles = (W: number, H: number) =>
   StyleSheet.create({
     box: {
       position: 'absolute',
@@ -57,7 +52,7 @@ const makeStyles = (W: number, H: number, bottomInset: number) =>
       width: '100%',
       height: H * 0.35,
       paddingTop: H * 0.065,
-      paddingBottom: H * 0.05 + bottomInset,
+      paddingBottom: H * 0.05,
       paddingHorizontal: W * 0.055,
       zIndex: 8,
     },

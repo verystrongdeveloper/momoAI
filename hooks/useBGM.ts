@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { musicMap } from '@/constants/eventAssets';
 import { listenForPlaybackFocus, listenForPlaybackUnlock } from '@/platform/audio';
 import { playbackOnFocusChange } from '@/platform/playbackFocus';
@@ -13,7 +13,7 @@ import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVo
  */
 export default function useBGM() {
   /** 현재 재생 중인 사운드 객체 */
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<AudioPlayer | null>(null);
   /** 현재 재생 중인 파일명(중복 재생 방지) */
   const currentKey = useRef<string | null>(null);
   const isLoadingRef = useRef<boolean>(false);
@@ -34,7 +34,7 @@ export default function useBGM() {
     setVolumeState(next);
     if (!soundRef.current) return;
     try {
-      await soundRef.current.setVolumeAsync(next);
+      soundRef.current.volume = next;
     } catch {
       /* ignore */
     }
@@ -55,7 +55,7 @@ export default function useBGM() {
     setMutedState(value);
     if (!soundRef.current) return;
     try {
-      await soundRef.current.setIsMutedAsync(value);
+      soundRef.current.muted = value;
     } catch {
       /* ignore */
     }
@@ -67,8 +67,8 @@ export default function useBGM() {
     pausedByLifecycle.current = false;
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
+        soundRef.current.pause();
+        soundRef.current.remove();
       } catch {
         /* ignore */
       }
@@ -98,12 +98,10 @@ export default function useBGM() {
           return;
         }
 
-        const snd = new Audio.Sound();
-        await snd.loadAsync(src, {
-          isLooping: true,
-          volume: volumeRef.current,
-          isMuted: mutedRef.current,
-        });
+        const snd = createAudioPlayer(src);
+        snd.loop = true;
+        snd.volume = volumeRef.current;
+        snd.muted = mutedRef.current;
         soundRef.current = snd;
         currentKey.current = key;
 
@@ -111,12 +109,18 @@ export default function useBGM() {
           clearResume();
           resumeRef.current = listenForPlaybackUnlock(() => {
             resumeRef.current = null;
-            void snd.playAsync().catch(() => {});
+            try {
+              snd.play();
+            } catch {
+              /* ignore */
+            }
           });
         };
 
         try {
-          await snd.playAsync();
+          snd.play();
+          // 웹은 play()가 막혀도 예외를 던지지 않고 paused로 남는다.
+          if (snd.paused) armResume();
         } catch {
           // 브라우저가 클릭 없이 재생을 막으면, 다음 입력에서 시작한다.
           armResume();
@@ -141,13 +145,25 @@ export default function useBGM() {
         const snd = soundRef.current;
         const next = playbackOnFocusChange('active', snd != null, pausedByLifecycle.current);
         pausedByLifecycle.current = next.pausedByLifecycle;
-        if (next.command === 'resume' && snd) void snd.playAsync().catch(() => {});
+        if (next.command === 'resume' && snd) {
+          try {
+            snd.play();
+          } catch {
+            /* ignore */
+          }
+        }
       },
       () => {
         const snd = soundRef.current;
         const next = playbackOnFocusChange('background', snd != null, pausedByLifecycle.current);
         pausedByLifecycle.current = next.pausedByLifecycle;
-        if (next.command === 'pause' && snd) void snd.pauseAsync().catch(() => {});
+        if (next.command === 'pause' && snd) {
+          try {
+            snd.pause();
+          } catch {
+            /* ignore */
+          }
+        }
       },
     );
   }, []);

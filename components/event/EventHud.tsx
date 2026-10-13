@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLayout } from '@/hooks/useLayout';
 
 interface Props {
@@ -11,11 +10,7 @@ interface Props {
 
 const EventHud: React.FC<Props> = ({ auto, onToggleAuto, onMenu }) => {
   const { eventWidth, eventHeight } = useLayout();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(
-    () => makeStyles(eventWidth, eventHeight, insets.top),
-    [eventWidth, eventHeight, insets.top],
-  );
+  const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
 
   return (
     <>
@@ -36,11 +31,11 @@ const EventHud: React.FC<Props> = ({ auto, onToggleAuto, onMenu }) => {
 
 export default EventHud;
 
-const makeStyles = (W: number, H: number, topInset: number) =>
+const makeStyles = (W: number, H: number) =>
   StyleSheet.create({
     markWrap: {
       position: 'absolute',
-      top: Math.max(H * 0.042, topInset + 8),
+      top: Math.max(8, H * 0.02),
       left: W * 0.03,
       height: Math.max(32, H * 0.055),
       justifyContent: 'center',
@@ -57,7 +52,7 @@ const makeStyles = (W: number, H: number, topInset: number) =>
     },
     row: {
       position: 'absolute',
-      top: Math.max(H * 0.042, topInset + 8),
+      top: Math.max(8, H * 0.02),
       right: W * 0.03,
       flexDirection: 'row',
       gap: W * 0.014,

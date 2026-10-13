@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Asset } from 'expo-asset';
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
 import { useRouter } from 'expo-router';
 import { bgMap, emotionMap, expressionMap, sfxMap } from '@/constants/eventAssets';
 import { getSfxVolume } from '@/services/sfxVolume';
@@ -102,9 +102,14 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const playSFX = async (key: string) => {
     const src = sfxMap[key];
     if (!src) return;
-    const snd = new Audio.Sound();
-    await snd.loadAsync(src, { volume: mutedRef.current ? 0 : getSfxVolume() });
-    await snd.playAsync();
+    const player = createAudioPlayer(src, { keepAudioSessionActive: true });
+    player.volume = mutedRef.current ? 0 : getSfxVolume();
+    const subscription = player.addListener('playbackStatusUpdate', (status) => {
+      if (!status.didJustFinish) return;
+      subscription.remove();
+      player.remove();
+    });
+    player.play();
   };
 
   /* 에셋 선로딩 */
