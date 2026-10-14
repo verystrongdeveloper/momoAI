@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import { createAudioPlayer } from 'expo-audio';
 import { useRouter } from 'expo-router';
@@ -249,7 +249,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           expression={expression}
           animation={animation}
         />
-        <TouchableOpacity style={styles.tap} onPress={onAdvance} activeOpacity={1} />
+        <Pressable style={styles.tap} onPress={onAdvance} accessibilityLabel="다음 대사" />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
         <TextBox ref={dialogueRef} currentLine={line} lastSpoken={last} onPress={onAdvance} />
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
@@ -300,6 +300,6 @@ const styles = StyleSheet.create({
   },
   tap: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 3,
+    zIndex: 7,
   },
 });
