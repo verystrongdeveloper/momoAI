@@ -27,6 +27,7 @@ export default function StoryLibraryList() {
   const [stories, setStories] = useState<SavedStory[]>(() => listStories());
   const [editing, setEditing] = useState<SavedStory | null>(null);
   const [draft, setDraft] = useState('');
+  const [editorTab, setEditorTab] = useState<'story' | 'assets'>('story');
   const [notice, setNotice] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export default function StoryLibraryList() {
     setMenuId(null);
     setEditing(story);
     setDraft(story.script);
+    setEditorTab('story');
     setNotice('');
     selectionRef.current = { start: 0, end: 0 };
   };
@@ -139,20 +141,44 @@ export default function StoryLibraryList() {
           </View>
         </View>
         {!!notice && <Text style={styles.notice}>{notice}</Text>}
-        <View style={styles.editorBody}>
-          <TextInput
-            style={styles.editor}
-            value={draft}
-            onChangeText={setDraft}
-            onSelectionChange={(e) => {
-              selectionRef.current = e.nativeEvent.selection;
-            }}
-            multiline
-            textAlignVertical="top"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <StoryAssetPanel character={editing.character} onInsert={insertAsset} />
+        <View style={[styles.editorBody, isCompact && styles.editorBodyCompact]}>
+          {isCompact && (
+            <View style={styles.editorTabs} accessibilityRole="tablist">
+              <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={{ selected: editorTab === 'story' }}
+                onPress={() => setEditorTab('story')}
+                style={[styles.editorTab, editorTab === 'story' && styles.editorTabActive]}
+              >
+                <Text style={[styles.editorTabText, editorTab === 'story' && styles.editorTabTextActive]}>스토리 수정</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={{ selected: editorTab === 'assets' }}
+                onPress={() => setEditorTab('assets')}
+                style={[styles.editorTab, editorTab === 'assets' && styles.editorTabActive]}
+              >
+                <Text style={[styles.editorTabText, editorTab === 'assets' && styles.editorTabTextActive]}>사용 가능 에셋</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {(!isCompact || editorTab === 'story') && (
+            <TextInput
+              style={[styles.editor, isCompact && styles.editorCompact]}
+              value={draft}
+              onChangeText={setDraft}
+              onSelectionChange={(e) => {
+                selectionRef.current = e.nativeEvent.selection;
+              }}
+              multiline
+              textAlignVertical="top"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+          {(!isCompact || editorTab === 'assets') && (
+            <StoryAssetPanel character={editing.character} onInsert={insertAsset} fullWidth={isCompact} />
+          )}
         </View>
       </View>
     );
@@ -504,6 +530,43 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     overflow: 'visible',
   },
+  editorBodyCompact: {
+    flexDirection: 'column',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  editorTabs: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 10,
+    backgroundColor: '#eceff3',
+    gap: 4,
+  },
+  editorTab: {
+    flex: 1,
+    minHeight: 38,
+    paddingHorizontal: 10,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editorTabActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#243044',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  editorTabText: {
+    color: '#67717d',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  editorTabTextActive: {
+    color: '#d85b76',
+  },
   editor: {
     flex: 1,
     padding: 16,
@@ -514,6 +577,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: '#222',
+  },
+  editorCompact: {
+    width: '100%',
   },
   portrait: {
     ...StyleSheet.absoluteFillObject,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { bgMap, emotionMap, expressionMap, musicMap, sfxMap } from '@/constants/eventAssets';
 import { getSfxVolume } from '@/services/sfxVolume';
@@ -66,15 +66,38 @@ const emotionGroups = EMOTION_GROUPS.map((group) => ({
 interface Props {
   character: string;
   onInsert: (kind: AssetKind, file: string) => void;
+  fullWidth?: boolean;
 }
 
-export default function StoryAssetPanel({ character, onInsert }: Props) {
+export default function StoryAssetPanel({ character, onInsert, fullWidth = false }: Props) {
   const [category, setCategory] = useState<Category>('bg');
   const [owner, setOwner] = useState(() => emotionGroups.find((group) => group.label === character)?.label ?? emotionGroups[0]?.label ?? '');
   const [query, setQuery] = useState('');
   const [hovered, setHovered] = useState<string | null>(null);
+  const [mobilePreviewFile, setMobilePreviewFile] = useState<string | null>(null);
   const preview = hovered ? imageOf(category, hovered) : undefined;
   const previewSound = useRef<AudioPlayer | null>(null);
+  const suppressNextInsert = useRef(false);
+
+  const closeMobilePreview = () => {
+    setMobilePreviewFile(null);
+    setHovered(null);
+    suppressNextInsert.current = false;
+  };
+
+  const openMobilePreview = (file: string) => {
+    suppressNextInsert.current = true;
+    setHovered(file);
+    setMobilePreviewFile(file);
+  };
+
+  const insertAsset = (file: string) => {
+    if (suppressNextInsert.current) {
+      suppressNextInsert.current = false;
+      return;
+    }
+    onInsert(category, file);
+  };
 
   useEffect(() => {
     const src =
@@ -133,7 +156,7 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
   }, [category, owner, query]);
 
   return (
-    <View style={styles.panel}>
+    <View style={[styles.panel, fullWidth && styles.panelFullWidth]}>
       <Text style={styles.heading}>사용 가능 에셋</Text>
       <Text style={styles.hint}>
         커서 앞에 [ 가 있을 때만 넣습니다. 같은 항목이 있으면 바꿉니다.
@@ -146,6 +169,7 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
             onPress={() => {
               setCategory(item.id);
               setHovered(null);
+              setMobilePreviewFile(null);
             }}
             style={[styles.chip, category === item.id && styles.chipOn]}
           >
@@ -178,7 +202,9 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
         {files.map((file) => (
           <Pressable
             key={file}
-            onPress={() => onInsert(category, file)}
+            onPress={() => insertAsset(file)}
+            onLongPress={fullWidth ? () => openMobilePreview(file) : undefined}
+            delayLongPress={350}
             onHoverIn={() => setHovered(file)}
             onHoverOut={() => setHovered((current) => (current === file ? null : current))}
             style={styles.fileBtn}
@@ -188,6 +214,29 @@ export default function StoryAssetPanel({ character, onInsert }: Props) {
         ))}
       </ScrollView>
       {preview && <Image source={preview} resizeMode="contain" pointerEvents="none" style={styles.preview} />}
+      <Modal
+        transparent
+        visible={mobilePreviewFile != null}
+        animationType="fade"
+        onRequestClose={closeMobilePreview}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={closeMobilePreview}>
+          <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
+            <Text style={styles.modalTitle}>에셋 미리보기</Text>
+            <Text style={styles.modalFileName}>{mobilePreviewFile}</Text>
+            {mobilePreviewFile && imageOf(category, mobilePreviewFile) ? (
+              <Image source={imageOf(category, mobilePreviewFile)} resizeMode="contain" style={styles.modalImage} />
+            ) : (
+              <View style={styles.audioPreview}>
+                <Text style={styles.audioPreviewText}>
+                  {mobilePreviewFile === 'none' ? '배경 음악 없음' : '오디오 미리보기를 재생하고 있어요.'}
+                </Text>
+              </View>
+            )}
+            <Text style={styles.modalHint}>바깥을 누르면 미리보기를 닫습니다.</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -203,6 +252,10 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     zIndex: 2,
   },
+  panelFullWidth: {
+    width: '100%',
+    flex: 1,
+  },
   preview: {
     position: 'fixed',
     left: '50%',
@@ -216,6 +269,59 @@ const styles = StyleSheet.create({
     borderColor: '#e2e6ea',
     backgroundColor: '#1b1e24',
     zIndex: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(20, 24, 32, 0.7)',
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 520,
+    maxHeight: '90%',
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+  },
+  modalTitle: {
+    color: '#222',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalFileName: {
+    marginTop: 6,
+    color: '#6d7681',
+    fontSize: 13,
+  },
+  modalImage: {
+    width: '100%',
+    height: 360,
+    marginTop: 14,
+    borderRadius: 10,
+    backgroundColor: '#1b1e24',
+  },
+  audioPreview: {
+    minHeight: 180,
+    marginTop: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#f3f5f7',
+  },
+  audioPreviewText: {
+    color: '#59636f',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  modalHint: {
+    marginTop: 14,
+    color: '#8a929c',
+    fontSize: 12,
+    textAlign: 'center',
   },
   heading: {
     fontSize: 15,
