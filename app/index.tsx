@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import StoryContainer from '@/components/layout/StoryContainer';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset';
@@ -9,19 +9,20 @@ export default function Home() {
   const keyboardInset = useKeyboardInset();
 
   return (
-    <View
+    <KeyboardAvoidingView
+      behavior={Platform.select({ ios: 'padding', android: 'height' })}
       style={[
         styles.container,
         {
           paddingTop: insets.top,
-          paddingBottom: Math.max(insets.bottom, keyboardInset),
+          paddingBottom: keyboardInset > 0 ? 0 : insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         },
       ]}
     >
       <StoryContainer />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

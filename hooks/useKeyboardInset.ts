@@ -11,7 +11,9 @@ export function useKeyboardInset() {
 
     const onShow = (event: KeyboardEvent) => {
       const windowHeight = Dimensions.get('window').height;
-      setInset(Math.max(0, windowHeight - event.endCoordinates.screenY));
+      // Android may resize the window before this event arrives. Keep a
+      // non-zero value so callers can still recognize the keyboard as open.
+      setInset(Math.max(1, windowHeight - event.endCoordinates.screenY));
     };
 
     const show = Keyboard.addListener(showEvent, onShow);

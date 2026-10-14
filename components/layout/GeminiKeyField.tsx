@@ -2,7 +2,7 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { getGeminiKey, getRememberApiKey, setGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
 
-export default function GeminiKeyField() {
+export default function GeminiKeyField({ onFocus }: { onFocus?: () => void }) {
   const stored = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
   const storedRemember = useSyncExternalStore(subscribeGeminiKey, getRememberApiKey, () => false);
   const [value, setValue] = useState(stored);
@@ -37,6 +37,7 @@ export default function GeminiKeyField() {
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
+          onFocus={onFocus}
           onSubmitEditing={save}
         />
         <Button title="저장" onPress={save} disabled={!dirty} />

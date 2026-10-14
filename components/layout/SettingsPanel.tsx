@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
@@ -69,12 +69,25 @@ export default function SettingsPanel({
 }) {
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
+  const scrollRef = useRef<ScrollView>(null);
+  const [keyOffset, setKeyOffset] = useState(0);
 
   useEffect(() => subscribeBgmVolume(setVolume), []);
   useEffect(() => subscribeSfxVolume(setSfx), []);
 
+  const revealApiKey = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, keyOffset - 16), animated: true });
+    }, 250);
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      ref={scrollRef}
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>설정</Text>
 
       <View style={styles.card}>
@@ -83,8 +96,8 @@ export default function SettingsPanel({
         <Text style={styles.hint}>스토리 안에서 바꾼 볼륨과 같습니다.</Text>
       </View>
 
-      <View style={styles.keyWrap}>
-        <GeminiKeyField />
+      <View style={styles.keyWrap} onLayout={(event) => setKeyOffset(event.nativeEvent.layout.y)}>
+        <GeminiKeyField onFocus={revealApiKey} />
       </View>
 
       <View style={styles.card}>
@@ -98,15 +111,20 @@ export default function SettingsPanel({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: '#f7f4f5',
+  },
+  container: {
+    flexGrow: 1,
+    backgroundColor: '#f7f4f5',
     padding: 28,
+    paddingBottom: 48,
   },
   title: {
     fontSize: 22,

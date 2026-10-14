@@ -249,6 +249,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           expression={expression}
           animation={animation}
         />
+        <TouchableOpacity style={styles.tap} onPress={onAdvance} activeOpacity={1} />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
         <TextBox ref={dialogueRef} currentLine={line} lastSpoken={last} onPress={onAdvance} />
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />
@@ -258,8 +259,6 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
             <EventSelection options={line.options ?? []} onSelect={nextLine} />
           </View>
         )}
-
-        <TouchableOpacity style={styles.tap} onPress={onAdvance} />
         {menuOpen && (
           <EventVolumeModal
             volume={volume}
@@ -301,6 +300,6 @@ const styles = StyleSheet.create({
   },
   tap: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    zIndex: 3,
   },
 });

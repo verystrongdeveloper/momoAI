@@ -12,10 +12,7 @@ interface Props {
   onExit: () => void;
 }
 
-const clamp = (value: number) => {
-  if (!Number.isFinite(value)) return null;
-  return Math.min(1, Math.max(0, value));
-};
+const clamp = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null);
 
 function VolumeSlider({
   label,
@@ -33,43 +30,39 @@ function VolumeSlider({
   const trackRef = useRef<View>(null);
   const shown = Number.isFinite(value) ? value : 1;
 
-  const setFromPress = (e: GestureResponderEvent) => {
-    const pageX = e.nativeEvent.pageX;
+  const setFromPress = (event: GestureResponderEvent) => {
     const node = trackRef.current as (View & { getBoundingClientRect?: () => { left: number; width: number } }) | null;
-    if (!node || !Number.isFinite(pageX)) return;
+    if (!node || !Number.isFinite(event.nativeEvent.pageX)) return;
 
     if (typeof node.getBoundingClientRect === 'function') {
       const rect = node.getBoundingClientRect();
       const scrollX = typeof window === 'undefined' ? 0 : window.scrollX;
-      const next = clamp((pageX - (rect.left + scrollX)) / rect.width);
+      const next = clamp((event.nativeEvent.pageX - (rect.left + scrollX)) / rect.width);
       if (next != null) onChange(next);
       return;
     }
 
     node.measureInWindow((left, _top, width) => {
-      const next = clamp((pageX - left) / width);
+      const next = clamp((event.nativeEvent.pageX - left) / width);
       if (next != null) onChange(next);
     });
   };
 
-  const step = (delta: number) => {
-    const next = clamp(shown + delta);
-    if (next != null) onChange(next);
-  };
-
   return (
     <View style={styles.group}>
-      <Text style={styles.title}>{label}</Text>
-      <Text style={styles.value}>{muted ? '음소거' : `${Math.round(shown * 100)}%`}</Text>
+      <View style={styles.sliderLabelRow}>
+        <Text style={styles.title}>{label}</Text>
+        <Text style={styles.value}>{muted ? '음소거' : `${Math.round(shown * 100)}%`}</Text>
+      </View>
       <Pressable ref={trackRef} style={styles.track} onPress={setFromPress}>
         <View pointerEvents="none" style={[styles.fill, muted && styles.fillMuted, { width: `${shown * 100}%` }]} />
       </Pressable>
       <View style={styles.stepRow}>
-        <TouchableOpacity style={styles.step} onPress={() => step(-0.1)}>
-          <Text style={styles.stepText}>-</Text>
+        <TouchableOpacity style={styles.step} onPress={() => onChange(Math.max(0, shown - 0.1))}>
+          <Text style={styles.stepText}>−</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.step} onPress={() => step(0.1)}>
-          <Text style={styles.stepText}>+</Text>
+        <TouchableOpacity style={styles.step} onPress={() => onChange(Math.min(1, shown + 0.1))}>
+          <Text style={styles.stepText}>＋</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -86,25 +79,31 @@ export default function EventVolumeModal({ volume, muted, onChange, onToggleMute
   return (
     <View style={styles.backdrop}>
       <View style={styles.card}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.heading}>사운드 설정</Text>
+            <Text style={styles.subheading}>배경 음악과 효과음 볼륨을 조절합니다.</Text>
+          </View>
+          <TouchableOpacity style={styles.closeIcon} onPress={onClose} accessibilityLabel="닫기">
+            <Text style={styles.closeIconText}>×</Text>
+          </TouchableOpacity>
+        </View>
+
         <VolumeSlider label="BGM" value={volume} muted={muted} onChange={onChange} styles={styles} />
-        <VolumeSlider
-          label="효과음"
-          value={sfx}
-          muted={muted}
-          onChange={(next) => setSfx(setSfxVolume(next))}
-          styles={styles}
-        />
+        <VolumeSlider label="효과음" value={sfx} muted={muted} onChange={(next) => setSfx(setSfxVolume(next))} styles={styles} />
 
         <TouchableOpacity style={[styles.mute, muted && styles.muteOn]} onPress={onToggleMute}>
           <Text style={[styles.muteText, muted && styles.muteTextOn]}>{muted ? '음소거 해제' : '음소거'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.close} onPress={onClose}>
-          <Text style={styles.closeText}>닫기</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onExit}>
-          <Text style={styles.exitText}>이벤트 나가기</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.close} onPress={onClose}>
+            <Text style={styles.closeText}>닫기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.exit} onPress={onExit}>
+            <Text style={styles.exitText}>이벤트 나가기</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -113,46 +112,89 @@ export default function EventVolumeModal({ volume, muted, onChange, onToggleMute
 const makeStyles = (W: number, H: number) =>
   StyleSheet.create({
     backdrop: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(8, 16, 32, 0.45)',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
       alignItems: 'center',
       justifyContent: 'center',
+      padding: 20,
+      backgroundColor: 'rgba(8, 16, 32, 0.56)',
       zIndex: 40,
     },
     card: {
-      width: Math.min(W * 0.42, 420),
-      backgroundColor: 'rgba(255,255,255,0.97)',
-      borderRadius: 18,
-      paddingVertical: H * 0.03,
-      paddingHorizontal: W * 0.03,
+      width: Math.min(W * 0.88, 440),
+      maxWidth: '100%',
+      padding: Math.max(18, Math.round(H * 0.028)),
+      borderRadius: 22,
+      backgroundColor: '#ffffff',
+      shadowColor: '#000000',
+      shadowOpacity: 0.22,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 12,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    heading: {
+      color: '#243e5c',
+      fontSize: Math.max(20, Math.round(H * 0.032)),
+      fontWeight: '800',
+    },
+    subheading: {
+      marginTop: 5,
+      color: '#718093',
+      fontSize: Math.max(12, Math.round(H * 0.018)),
+    },
+    closeIcon: {
+      width: 34,
+      height: 34,
+      marginLeft: 12,
+      borderRadius: 17,
       alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#edf2f6',
+    },
+    closeIconText: {
+      color: '#58697b',
+      fontSize: 25,
+      lineHeight: 28,
+      fontWeight: '500',
     },
     group: {
-      width: '100%',
+      marginBottom: 18,
+    },
+    sliderLabelRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
+      justifyContent: 'space-between',
+      marginBottom: 10,
     },
     title: {
-      fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
-      fontSize: Math.max(18, Math.round(H * 0.028)),
-      fontWeight: '700',
       color: '#243e5c',
+      fontSize: Math.max(16, Math.round(H * 0.024)),
+      fontWeight: '800',
     },
     value: {
-      marginTop: 6,
-      marginBottom: 10,
-      fontSize: Math.max(16, Math.round(H * 0.024)),
       color: '#3d6288',
+      fontSize: Math.max(14, Math.round(H * 0.021)),
+      fontWeight: '700',
     },
     track: {
       width: '100%',
-      height: 14,
-      borderRadius: 7,
-      backgroundColor: '#d5e4f2',
+      height: 12,
+      borderRadius: 6,
       overflow: 'hidden',
+      backgroundColor: '#dce8f1',
     },
     fill: {
       height: '100%',
+      borderRadius: 6,
       backgroundColor: '#4d8ec9',
     },
     fillMuted: {
@@ -160,64 +202,71 @@ const makeStyles = (W: number, H: number) =>
     },
     stepRow: {
       flexDirection: 'row',
-      gap: 12,
-      marginTop: 12,
+      gap: 10,
+      marginTop: 10,
     },
     step: {
-      width: 48,
+      flex: 1,
       height: 36,
-      borderRadius: 18,
-      backgroundColor: '#e7f1fa',
+      borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: '#eef4f8',
     },
     stepText: {
-      fontSize: 22,
-      fontWeight: '700',
       color: '#2d6ea8',
+      fontSize: 21,
+      fontWeight: '800',
     },
     mute: {
-      marginTop: 8,
-      minWidth: 140,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: '#e7f1fa',
+      height: 44,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 20,
+      backgroundColor: '#e8f1fa',
     },
     muteOn: {
       backgroundColor: '#d7e3ee',
     },
     muteText: {
-      fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
       color: '#2d6ea8',
       fontSize: 16,
-      fontWeight: '700',
+      fontWeight: '800',
     },
     muteTextOn: {
       color: '#5c7388',
     },
-    close: {
+    actionRow: {
+      flexDirection: 'row',
+      gap: 10,
       marginTop: 14,
-      minWidth: 120,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: '#2d6ea8',
+    },
+    close: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 20,
+      backgroundColor: '#2d6ea8',
     },
     closeText: {
-      fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
       color: '#ffffff',
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '800',
+    },
+    exit: {
+      flex: 1,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: '#d8e1ea',
+      backgroundColor: '#f8fafc',
     },
     exitText: {
-      marginTop: 14,
-      fontFamily: '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
-      color: '#6a8298',
+      color: '#56708b',
       fontSize: 14,
+      fontWeight: '700',
     },
   });
