@@ -55,8 +55,22 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
       - run: npm ci
-      - name: Build APK
+      - name: Restore Android release key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64 secret"; exit 1; }
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release.keystore
+      - name: Build APK
+        env:
+          ANDROID_KEYSTORE_FILE: release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing Android signing secrets"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing Android signing secrets"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing Android signing secrets"; exit 1; }
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           chmod +x android/gradlew
           cd android
@@ -68,30 +82,9 @@ jobs:
           name: android
           path: MomoStory.apk
 
-  web:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Export web
-        run: npx expo export --platform web
-        env:
-          EXPO_PUBLIC_GEMINI_TRANSPORT: direct
-      - name: Zip web
-        run: zip -r momo-web.zip dist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web
-          path: momo-web.zip
-
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [desktop, android, web]
+    needs: [desktop, android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -102,12 +95,10 @@ jobs:
           files: |
             release-assets/windows/*
             release-assets/android/*
-            release-assets/web/*
           body: |
             ## MomoStory ${{ github.ref_name }}
 
             - Windows: `MomoStory.exe` 또는 설치 파일
             - Android: `MomoStory.apk`
-            - 웹: `momo-web.zip`
 
             Gemini 키는 들어 있지 않습니다. 설치한 뒤 설정에서 본인 키를 입력하세요.
