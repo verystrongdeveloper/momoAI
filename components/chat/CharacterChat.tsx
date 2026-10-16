@@ -21,6 +21,7 @@ import { useI18n } from '@/i18n';
 
 interface Props {
   characterName: string;
+  displayName?: string;
   characterImage: ImageSourcePropType;
   setGlobalLoading?: (value: boolean) => void;
 }
@@ -42,8 +43,9 @@ const splitSentences = (text: string) =>
     .map((s) => s.replace(/\n/g, ' ').trim())
     .filter((s) => s !== '' && !/^(\.){2,}$/.test(s));
 
-const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlobalLoading }) => {
+const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterImage, setGlobalLoading }) => {
   const { t } = useI18n();
+  const visibleName = displayName ?? characterName;
   const router = useRouter();
 
   const apiKey = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
@@ -172,7 +174,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
           </View>
         )}
         <View style={styles.messageColumn}>
-          {!isUser && item.showImage && <Text style={styles.charName}>{characterName}</Text>}
+          {!isUser && item.showImage && <Text style={styles.charName}>{visibleName}</Text>}
           <Text style={[styles.bubble, isUser ? styles.userBubble : styles.charBubble, isTyping && styles.typingBubble]}>
             {item.text}
           </Text>
@@ -195,7 +197,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
         <View style={styles.eventContainer}>
           <Text style={styles.eventLabel}>| {t('bondEvent')} |</Text>
           <TouchableOpacity style={styles.eventButton} onPress={handleEventStart}>
-            <Text style={styles.eventButtonText}>{t('bondStory', { name: characterName })}</Text>
+            <Text style={styles.eventButtonText}>{t('bondStory', { name: visibleName })}</Text>
           </TouchableOpacity>
         </View>
       )}

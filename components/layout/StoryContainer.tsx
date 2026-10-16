@@ -16,7 +16,7 @@ import { useI18n } from '@/i18n';
 type ListPanel = 'characters' | 'library' | 'settings';
 
 const StoryContainer: React.FC = () => {
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const { isCompact } = useLayout();
   const [listPanel, setListPanel] = useState<ListPanel>('characters');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
@@ -24,7 +24,7 @@ const StoryContainer: React.FC = () => {
   const [guide, setGuide] = useState<GuideMode | null>(null);
 
   const hasDetail = selectedCharacter !== null;
-  const detailTitle = selectedCharacter?.name;
+  const detailTitle = selectedCharacter?.displayName[language];
 
   const closeDetail = () => {
     setSelectedCharacter(null);
@@ -71,8 +71,8 @@ const StoryContainer: React.FC = () => {
           <ChatEntry
             key={char.name}
             image={char.image}
-            name={char.name}
-            status={char.status}
+            name={char.displayName[language]}
+            status={char.displayStatus[language]}
             selected={selectedCharacter?.name === char.name}
             onSelect={() => openCharacter(char)}
           />
@@ -89,6 +89,7 @@ const StoryContainer: React.FC = () => {
         <CharacterChat
           key={selectedCharacter.name}
           characterName={selectedCharacter.name}
+          displayName={selectedCharacter.displayName[language]}
           characterImage={selectedCharacter.image}
           setGlobalLoading={setGlobalLoading}
         />

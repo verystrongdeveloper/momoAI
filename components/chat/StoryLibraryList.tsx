@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { avatarOf } from '@/constants/characters';
+import { avatarOf, displayCharacterName } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
 import { deleteStory, importStory, listStories, SavedStory, subscribeStories, updateStory } from '@/store/storyLibrary';
@@ -215,7 +215,7 @@ export default function StoryLibraryList() {
                       <Image source={portrait} style={styles.portrait} resizeMode="cover" />
                     ) : (
                       <View style={[styles.portrait, styles.portraitFallback]}>
-                        <Text style={styles.fallbackText}>{story.character.slice(0, 1)}</Text>
+                        <Text style={styles.fallbackText}>{displayCharacterName(story.character, language).slice(0, 1)}</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -233,7 +233,7 @@ export default function StoryLibraryList() {
                       {story.title}
                     </Text>
                     <Text style={styles.character} numberOfLines={1}>
-                      {story.character}
+                      {displayCharacterName(story.character, language)}
                     </Text>
                     <Text style={styles.meta}>{formatWhen(story.createdAt, language)}</Text>
                   </View>
