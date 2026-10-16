@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  GestureResponderEvent,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
@@ -82,12 +92,17 @@ export default function SettingsPanel({
   };
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={styles.scroll}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
       <Text style={styles.title}>설정</Text>
 
       <View style={styles.card}>
@@ -111,14 +126,17 @@ export default function SettingsPanel({
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   scroll: {
     flex: 1,
-    backgroundColor: '#f7f4f5',
   },
   container: {
     flexGrow: 1,
