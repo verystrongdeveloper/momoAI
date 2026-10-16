@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  GestureResponderEvent,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
@@ -69,12 +79,23 @@ export default function SettingsPanel({
 }) {
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => subscribeBgmVolume(setVolume), []);
   useEffect(() => subscribeSfxVolume(setSfx), []);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
       <Text style={styles.title}>설정</Text>
 
       <View style={styles.card}>
@@ -84,7 +105,12 @@ export default function SettingsPanel({
       </View>
 
       <View style={styles.keyWrap}>
-        <GeminiKeyField />
+        <GeminiKeyField
+          onFocus={() => {
+            // 키보드가 올라온 뒤 입력창이 가려지지 않도록 하단까지 스크롤합니다.
+            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+          }}
+        />
       </View>
 
       <View style={styles.card}>
@@ -98,13 +124,20 @@ export default function SettingsPanel({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     backgroundColor: '#f7f4f5',
     padding: 28,
   },
