@@ -13,6 +13,8 @@ import {
 import GeminiKeyField from './GeminiKeyField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
+import { APP_LANGUAGES, setAppLanguage } from '@/services/appLanguage';
+import { useI18n } from '@/i18n';
 
 const clamp = (value: number) => {
   if (!Number.isFinite(value)) return null;
@@ -77,6 +79,7 @@ export default function SettingsPanel({
   onOpenTutorial: () => void;
   onOpenTerms: () => void;
 }) {
+  const { language, t } = useI18n();
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
   const scrollRef = useRef<ScrollView>(null);
@@ -103,12 +106,30 @@ export default function SettingsPanel({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-      <Text style={styles.title}>설정</Text>
+      <Text style={styles.title}>{t('settings')}</Text>
 
       <View style={styles.card}>
-        <VolumeControl label="BGM 볼륨" value={volume} onChange={(next) => setVolume(setBgmVolume(next))} />
-        <VolumeControl label="효과음 볼륨" value={sfx} onChange={(next) => setSfx(setSfxVolume(next))} />
-        <Text style={styles.hint}>스토리 안에서 바꾼 볼륨과 같습니다.</Text>
+        <Text style={styles.label}>{t('language')}</Text>
+        <View style={styles.languageRow}>
+          {APP_LANGUAGES.map((option) => (
+            <TouchableOpacity
+              key={option.code}
+              style={[styles.languageButton, language === option.code && styles.languageButtonActive]}
+              onPress={() => setAppLanguage(option.code)}
+            >
+              <Text style={[styles.languageButtonText, language === option.code && styles.languageButtonTextActive]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>{t('sound')}</Text>
+        <VolumeControl label={t('bgm')} value={volume} onChange={(next) => setVolume(setBgmVolume(next))} />
+        <VolumeControl label={t('sfx')} value={sfx} onChange={(next) => setSfx(setSfxVolume(next))} />
+        <Text style={styles.hint}>{t('volumeHint')}</Text>
       </View>
 
       <View style={styles.keyWrap} onLayout={(event) => setKeyOffset(event.nativeEvent.layout.y)}>
@@ -116,13 +137,13 @@ export default function SettingsPanel({
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>안내</Text>
+        <Text style={styles.label}>{t('guide')}</Text>
         <View style={styles.guideRow}>
           <TouchableOpacity style={styles.guideBtn} onPress={onOpenTutorial}>
-            <Text style={styles.guideText}>사용 방법</Text>
+            <Text style={styles.guideText}>{t('howToUse')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.guideBtn} onPress={onOpenTerms}>
-            <Text style={styles.guideText}>이용 약관</Text>
+            <Text style={styles.guideText}>{t('terms')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -231,5 +252,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#6d5360',
+  },
+  languageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  languageButton: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d6e0e8',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  languageButtonActive: {
+    borderColor: '#4d8ec9',
+    backgroundColor: '#e7f1fa',
+  },
+  languageButtonText: {
+    color: '#56708b',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  languageButtonTextActive: {
+    color: '#2d6ea8',
   },
 });

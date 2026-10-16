@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { getGeminiKey, getRememberApiKey, setGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
+import { useI18n } from '@/i18n';
 
 export default function GeminiKeyField({ onFocus }: { onFocus?: () => void }) {
+  const { t } = useI18n();
   const stored = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
   const storedRemember = useSyncExternalStore(subscribeGeminiKey, getRememberApiKey, () => false);
   const [value, setValue] = useState(stored);
@@ -24,7 +26,7 @@ export default function GeminiKeyField({ onFocus }: { onFocus?: () => void }) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>Gemini API 키</Text>
+      <Text style={styles.label}>{t('apiKey')}</Text>
       <View style={styles.row}>
         <TextInput
           style={styles.input}
@@ -33,17 +35,17 @@ export default function GeminiKeyField({ onFocus }: { onFocus?: () => void }) {
             setTouched(true);
             setValue(next);
           }}
-          placeholder="본인 키를 입력하세요"
+          placeholder={t('apiKeyPlaceholder')}
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
           onFocus={onFocus}
           onSubmitEditing={save}
         />
-        <Button title="저장" onPress={save} disabled={!dirty} />
+        <Button title={t('save')} onPress={save} disabled={!dirty} />
       </View>
       <View style={styles.rememberRow}>
-        <Text style={styles.hint}>API 키 기억하기</Text>
+        <Text style={styles.hint}>{t('rememberKey')}</Text>
         <Switch
           value={remember}
           onValueChange={(next) => {
@@ -54,10 +56,10 @@ export default function GeminiKeyField({ onFocus }: { onFocus?: () => void }) {
       </View>
       <Text style={styles.hint}>
         {stored && remember
-          ? '이 기기에 저장됨. 이 키로 대화합니다.'
+          ? t('keySaved')
           : stored
-            ? '이번 실행에서만 사용합니다.'
-            : '저장하면 채팅과 스토리에 이 키를 사용합니다.'}
+            ? t('keySession')
+            : t('keyRequired')}
       </Text>
     </View>
   );

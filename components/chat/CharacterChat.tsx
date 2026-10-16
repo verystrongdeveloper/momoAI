@@ -17,6 +17,7 @@ import { getGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
 import { saveStory } from '@/store/storyLibrary';
+import { useI18n } from '@/i18n';
 
 interface Props {
   characterName: string;
@@ -42,6 +43,7 @@ const splitSentences = (text: string) =>
     .filter((s) => s !== '' && !/^(\.){2,}$/.test(s));
 
 const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlobalLoading }) => {
+  const { t } = useI18n();
   const router = useRouter();
 
   const apiKey = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
@@ -191,9 +193,9 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
 
       {eventReady && (
         <View style={styles.eventContainer}>
-          <Text style={styles.eventLabel}>| 인연 이벤트 |</Text>
+          <Text style={styles.eventLabel}>| {t('bondEvent')} |</Text>
           <TouchableOpacity style={styles.eventButton} onPress={handleEventStart}>
-            <Text style={styles.eventButtonText}>{characterName}의 인연 스토리로.</Text>
+            <Text style={styles.eventButtonText}>{t('bondStory', { name: characterName })}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -202,14 +204,14 @@ const CharacterChat: React.FC<Props> = ({ characterName, characterImage, setGlob
         <TextInput
           ref={inputRef}
           style={[styles.input, !hasKey && styles.inputLocked]}
-          placeholder={hasKey ? '메시지를 입력하세요' : '설정에서 API 키를 입력해 주세요'}
+          placeholder={hasKey ? t('messagePlaceholder') : t('messageKeyRequired')}
           value={hasKey ? input : ''}
           editable={hasKey}
           onChangeText={setInput}
           onSubmitEditing={handleSend}
           blurOnSubmit={false}
         />
-        <Button title="보내기" onPress={handleSend} disabled={!hasKey} />
+        <Button title={t('send')} onPress={handleSend} disabled={!hasKey} />
       </View>
     </View>
   );

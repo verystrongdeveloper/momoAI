@@ -1,4 +1,7 @@
+export type AppLanguage = 'ko' | 'en' | 'ja' | 'zh';
+
 export type Preferences = {
+  language: AppLanguage;
   bgmVolume: number;
   sfxVolume: number;
   greetMode: boolean;
@@ -21,6 +24,7 @@ export type StorageSnapshot = Preferences & {
 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
+  language: 'ko',
   bgmVolume: 0.5,
   sfxVolume: 0.5,
   greetMode: false,
@@ -80,6 +84,7 @@ export function parsePreferences(raw: string | null): Preferences {
   try {
     const parsed = JSON.parse(raw) as Partial<Preferences>;
     return {
+      language: parsed.language === 'en' || parsed.language === 'ja' || parsed.language === 'zh' ? parsed.language : 'ko',
       bgmVolume: clampVolume(Number(parsed.bgmVolume)) ?? DEFAULT_PREFERENCES.bgmVolume,
       sfxVolume: clampVolume(Number(parsed.sfxVolume)) ?? DEFAULT_PREFERENCES.sfxVolume,
       greetMode: parsed.greetMode === true,

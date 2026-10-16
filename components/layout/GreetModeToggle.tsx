@@ -1,8 +1,10 @@
 import React, { useSyncExternalStore } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { getGreetMode, setGreetMode, subscribeGreetMode } from '@/services/greetMode';
+import { useI18n } from '@/i18n';
 
 export default function GreetModeToggle() {
+  const { t } = useI18n();
   const on = useSyncExternalStore(subscribeGreetMode, getGreetMode, () => false);
 
   const toggle = (next: boolean) => {
@@ -12,10 +14,10 @@ export default function GreetModeToggle() {
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
-        <Text style={styles.label}>먼저 말 걸기</Text>
+        <Text style={styles.label}>{t('greetFirst')}</Text>
         <Switch value={on} onValueChange={toggle} />
       </View>
-      <Text style={styles.hint}>{on ? '방에 들어가면 먼저 말을 겁니다.' : '꺼 두면 먼저 말을 걸지 않습니다.'}</Text>
+      <Text style={styles.hint}>{on ? t('greetOn') : t('greetOff')}</Text>
     </View>
   );
 }

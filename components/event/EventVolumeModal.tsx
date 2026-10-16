@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureResponderEvent, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLayout } from '@/hooks/useLayout';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
+import { useI18n } from '@/i18n';
 
 interface Props {
   volume: number;
@@ -70,6 +71,7 @@ function VolumeSlider({
 }
 
 export default function EventVolumeModal({ volume, muted, onChange, onToggleMute, onClose, onExit }: Props) {
+  const { t } = useI18n();
   const { eventWidth, eventHeight } = useLayout();
   const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
   const [sfx, setSfx] = useState(getSfxVolume);
@@ -81,27 +83,27 @@ export default function EventVolumeModal({ volume, muted, onChange, onToggleMute
       <View style={styles.card}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.heading}>사운드 설정</Text>
-            <Text style={styles.subheading}>배경 음악과 효과음 볼륨을 조절합니다.</Text>
+            <Text style={styles.heading}>{t('soundSettings')}</Text>
+            <Text style={styles.subheading}>{t('soundSettingsHint')}</Text>
           </View>
-          <TouchableOpacity style={styles.closeIcon} onPress={onClose} accessibilityLabel="닫기">
+          <TouchableOpacity style={styles.closeIcon} onPress={onClose} accessibilityLabel={t('close')}>
             <Text style={styles.closeIconText}>×</Text>
           </TouchableOpacity>
         </View>
 
         <VolumeSlider label="BGM" value={volume} muted={muted} onChange={onChange} styles={styles} />
-        <VolumeSlider label="효과음" value={sfx} muted={muted} onChange={(next) => setSfx(setSfxVolume(next))} styles={styles} />
+        <VolumeSlider label={t('soundEffect')} value={sfx} muted={muted} onChange={(next) => setSfx(setSfxVolume(next))} styles={styles} />
 
         <TouchableOpacity style={[styles.mute, muted && styles.muteOn]} onPress={onToggleMute}>
-          <Text style={[styles.muteText, muted && styles.muteTextOn]}>{muted ? '음소거 해제' : '음소거'}</Text>
+          <Text style={[styles.muteText, muted && styles.muteTextOn]}>{muted ? t('unmute') : t('mute')}</Text>
         </TouchableOpacity>
 
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.close} onPress={onClose}>
-            <Text style={styles.closeText}>닫기</Text>
+            <Text style={styles.closeText}>{t('close')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.exit} onPress={onExit}>
-            <Text style={styles.exitText}>이벤트 나가기</Text>
+            <Text style={styles.exitText}>{t('exitEvent')}</Text>
           </TouchableOpacity>
         </View>
       </View>

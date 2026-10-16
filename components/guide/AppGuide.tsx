@@ -2,6 +2,7 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSetting, isStorageSynced, saveSetting, subscribeStorage } from '@/storage';
+import { useI18n } from '@/i18n';
 
 const AI_STUDIO_URL = 'https://aistudio.google.com/apikey';
 
@@ -121,6 +122,7 @@ export default function AppGuide({
   manual: GuideMode | null;
   onManualClose: () => void;
 }) {
+  const { t } = useI18n();
   const synced = useSyncExternalStore(subscribeStorage, isStorageSynced, () => false);
   const termsAccepted = useSyncExternalStore(subscribeStorage, () => getSetting('termsAccepted'), () => false);
   const tutorialSeen = useSyncExternalStore(subscribeStorage, () => getSetting('tutorialSeen'), () => false);
@@ -155,7 +157,7 @@ export default function AppGuide({
     <View style={styles.overlay}>
       <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{mode === 'terms' ? '이용 약관' : '사용 방법'}</Text>
+          <Text style={styles.headerTitle}>{mode === 'terms' ? t('termsTitle') : t('tutorialTitle')}</Text>
           {mode === 'tutorial' ? (
             <Text style={styles.headerCount}>
               {step + 1} / {steps.length}
@@ -206,19 +208,19 @@ export default function AppGuide({
                   <View style={[styles.check, agreed && styles.checkOn]}>
                     {agreed ? <Ionicons name="checkmark" size={16} color="#ffffff" /> : null}
                   </View>
-                  <Text style={styles.checkText}>위 내용을 확인했고, 이에 동의합니다.</Text>
+                  <Text style={styles.checkText}>{t('agreeTerms')}</Text>
                 </Pressable>
                 <TouchableOpacity
                   style={[styles.primary, !agreed && styles.primaryOff]}
                   disabled={!agreed}
                   onPress={acceptTerms}
                 >
-                  <Text style={styles.primaryText}>동의하고 시작</Text>
+                  <Text style={styles.primaryText}>{t('agreeStart')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity style={styles.primary} onPress={onManualClose}>
-                <Text style={styles.primaryText}>닫기</Text>
+                <Text style={styles.primaryText}>{t('close')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -231,19 +233,19 @@ export default function AppGuide({
             </View>
             <View style={styles.row}>
               <TouchableOpacity onPress={finishTutorial} style={styles.ghost}>
-                <Text style={styles.ghostText}>건너뛰기</Text>
+                <Text style={styles.ghostText}>{t('skip')}</Text>
               </TouchableOpacity>
               <View style={styles.rowRight}>
                 {step > 0 ? (
                   <TouchableOpacity onPress={() => setStep((value) => value - 1)} style={styles.secondary}>
-                    <Text style={styles.secondaryText}>이전</Text>
+                    <Text style={styles.secondaryText}>{t('previous')}</Text>
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity
                   onPress={() => (last ? finishTutorial() : setStep((value) => value + 1))}
                   style={styles.primaryInline}
                 >
-                  <Text style={styles.primaryText}>{last ? '시작하기' : '다음'}</Text>
+                  <Text style={styles.primaryText}>{last ? t('start') : t('next')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

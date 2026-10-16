@@ -11,17 +11,14 @@ import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 import { copyText } from '@/platform/clipboard';
 import { downloadStory, pickStoryFile } from '@/utils/storyFile';
 import { buildStoryPrompt } from '@/utils/storyPrompt';
+import { useI18n } from '@/i18n';
 
-const formatWhen = (createdAt: number) => {
-  const d = new Date(createdAt);
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  const hour = String(d.getHours()).padStart(2, '0');
-  const minute = String(d.getMinutes()).padStart(2, '0');
-  return `${month}.${day} ${hour}:${minute}`;
-};
+const localeOf = { ko: 'ko-KR', en: 'en-US', ja: 'ja-JP', zh: 'zh-CN' } as const;
+const formatWhen = (createdAt: number, language: keyof typeof localeOf) =>
+  new Intl.DateTimeFormat(localeOf[language], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(createdAt));
 
 export default function StoryLibraryList() {
+  const { language, t } = useI18n();
   const router = useRouter();
   const { isCompact } = useLayout();
   const [stories, setStories] = useState<SavedStory[]>(() => listStories());
@@ -95,9 +92,9 @@ export default function StoryLibraryList() {
   const copyPrompt = async () => {
     try {
       await copyText(buildStoryPrompt());
-      setListNotice('프롬프트를 복사했습니다.');
+      setListNotice(t('promptCopied'));
     } catch {
-      setListNotice('복사에 실패했습니다.');
+      setListNotice(t('copyFailed'));
     }
   };
 
@@ -106,7 +103,7 @@ export default function StoryLibraryList() {
     if (text == null) return;
     const script = text.trim();
     if (!script) {
-      setListNotice('파일에 대본이 없습니다.');
+      setListNotice(t('emptyFile'));
       return;
     }
     importStory(script);
@@ -130,13 +127,13 @@ export default function StoryLibraryList() {
     return (
       <View style={styles.container}>
         <View style={styles.editorHeader}>
-          <Text style={styles.title}>스토리 수정</Text>
+          <Text style={styles.title}>{t('editStory')}</Text>
           <View style={styles.editorActions}>
             <TouchableOpacity onPress={() => setEditing(null)} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>취소</Text>
+              <Text style={styles.cancelText}>{t('cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={saveEdit} style={styles.saveBtn}>
-              <Text style={styles.saveText}>저장</Text>
+              <Text style={styles.saveText}>{t('save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -150,7 +147,7 @@ export default function StoryLibraryList() {
                 onPress={() => setEditorTab('story')}
                 style={[styles.editorTab, editorTab === 'story' && styles.editorTabActive]}
               >
-                <Text style={[styles.editorTabText, editorTab === 'story' && styles.editorTabTextActive]}>스토리 수정</Text>
+                <Text style={[styles.editorTabText, editorTab === 'story' && styles.editorTabTextActive]}>{t('editStory')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 accessibilityRole="tab"
@@ -158,7 +155,7 @@ export default function StoryLibraryList() {
                 onPress={() => setEditorTab('assets')}
                 style={[styles.editorTab, editorTab === 'assets' && styles.editorTabActive]}
               >
-                <Text style={[styles.editorTabText, editorTab === 'assets' && styles.editorTabTextActive]}>사용 가능 에셋</Text>
+                <Text style={[styles.editorTabText, editorTab === 'assets' && styles.editorTabTextActive]}>{t('assets')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -188,20 +185,20 @@ export default function StoryLibraryList() {
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={[styles.header, isCompact && styles.headerCompact]}>
-          <Text style={styles.libraryTitle}>라이브러리</Text>
+          <Text style={styles.libraryTitle}>{t('library')}</Text>
           <View style={[styles.headerActions, isCompact && styles.headerActionsCompact]}>
             <TouchableOpacity onPress={copyPrompt} style={styles.copyBtn}>
-              <Text style={styles.copyText}>프롬프트 복사</Text>
+              <Text style={styles.copyText}>{t('copyPrompt')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={loadFile} style={styles.loadBtn}>
-              <Text style={styles.loadText}>불러오기</Text>
+              <Text style={styles.loadText}>{t('load')}</Text>
             </TouchableOpacity>
           </View>
         </View>
         <View style={styles.shelf}>
         {!!listNotice && <Text style={styles.listNotice}>{listNotice}</Text>}
         {stories.length === 0 ? (
-          <Text style={styles.empty}>저장된 스토리가 없습니다.</Text>
+          <Text style={styles.empty}>{t('emptyStories')}</Text>
         ) : (
           <View style={[styles.grid, isCompact && styles.gridCompact]}>
             {stories.map((story) => {
@@ -224,7 +221,7 @@ export default function StoryLibraryList() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     dataSet={{ storyMenu: 'true' }}
-                    accessibilityLabel="스토리 관리"
+                    accessibilityLabel={t('storyMenu')}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     onPress={() => toggleMenu(story.id)}
                     style={[styles.moreBtn, menuOpen && styles.moreBtnOpen]}
@@ -238,24 +235,24 @@ export default function StoryLibraryList() {
                     <Text style={styles.character} numberOfLines={1}>
                       {story.character}
                     </Text>
-                    <Text style={styles.meta}>{formatWhen(story.createdAt)}</Text>
+                    <Text style={styles.meta}>{formatWhen(story.createdAt, language)}</Text>
                   </View>
                   {menuOpen && (
                     <View dataSet={{ storyMenu: 'true' }} style={styles.menu}>
                       {confirmId === story.id ? (
                         <>
-                          <Text style={styles.confirmText}>지울까요?</Text>
+                          <Text style={styles.confirmText}>{t('deleteQuestion')}</Text>
                           <TouchableOpacity onPress={() => remove(story.id)} style={styles.menuItem}>
-                            <Text style={styles.menuDelete}>삭제</Text>
+                            <Text style={styles.menuDelete}>{t('delete')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => setConfirmId(null)} style={styles.menuItem}>
-                            <Text style={styles.menuKeep}>취소</Text>
+                            <Text style={styles.menuKeep}>{t('cancel')}</Text>
                           </TouchableOpacity>
                         </>
                       ) : (
                         <>
                           <TouchableOpacity onPress={() => startEdit(story)} style={styles.menuItem}>
-                            <Text style={styles.menuText}>수정</Text>
+                            <Text style={styles.menuText}>{t('edit')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             onPress={() => {
@@ -264,10 +261,10 @@ export default function StoryLibraryList() {
                             }}
                             style={styles.menuItem}
                           >
-                            <Text style={styles.menuText}>추출</Text>
+                            <Text style={styles.menuText}>{t('export')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => setConfirmId(story.id)} style={[styles.menuItem, styles.menuItemLast]}>
-                            <Text style={styles.menuDelete}>삭제</Text>
+                            <Text style={styles.menuDelete}>{t('delete')}</Text>
                           </TouchableOpacity>
                         </>
                       )}

@@ -10,11 +10,13 @@ import SettingsPanel from './SettingsPanel';
 import AppGuide, { GuideMode } from '@/components/guide/AppGuide';
 import { CHARACTERS, Character } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
+import { useI18n } from '@/i18n';
 
 /** characters: 1:1 캐릭터 목록  |  library: 저장된 스토리  |  settings: 설정 */
 type ListPanel = 'characters' | 'library' | 'settings';
 
 const StoryContainer: React.FC = () => {
+  const { t } = useI18n();
   const { isCompact } = useLayout();
   const [listPanel, setListPanel] = useState<ListPanel>('characters');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
@@ -93,7 +95,7 @@ const StoryContainer: React.FC = () => {
       )}
       {!hasDetail && (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>대화할 상대를 선택하세요.</Text>
+          <Text style={styles.placeholderText}>{t('selectCharacter')}</Text>
         </View>
       )}
     </View>

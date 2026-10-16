@@ -17,6 +17,7 @@ import EventVolumeModal from './EventVolumeModal';
 import TextBox from './TextBox';
 import { DialogueHandle } from './EventDialogue';
 import TitleBanner from './TitleBanner';
+import { useI18n } from '@/i18n';
 
 interface Props {
   script: string;
@@ -42,6 +43,7 @@ const isEndingCaption = (lines: EventLine[], index: number) => {
 };
 
 const EventPlayer: React.FC<Props> = ({ script }) => {
+  const { t } = useI18n();
   const router = useRouter();
   const lines = useEventParser(script);
   const [idx, setIdx] = useState(0);
@@ -249,7 +251,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
           expression={expression}
           animation={animation}
         />
-        <Pressable style={styles.tap} onPress={onAdvance} accessibilityLabel="다음 대사" />
+        <Pressable style={styles.tap} onPress={onAdvance} accessibilityLabel={t('nextLine')} />
         {line?.type === 'selection' && <View style={styles.selectionDim} pointerEvents="none" />}
         <TextBox ref={dialogueRef} currentLine={line} lastSpoken={last} onPress={onAdvance} />
         <EventHud auto={auto} onToggleAuto={() => setAuto((v) => !v)} onMenu={() => setMenuOpen(true)} />

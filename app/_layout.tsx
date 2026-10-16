@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 import { registerAppShell } from '@/platform/pwa';
 import { hydrateStorage } from '@/storage';
+import { I18nProvider } from '@/i18n';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -14,12 +15,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="event" />
-        <Stack.Screen name="+not-found" options={{ headerShown: true }} />
-      </Stack>
-      <StatusBar style="auto" />
+      <I18nProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="event" />
+          <Stack.Screen name="+not-found" options={{ headerShown: true }} />
+        </Stack>
+        <StatusBar style="auto" />
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

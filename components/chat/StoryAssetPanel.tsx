@@ -4,15 +4,16 @@ import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { bgMap, emotionMap, expressionMap, musicMap, sfxMap } from '@/constants/eventAssets';
 import { getSfxVolume } from '@/services/sfxVolume';
 import { AssetKind } from '@/utils/insertStoryAsset';
+import { useI18n } from '@/i18n';
 
 type Category = AssetKind;
 
-const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'bg', label: '배경' },
-  { id: 'emotion', label: '표정' },
-  { id: 'music', label: '음악' },
-  { id: 'sound', label: '효과음' },
-  { id: 'expression', label: '연출' },
+const CATEGORIES: { id: Category; label: 'background' | 'emotion' | 'music' | 'soundEffect' | 'effect' }[] = [
+  { id: 'bg', label: 'background' },
+  { id: 'emotion', label: 'emotion' },
+  { id: 'music', label: 'music' },
+  { id: 'sound', label: 'soundEffect' },
+  { id: 'expression', label: 'effect' },
 ];
 
 /** 긴 접두사를 먼저 맞춰 표정 파일을 묶는다. */
@@ -70,6 +71,7 @@ interface Props {
 }
 
 export default function StoryAssetPanel({ character, onInsert, fullWidth = false }: Props) {
+  const { t } = useI18n();
   const [category, setCategory] = useState<Category>('bg');
   const [owner, setOwner] = useState(() => emotionGroups.find((group) => group.label === character)?.label ?? emotionGroups[0]?.label ?? '');
   const [query, setQuery] = useState('');
@@ -157,10 +159,10 @@ export default function StoryAssetPanel({ character, onInsert, fullWidth = false
 
   return (
     <View style={[styles.panel, fullWidth && styles.panelFullWidth]}>
-      <Text style={styles.heading}>사용 가능 에셋</Text>
+      <Text style={styles.heading}>{t('assets')}</Text>
       <Text style={styles.hint}>
-        커서 앞에 [ 가 있을 때만 넣습니다. 같은 항목이 있으면 바꿉니다.
-        {category === 'music' || category === 'sound' ? ' 이름에 올리면 들립니다.' : ''}
+        {t('assetHint')}
+        {category === 'music' || category === 'sound' ? t('audioHint') : ''}
       </Text>
       <View style={styles.chips}>
         {CATEGORIES.map((item) => (
@@ -173,7 +175,7 @@ export default function StoryAssetPanel({ character, onInsert, fullWidth = false
             }}
             style={[styles.chip, category === item.id && styles.chipOn]}
           >
-            <Text style={[styles.chipText, category === item.id && styles.chipTextOn]}>{item.label}</Text>
+            <Text style={[styles.chipText, category === item.id && styles.chipTextOn]}>{t(item.label)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -194,7 +196,7 @@ export default function StoryAssetPanel({ character, onInsert, fullWidth = false
         style={styles.search}
         value={query}
         onChangeText={setQuery}
-        placeholder="이름 검색"
+        placeholder={t('searchName')}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -222,18 +224,18 @@ export default function StoryAssetPanel({ character, onInsert, fullWidth = false
       >
         <Pressable style={styles.modalBackdrop} onPress={closeMobilePreview}>
           <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-            <Text style={styles.modalTitle}>에셋 미리보기</Text>
+            <Text style={styles.modalTitle}>{t('previewAsset')}</Text>
             <Text style={styles.modalFileName}>{mobilePreviewFile}</Text>
             {mobilePreviewFile && imageOf(category, mobilePreviewFile) ? (
               <Image source={imageOf(category, mobilePreviewFile)} resizeMode="contain" style={styles.modalImage} />
             ) : (
               <View style={styles.audioPreview}>
                 <Text style={styles.audioPreviewText}>
-                  {mobilePreviewFile === 'none' ? '배경 음악 없음' : '오디오 미리보기를 재생하고 있어요.'}
+                  {mobilePreviewFile === 'none' ? t('noBackgroundMusic') : t('playingPreview')}
                 </Text>
               </View>
             )}
-            <Text style={styles.modalHint}>바깥을 누르면 미리보기를 닫습니다.</Text>
+            <Text style={styles.modalHint}>{t('tapOutside')}</Text>
           </Pressable>
         </Pressable>
       </Modal>
