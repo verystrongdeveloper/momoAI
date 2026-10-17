@@ -9,8 +9,10 @@
 ## 한눈에 보기
 
 <p align="center">
-  <img src="docs/screenshots/home.png" alt="MomoStory 첫 실행 및 캐릭터 선택 화면" width="860" />
+  <img src="docs/screenshots/event.png" alt="MomoStory 인연 이벤트 플레이어 화면" width="860" />
 </p>
+
+<p align="center"><sub>인연 이벤트 플레이어 — 대화에서 이어진 장면을 배경·표정·BGM과 함께 재생합니다.</sub></p>
 
 MomoStory는 캐릭터의 말투와 성격을 반영한 1:1 대화, 그리고 대화 맥락을 바탕으로 전개되는 선택형 인연 이벤트를 제공합니다. 배경·표정·BGM·효과음으로 장면의 분위기까지 함께 즐길 수 있습니다.
 
