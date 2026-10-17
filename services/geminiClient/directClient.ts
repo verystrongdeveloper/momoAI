@@ -3,6 +3,7 @@ import { buildEventPromptPro } from '../../shared/prompts/promptBuilderPro';
 import { buildSelectionPrompt } from '../../shared/prompts/selectionPromptBuilder';
 import { getAvailableCharacters, hasStoryAssets, keepAssetSpeakers } from '../../shared/prompts/characterList';
 import { getGeminiKey } from '@/services/geminiKey';
+import { getAppLanguage } from '@/services/appLanguage';
 import { dialogKey, sendWithFallback, userApiKey } from './rest';
 
 type DialogPair = { user: string; ai: string };
@@ -31,28 +32,31 @@ function pushLog(character: string, apiKey: string, pair: DialogPair): boolean {
 
 export const directClient = {
   async trigger(character: string) {
+    const language = getAppLanguage();
     const apiKey = readKey();
     if (!character) throw new Error('character 누락');
-    const triggerLine = await sendWithFallback(character, '', TRIGGER_MESSAGE, undefined, apiKey);
+    const triggerLine = await sendWithFallback(character, '', TRIGGER_MESSAGE, undefined, apiKey, language);
     pushLog(character, apiKey, { user: '(트리거)', ai: triggerLine });
     return { triggerLine };
   },
 
   async chat(character: string, message: string) {
+    const language = getAppLanguage();
     const apiKey = readKey();
     if (!character || !message) throw new Error('character 또는 message 누락');
-    const reply = await sendWithFallback(character, '', message, undefined, apiKey);
+    const reply = await sendWithFallback(character, '', message, undefined, apiKey, language);
     const eventReady = pushLog(character, apiKey, { user: message, ai: reply });
     return { reply, eventReady };
   },
 
   async createEvent(character: string) {
+    const language = getAppLanguage();
     const apiKey = readKey();
     if (!character) throw new Error('character 누락');
     const dialogHistory = chatLogs.get(dialogKey(character, apiKey)) ?? [];
     if (dialogHistory.length !== 3) throw new Error('dialogHistory 부족(3쌍 필요)');
 
-    const rawSelText = await sendWithFallback(character, 'select', buildSelectionPrompt(dialogHistory), SELECTOR_SYSTEM, apiKey);
+    const rawSelText = await sendWithFallback(character, 'select', buildSelectionPrompt(dialogHistory), SELECTOR_SYSTEM, apiKey, language);
     const jsonMatch = rawSelText.match(/\{[\s\S]*}/);
     let selection: { characters?: { name?: string }[]; direction?: string };
     if (!jsonMatch) {
@@ -78,7 +82,7 @@ export const directClient = {
 
     const eventPrompt = buildEventPromptPro(character, dialogHistory, allCharsWithEmotions, selection.direction ?? '');
     const script = keepAssetSpeakers(
-      (await sendWithFallback(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, apiKey)).trim(),
+      (await sendWithFallback(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, apiKey, language)).trim(),
       getAvailableCharacters(),
     );
     return { eventScript: script };

@@ -6,6 +6,7 @@
     "video:renderer": "node scripts/build-video-renderer.js",
     "test:video": "node scripts/test-video-timeline.cjs && node scripts/test-video-presentation.cjs && node scripts/test-video-ui.cjs",
     "test:file-save": "node scripts/test-file-save.cjs && node scripts/test-local-file-save.cjs",
+    "test:language": "node scripts/test-generation-language.cjs",
     "postinstall": "node scripts/build-video-renderer.js",
     "start": "expo start",
     "server": "npm --prefix server start",

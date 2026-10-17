@@ -22,6 +22,7 @@ import type { SavedChatMessage } from '@/storage/types';
 import { useChatSize } from '@/services/chatSize';
 import { makeChatSizeStyles } from './chatSizeStyles';
 import { useI18n } from '@/i18n';
+import { splitChatReply } from '@/utils/splitChatReply';
 
 interface Props {
   characterName: string;
@@ -40,13 +41,6 @@ interface Chat {
 const TYPING_DELAY_MS = 1500;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** 한 응답을 문장 단위로 쪼개 실제 채팅처럼 나눠 보낸다. */
-const splitSentences = (text: string) =>
-  text
-    .split(/(?<=[.!?])\s+(?=\S)/g)
-    .map((s) => s.replace(/\n/g, ' ').trim())
-    .filter((s) => s !== '' && !/^(\.){2,}$/.test(s));
 
 const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterImage, setGlobalLoading, savedStory }) => {
   const { t } = useI18n();
@@ -92,7 +86,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
 
   /** 캐릭터 응답을 타이핑 표시와 함께 문장별로 출력 */
   const playReply = async (text: string) => {
-    const sentences = splitSentences(text);
+    const sentences = splitChatReply(text);
     if (sentences.length === 0) {
       setMessages(removeTyping);
       return;

@@ -31,7 +31,7 @@ exports.sendChat = async (req, res) => {
   }
 
   try {
-    const chat   = await getChat(character, undefined, '', undefined, apiKey);
+    const chat   = await getChat(character, undefined, '', undefined, apiKey, req.body.language);
     const result = await chat.sendMessage(message);
     const reply  = result.response.text();
 

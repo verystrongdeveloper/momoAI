@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { prompts } = require('../config/prompts');
+const { normalizeGenerationLanguage, withGenerationLanguage } = require('../../../shared/prompts/generationLanguage');
 
 // 앞 모델이 503/429면 다음 모델로 넘긴다.
 const MODEL_FALLBACKS = [
@@ -47,28 +48,33 @@ function orderFrom(modelName) {
   return MODEL_FALLBACKS.slice(index).concat(MODEL_FALLBACKS.slice(0, index));
 }
 
-function openChat(character, modelName, sessionKey, systemInstruction, apiKey) {
+async function openChat(character, modelName, sessionKey, systemInstruction, apiKey, language) {
   const { id, genAI } = clientFor(apiKey);
   const cacheKey = [id, character, modelName, sessionKey].filter(Boolean).join(':');
-  if (sessions.has(cacheKey)) return sessions.get(cacheKey);
+  const instruction = withGenerationLanguage(systemInstruction || prompts[character] || `${character}처럼 말해.`, language, sessionKey === 'event' ? 'event' : sessionKey === 'select' ? 'select' : 'chat');
+  const existing = sessions.get(cacheKey);
+  if (existing?.instruction === instruction) return existing.chat;
+  // SDK system instructions are fixed at session creation. Recreate on language
+  // change, retaining the conversation instead of continuing with the old language.
+  const history = existing ? await existing.chat.getHistory() : [];
 
   console.log(`[Cache MISS] Creating new session for ${cacheKey}`);
   const model = genAI.getGenerativeModel({
     model: modelName,
-    systemInstruction: systemInstruction || prompts[character] || `${character}처럼 말해.`,
+    systemInstruction: instruction,
   });
-  const chat = model.startChat({ history: [] });
-  sessions.set(cacheKey, chat);
+  const chat = model.startChat({ history });
+  sessions.set(cacheKey, { chat, instruction });
   return chat;
 }
 
-async function sendWithFallback(character, sessionKey, message, systemInstruction, apiKey) {
+async function sendWithFallback(character, sessionKey, message, systemInstruction, apiKey, language) {
   const order = orderFrom(activeModel);
   let lastError;
 
   for (const modelName of order) {
     try {
-      const chat = openChat(character, modelName, sessionKey, systemInstruction, apiKey);
+      const chat = await openChat(character, modelName, sessionKey, systemInstruction, apiKey, language);
       const result = await chat.sendMessage(message);
       if (activeModel !== modelName) {
         console.log(`[MomoStory] 모델 전환: ${activeModel} -> ${modelName}`);
@@ -91,10 +97,11 @@ async function sendWithFallback(character, sessionKey, message, systemInstructio
  * @param {string} [sessionKey] 같은 캐릭터라도 세션을 나눌 때 사용
  * @param {string} [systemInstruction] 있으면 캐릭터 기본 프롬프트 대신 사용
  */
-async function getChat(character, _modelName = GEMINI_MODEL, sessionKey = '', systemInstruction, apiKey) {
+async function getChat(character, _modelName = GEMINI_MODEL, sessionKey = '', systemInstruction, apiKey, language = 'ko') {
+  const selectedLanguage = normalizeGenerationLanguage(language);
   return {
     sendMessage(message) {
-      return sendWithFallback(character, sessionKey, message, systemInstruction, apiKey);
+      return sendWithFallback(character, sessionKey, message, systemInstruction, apiKey, selectedLanguage);
     },
   };
 }

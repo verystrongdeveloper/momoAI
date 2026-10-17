@@ -1,0 +1,146 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { createRequire } = require('node:module');
+const ts = require('typescript');
+const root = path.resolve(__dirname, '..');
+function load(file, mocks = {}, globals = {}) {
+  const absolute = path.join(root, file);
+  const localRequire = createRequire(absolute);
+  const module = { exports: {} };
+  const source = fs.readFileSync(absolute, 'utf8');
+  const code = file.endsWith('.ts') ? ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText : source;
+  new Function('require', 'module', 'exports', ...Object.keys(globals), code)(
+    id => Object.hasOwn(mocks, id) ? mocks[id] : localRequire(id), module, module.exports, ...Object.values(globals));
+  return module.exports;
+}
+const { normalizeGenerationLanguage, withGenerationLanguage } = require('../shared/prompts/generationLanguage');
+const languages = { ko: 'Korean', en: 'English', ja: 'Japanese', zh: 'Simplified Chinese' };
+const content = { ko: '안녕', en: 'Hello', ja: 'こんにちは', zh: '你好' };
+function output(instruction) {
+  const code = Object.keys(languages).find(code => instruction.includes(`OUTPUT LANGUAGE: ${languages[code]}.`));
+  assert.ok(code, 'Every request needs an explicit output language');
+  if (instruction.includes('Write direction and reason')) return JSON.stringify({ characters: [], direction: content[code] });
+  if (instruction.includes('Write the story title')) return `타이틀 : ${content[code]}\n호시노 : ${content[code]} [emotion : hoshino_smile.png]\nselection : (1)"${content[code]}"\nendEvent`;
+  return content[code];
+}
+(async () => {
+  const { splitChatReply } = load('utils/splitChatReply.ts');
+  assert.deepEqual(splitChatReply('안녕. 선생!'), ['안녕.', '선생!']);
+  assert.deepEqual(splitChatReply('Hello. Sensei!'), ['Hello.', 'Sensei!']);
+  assert.deepEqual(splitChatReply('こんにちは。先生！元気？'), ['こんにちは。', '先生！', '元気？']);
+  assert.deepEqual(splitChatReply('你好。老师！今天好吗？'), ['你好。', '老师！', '今天好吗？']);
+  for (const bad of [undefined, null, {}, '__proto__', 'constructor', 'xx']) assert.equal(normalizeGenerationLanguage(bad), 'ko');
+  for (const [code, name] of Object.entries(languages)) {
+    for (const mode of ['chat', 'select', 'event']) {
+      const prompt = withGenerationLanguage('persona remains', code, mode);
+      assert.ok(prompt.startsWith('persona remains'));
+      assert.ok(prompt.includes(`OUTPUT LANGUAGE: ${name}.`));
+      if (mode === 'event') assert.ok(prompt.includes('타이틀, narration, selection, deleteEmotion, deleteAll, waitSecond, endEvent'));
+    }
+  }
+  let selected = 'ko';
+  const requests = [];
+  const rest = load('services/geminiClient/rest.ts', { './errors': { throwIfOffline() {} } }, {
+    fetch: async (_url, options) => {
+      const body = JSON.parse(options.body); requests.push(body);
+      return { ok: true, text: async () => JSON.stringify({ candidates: [{ content: { parts: [{ text: output(body.systemInstruction.parts[0].text) }] } }] }) };
+    },
+  });
+  const direct = load('services/geminiClient/directClient.ts', {
+    '@/services/geminiKey': { getGeminiKey: () => 'test-only-key' },
+    '@/services/appLanguage': { getAppLanguage: () => selected }, './rest': rest,
+  }).directClient;
+  for (const code of Object.keys(languages)) {
+    selected = code;
+    assert.equal((await direct.trigger('호시노')).triggerLine, content[code]);
+    await direct.chat('호시노', '한국어 입력이어도 설정 언어로');
+    assert.equal((await direct.chat('호시노', 'continue')).reply, content[code]);
+    const script = (await direct.createEvent('호시노')).eventScript;
+    assert.ok(script.includes(`타이틀 : ${content[code]}`));
+    assert.ok(script.includes(`호시노 : ${content[code]}`));
+    assert.ok(script.includes('emotion : hoshino_smile.png'));
+    assert.ok(script.includes('endEvent'));
+  }
+  assert.ok(requests[5].contents.length > 1, 'Language change retains direct conversation history');
+  let attempt = 0;
+  const fallbackRequests = [];
+  const retryRest = load('services/geminiClient/rest.ts', { './errors': { throwIfOffline() {} } }, {
+    fetch: async (_url, options) => {
+      const body = JSON.parse(options.body); fallbackRequests.push(body);
+      if (attempt++ === 0) return { ok: false, status: 503, text: async () => '{"error":{"message":"busy"}}' };
+      return { ok: true, text: async () => JSON.stringify({ candidates: [{ content: { parts: [{ text: output(body.systemInstruction.parts[0].text) }] } }] }) };
+    },
+  });
+  assert.equal(await retryRest.sendWithFallback('호시노', '', 'hello', undefined, 'test-only-key', 'ja'), content.ja);
+  assert.equal(fallbackRequests.length, 2);
+  assert.ok(fallbackRequests.every(request => request.systemInstruction.parts[0].text.includes('OUTPUT LANGUAGE: Japanese.')));
+  // One generation keeps its initial language even if settings change during selection.
+  const snapshots = [];
+  selected = 'en';
+  const snapshot = load('services/geminiClient/directClient.ts', {
+    '@/services/geminiKey': { getGeminiKey: () => 'snapshot-key' },
+    '@/services/appLanguage': { getAppLanguage: () => selected },
+    './rest': { ...rest, sendWithFallback: async (_char, session, _message, _system, _key, language) => {
+      snapshots.push(language);
+      if (session === 'select') { selected = 'ja'; return '{"characters":[],"direction":"continue"}'; }
+      return session === 'event' ? '타이틀 : Hello\n호시노 : Hello\nendEvent' : 'Hello';
+    } },
+  }).directClient;
+  await snapshot.trigger('호시노'); await snapshot.chat('호시노', 'a'); await snapshot.chat('호시노', 'b'); await snapshot.createEvent('호시노');
+  assert.deepEqual(snapshots, ['en', 'en', 'en', 'en', 'en']);
+
+  const transportCalls = [];
+  const transport = load('services/geminiClient/expressTransport.ts', {
+    '@/services/geminiKey': { getGeminiKey: () => 'test-only-key' },
+    '@/services/appLanguage': { getAppLanguage: () => selected }, './errors': { throwIfOffline() {} },
+  }, { fetch: async (_url, options) => { transportCalls.push(JSON.parse(options.body)); return { ok: true, json: async () => ({}) }; } }).expressTransport;
+  for (const code of Object.keys(languages)) {
+    selected = code;
+    await transport.trigger('호시노'); await transport.chat('호시노', 'hi'); await transport.createEvent('호시노');
+    assert.ok(transportCalls.slice(-3).every(body => body.language === code));
+  }
+
+  const models = [], sdkRequests = [];
+  class FakeSDK {
+    getGenerativeModel(options) {
+      return { startChat({ history }) {
+        models.push({ instruction: options.systemInstruction, history: [...history] });
+        const log = [...history];
+        return {
+          getHistory: async () => log,
+          sendMessage: async message => {
+            sdkRequests.push(options.systemInstruction);
+            const text = output(options.systemInstruction);
+            log.push({ role: 'user', parts: [{ text: message }] }, { role: 'model', parts: [{ text }] });
+            return { response: { text: () => text } };
+          },
+        };
+      } };
+    }
+  }
+  const service = load('server/src/services/geminiService.js', { '@google/generative-ai': { GoogleGenerativeAI: FakeSDK } });
+  const chat = load('server/src/controllers/chatController.js', { '../services/geminiService': service });
+  const controllerMocks = { '../services/geminiService': service, './chatController': chat };
+  const trigger = load('server/src/controllers/triggerController.js', controllerMocks);
+  const event = load('server/src/controllers/eventController.js', controllerMocks);
+  async function invoke(handler, language, extra = {}) {
+    let status = 200, data;
+    const response = { status(value) { status = value; return this; }, json(value) { data = value; return this; } };
+    await handler({ body: { character: '호시노', apiKey: 'test-only-key', language, ...extra } }, response);
+    assert.equal(status, 200); return data;
+  }
+  for (const code of Object.keys(languages)) {
+    assert.equal((await invoke(trigger.sendTrigger, code)).triggerLine, content[code]);
+    await invoke(chat.sendChat, code, { message: 'one' });
+    assert.equal((await invoke(chat.sendChat, code, { message: 'two' })).reply, content[code]);
+    const result = await invoke(event.createEvent, code);
+    assert.ok(result.eventScript.includes(`호시노 : ${content[code]}`));
+  }
+  assert.ok(models.some(model => model.instruction.includes('OUTPUT LANGUAGE: English.') && model.history.length >= 6), 'SDK language switch keeps history');
+  const fallback = await invoke(chat.sendChat, 'invalid', { message: 'continue' });
+  assert.equal(fallback.reply, content.ko);
+  console.log('PASS ko/en/ja/zh: direct + Express greeting/chat/selection/story, mid-generation snapshot, language switching with history, invalid default, canonical script/asset preservation (mocked Gemini, no paid API calls)');
+})().catch(error => { console.error(error); process.exitCode = 1; });

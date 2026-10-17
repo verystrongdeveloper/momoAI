@@ -1,5 +1,7 @@
 import { prompts } from '../../shared/prompts';
 import { GEMINI_OFFLINE_MESSAGE, throwIfOffline } from './errors';
+import { withGenerationLanguage } from '../../shared/prompts/generationLanguage';
+import type { AppLanguage } from '@/storage/types';
 
 const MODEL_FALLBACKS = [
   'gemini-3.7-flash',
@@ -112,9 +114,10 @@ export async function sendWithFallback(
   message: string,
   systemInstruction: string | undefined,
   apiKey: string,
+  language: AppLanguage = 'ko',
 ): Promise<string> {
   const order = orderFrom(activeModel);
-  const instruction = systemText(character, systemInstruction);
+  const instruction = withGenerationLanguage(systemText(character, systemInstruction), language, sessionKey === 'event' ? 'event' : sessionKey === 'select' ? 'select' : 'chat');
   let lastError: unknown;
 
   for (const modelName of order) {
