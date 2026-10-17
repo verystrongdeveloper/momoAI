@@ -43,6 +43,8 @@ export async function migrateLegacyStorage(): Promise<boolean> {
     const apiKey = (oldKeyRaw ?? '').trim();
     const rememberApiKey = apiKey.length > 0;
     const prefs = {
+      language: DEFAULT_PREFERENCES.language,
+      chatSize: DEFAULT_PREFERENCES.chatSize,
       bgmVolume: parseVolume(oldVolumeRaw),
       sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: oldGreetRaw === '1',

@@ -27,6 +27,7 @@ export function readInitialSync(): StorageSnapshot | null {
     return {
       apiKey,
       language: 'ko',
+      chatSize: DEFAULT_PREFERENCES.chatSize,
       rememberApiKey: apiKey.length > 0,
       bgmVolume: parseVolume(localStorage.getItem(OLD_VOLUME)),
       sfxVolume: DEFAULT_PREFERENCES.sfxVolume,

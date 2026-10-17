@@ -15,6 +15,9 @@ import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVo
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
 import { APP_LANGUAGES, setAppLanguage } from '@/services/appLanguage';
 import { useI18n } from '@/i18n';
+import { setChatSize, useChatSize } from '@/services/chatSize';
+import { MAX_CHAT_SIZE, MIN_CHAT_SIZE } from '@/storage/types';
+import { makeChatSizeStyles } from '@/components/chat/chatSizeStyles';
 
 const clamp = (value: number) => {
   if (!Number.isFinite(value)) return null;
@@ -80,6 +83,8 @@ export default function SettingsPanel({
   onOpenTerms: () => void;
 }) {
   const { language, t } = useI18n();
+  const chatSize = useChatSize();
+  const chatStyles = makeChatSizeStyles(chatSize);
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
   const scrollRef = useRef<ScrollView>(null);
@@ -122,6 +127,39 @@ export default function SettingsPanel({
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>{t('chatSize')}</Text>
+        <Text style={styles.value} accessibilityLiveRegion="polite">{Math.round(chatSize * 100)}%</Text>
+        <View style={styles.sizeActions}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('decreaseChatSize')}
+            disabled={chatSize <= MIN_CHAT_SIZE}
+            style={[styles.step, chatSize <= MIN_CHAT_SIZE && styles.disabled]}
+            onPress={() => setChatSize(chatSize - 0.1)}
+          >
+            <Text style={styles.stepText}>−</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('increaseChatSize')}
+            disabled={chatSize >= MAX_CHAT_SIZE}
+            style={[styles.step, chatSize >= MAX_CHAT_SIZE && styles.disabled]}
+            onPress={() => setChatSize(chatSize + 0.1)}
+          >
+            <Text style={styles.stepText}>+</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.resetSize} accessibilityRole="button" onPress={() => setChatSize(1)}>
+            <Text style={styles.guideText}>{t('resetChatSize')}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.hint}>{t('chatSizeHint')}</Text>
+        <View style={styles.chatPreview}>
+          <Text style={[styles.previewCharacter, chatStyles.bubble]}>{t('chatPreviewCharacter')}</Text>
+          <Text style={[styles.previewUser, chatStyles.bubble]}>{t('chatPreviewUser')}</Text>
         </View>
       </View>
 
@@ -191,6 +229,38 @@ const styles = StyleSheet.create({
   },
   control: {
     marginBottom: 8,
+  },
+  sizeActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    alignItems: 'center',
+  },
+  disabled: { opacity: 0.35 },
+  resetSize: {
+    backgroundColor: '#f6eef1',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  chatPreview: {
+    marginTop: 14,
+    padding: 12,
+    gap: 10,
+    borderRadius: 12,
+    backgroundColor: '#f7f8fa',
+  },
+  previewCharacter: {
+    alignSelf: 'flex-start',
+    maxWidth: '95%',
+    color: '#fff',
+    backgroundColor: '#44546A',
+  },
+  previewUser: {
+    alignSelf: 'flex-end',
+    maxWidth: '95%',
+    backgroundColor: '#DCF8C6',
+    color: '#222',
   },
   label: {
     fontSize: 15,

@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { avatarOf, displayCharacterName } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
 import { deleteStory, importStory, listStories, SavedStory, subscribeStories, updateStory } from '@/store/storyLibrary';
-import { setPendingEvent } from '@/store/eventStore';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 import { copyText } from '@/platform/clipboard';
 import { downloadStory, pickStoryFile } from '@/utils/storyFile';
@@ -17,12 +15,29 @@ const localeOf = { ko: 'ko-KR', en: 'en-US', ja: 'ja-JP', zh: 'zh-CN' } as const
 const formatWhen = (createdAt: number, language: keyof typeof localeOf) =>
   new Intl.DateTimeFormat(localeOf[language], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(createdAt));
 
-export default function StoryLibraryList() {
+const normalizeSearch = (text: string) => text.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
+
+export default function StoryLibraryList({ onOpenStory }: { onOpenStory: (story: SavedStory) => void }) {
   const { language, t } = useI18n();
-  const router = useRouter();
   const { isCompact } = useLayout();
+  const [shelfWidth, setShelfWidth] = useState(0);
+  const cardGap = isCompact ? 12 : 20;
+  const minCardWidth = isCompact ? 144 : 300;
+  const columns = Math.max(1, Math.floor((shelfWidth + cardGap) / (minCardWidth + cardGap)));
+  const cardWidth = shelfWidth > 0 ? (shelfWidth - cardGap * (columns - 1)) / columns : undefined;
   const [stories, setStories] = useState<SavedStory[]>(() => listStories());
-  const [editing, setEditing] = useState<SavedStory | null>(null);
+  const [search, setSearch] = useState('');
+  const [searchMode, setSearchMode] = useState<'title' | 'content'>('title');
+  const searchEntries = useMemo(() => stories.map((story) => ({
+    story,
+    title: normalizeSearch(story.title),
+    content: normalizeSearch([story.script, ...(story.chatMessages ?? []).map((message) => message.text)].join('\n')),
+  })), [stories]);
+  const query = normalizeSearch(search);
+  const filteredStories = useMemo(() => query
+    ? searchEntries.filter((entry) => entry[searchMode].includes(query)).map((entry) => entry.story)
+    : stories, [stories, searchEntries, query, searchMode]);
+  const [editing, setEditing] = useState<SavedStory | 'new' | null>(null);
   const [draft, setDraft] = useState('');
   const [editorTab, setEditorTab] = useState<'story' | 'assets'>('story');
   const [notice, setNotice] = useState('');
@@ -58,8 +73,13 @@ export default function StoryLibraryList() {
 
   const open = (story: SavedStory) => {
     setMenuId(null);
-    setPendingEvent(story.script);
-    router.push('/event');
+    onOpenStory(story);
+  };
+
+  const changeSearch = (value: string) => {
+    setSearch(value);
+    setMenuId(null);
+    setConfirmId(null);
   };
 
   const toggleMenu = (id: string) => {
@@ -67,10 +87,10 @@ export default function StoryLibraryList() {
     setMenuId((current) => (current === id ? null : id));
   };
 
-  const startEdit = (story: SavedStory) => {
+  const startEdit = (story: SavedStory | 'new') => {
     setMenuId(null);
     setEditing(story);
-    setDraft(story.script);
+    setDraft(story === 'new' ? '' : story.script);
     setEditorTab('story');
     setNotice('');
     selectionRef.current = { start: 0, end: 0 };
@@ -78,7 +98,16 @@ export default function StoryLibraryList() {
 
   const saveEdit = () => {
     if (!editing) return;
-    updateStory(editing.id, draft);
+    if (editing === 'new') {
+      const script = draft.trim();
+      if (!script) {
+        setNotice(t('emptyDraft'));
+        return;
+      }
+      importStory(script);
+    } else {
+      updateStory(editing.id, draft);
+    }
     setStories(listStories());
     setEditing(null);
   };
@@ -127,7 +156,7 @@ export default function StoryLibraryList() {
     return (
       <View style={styles.container}>
         <View style={styles.editorHeader}>
-          <Text style={styles.title}>{t('editStory')}</Text>
+          <Text style={styles.title}>{t(editing === 'new' ? 'createStory' : 'editStory')}</Text>
           <View style={styles.editorActions}>
             <TouchableOpacity onPress={() => setEditing(null)} style={styles.cancelBtn}>
               <Text style={styles.cancelText}>{t('cancel')}</Text>
@@ -174,7 +203,7 @@ export default function StoryLibraryList() {
             />
           )}
           {(!isCompact || editorTab === 'assets') && (
-            <StoryAssetPanel character={editing.character} onInsert={insertAsset} fullWidth={isCompact} />
+            <StoryAssetPanel character={editing === 'new' ? '' : editing.character} onInsert={insertAsset} fullWidth={isCompact} />
           )}
         </View>
       </View>
@@ -183,7 +212,12 @@ export default function StoryLibraryList() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, isCompact && styles.contentCompact]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <View style={[styles.header, isCompact && styles.headerCompact]}>
           <Text style={styles.libraryTitle}>{t('library')}</Text>
           <View style={[styles.headerActions, isCompact && styles.headerActionsCompact]}>
@@ -193,22 +227,77 @@ export default function StoryLibraryList() {
             <TouchableOpacity onPress={loadFile} style={styles.loadBtn}>
               <Text style={styles.loadText}>{t('load')}</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => startEdit('new')} style={styles.loadBtn}>
+              <Text style={styles.loadText}>{t('createStory')}</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.shelf}>
+        <View style={styles.searchControls}>
+          <View style={styles.searchModes} accessibilityRole="radiogroup" accessibilityLabel={t('storySearchMode')}>
+            {(['title', 'content'] as const).map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: searchMode === mode }}
+                accessibilityLabel={t(mode === 'title' ? 'searchByTitle' : 'searchByContent')}
+                style={[styles.searchMode, searchMode === mode && styles.searchModeActive]}
+                onPress={() => {
+                  setSearchMode(mode);
+                  setMenuId(null);
+                  setConfirmId(null);
+                }}
+              >
+                <Text style={[styles.searchModeText, searchMode === mode && styles.searchModeTextActive]}>
+                  {t(mode === 'title' ? 'searchByTitle' : 'searchByContent')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color="#84909d" />
+          <TextInput
+            style={styles.searchInput}
+            value={search}
+            onChangeText={changeSearch}
+            placeholder={t('storySearchPlaceholder')}
+            accessibilityLabel={t(searchMode === 'title' ? 'searchStoryTitle' : 'searchStoryContent')}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('clearStorySearch')}
+              onPress={() => changeSearch('')}
+              style={styles.clearSearch}
+            >
+              <Ionicons name="close-circle" size={20} color="#84909d" />
+            </TouchableOpacity>
+          )}
+        </View>
+        </View>
+        {!!query && (
+          <Text style={styles.searchCount} accessibilityLiveRegion="polite">
+            {t('storySearchCount', { count: filteredStories.length, total: stories.length })}
+          </Text>
+        )}
+        <View style={styles.shelf} onLayout={(event) => setShelfWidth(event.nativeEvent.layout.width)}>
         {!!listNotice && <Text style={styles.listNotice}>{listNotice}</Text>}
         {stories.length === 0 ? (
           <Text style={styles.empty}>{t('emptyStories')}</Text>
+        ) : filteredStories.length === 0 ? (
+          <Text style={styles.empty}>{t('noStorySearchResults')}</Text>
         ) : (
-          <View style={[styles.grid, isCompact && styles.gridCompact]}>
-            {stories.map((story) => {
+          <View style={[styles.grid, { gap: cardGap }]}>
+            {filteredStories.map((story) => {
               const portrait = avatarOf(story.character);
               const menuOpen = menuId === story.id;
               return (
                 <View
                   key={story.id}
                   dataSet={{ storyCard: 'true' }}
-                  style={[styles.card, menuOpen && styles.cardMenuOpen]}
+                  style={[styles.card, cardWidth !== undefined && { width: cardWidth }, menuOpen && styles.cardMenuOpen]}
                 >
                   <TouchableOpacity style={styles.coverHit} onPress={() => open(story)} activeOpacity={0.92}>
                     {portrait ? (
@@ -228,7 +317,7 @@ export default function StoryLibraryList() {
                   >
                     <Ionicons name="ellipsis-horizontal" size={16} color="#5c6570" />
                   </TouchableOpacity>
-                  <View style={styles.body}>
+                  <TouchableOpacity style={styles.body} onPress={() => open(story)} activeOpacity={0.92}>
                     <Text style={styles.name} numberOfLines={2}>
                       {story.title}
                     </Text>
@@ -236,7 +325,7 @@ export default function StoryLibraryList() {
                       {displayCharacterName(story.character, language)}
                     </Text>
                     <Text style={styles.meta}>{formatWhen(story.createdAt, language)}</Text>
-                  </View>
+                  </TouchableOpacity>
                   {menuOpen && (
                     <View dataSet={{ storyMenu: 'true' }} style={styles.menu}>
                       {confirmId === story.id ? (
@@ -302,8 +391,11 @@ const styles = StyleSheet.create({
   },
   shelf: {
     width: '100%',
-    maxWidth: 1040,
     alignSelf: 'flex-start',
+  },
+  contentCompact: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
   header: {
     width: '100%',
@@ -320,7 +412,10 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    flexShrink: 0,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginLeft: 'auto',
     gap: 8,
@@ -339,6 +434,61 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#222',
+  },
+  searchControls: {
+    width: 420,
+    maxWidth: '100%',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  searchModes: {
+    flexDirection: 'row',
+    flexShrink: 0,
+    padding: 3,
+    borderRadius: 10,
+    backgroundColor: '#e9eef3',
+  },
+  searchMode: {
+    minHeight: 38,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  searchModeActive: { backgroundColor: '#fff' },
+  searchModeText: { color: '#6a8298', fontSize: 13 },
+  searchModeTextActive: { color: '#243e5c', fontWeight: '700' },
+  searchBar: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+    paddingRight: 6,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: '#dce3e9',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#243044',
+  },
+  clearSearch: {
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchCount: {
+    marginBottom: 12,
+    color: '#6a8298',
+    fontSize: 13,
   },
   copyBtn: {
     minHeight: 36,
@@ -381,14 +531,9 @@ const styles = StyleSheet.create({
   },
   grid: {
     width: '100%',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-    gap: 20,
-    justifyContent: 'start',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'stretch',
-  },
-  gridCompact: {
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))',
   },
   card: {
     width: '100%',
@@ -579,7 +724,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   portrait: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
     backgroundColor: '#f3d5dc',

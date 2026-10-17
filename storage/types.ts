@@ -2,6 +2,7 @@ export type AppLanguage = 'ko' | 'en' | 'ja' | 'zh';
 
 export type Preferences = {
   language: AppLanguage;
+  chatSize: number;
   bgmVolume: number;
   sfxVolume: number;
   greetMode: boolean;
@@ -10,12 +11,19 @@ export type Preferences = {
   tutorialSeen: boolean;
 };
 
+export type SavedChatMessage = {
+  sender: 'user' | 'character';
+  text: string;
+  showImage?: boolean;
+};
+
 export type StoryRecord = {
   id: string;
   title: string;
   character: string;
   script: string;
   createdAt: number;
+  chatMessages?: SavedChatMessage[];
 };
 
 export type StorageSnapshot = Preferences & {
@@ -25,6 +33,7 @@ export type StorageSnapshot = Preferences & {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   language: 'ko',
+  chatSize: 1,
   bgmVolume: 0.5,
   sfxVolume: 0.5,
   greetMode: false,
@@ -51,6 +60,14 @@ export function clampVolume(value: number): number | null {
   return Math.round(next * 100) / 100;
 }
 
+export const MIN_CHAT_SIZE = 0.8;
+export const MAX_CHAT_SIZE = 1.5;
+
+export function clampChatSize(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+  return Math.round(Math.min(MAX_CHAT_SIZE, Math.max(MIN_CHAT_SIZE, value)) * 10) / 10;
+}
+
 export function parseVolume(raw: string | null): number {
   if (raw == null || raw === '') return DEFAULT_PREFERENCES.bgmVolume;
   return clampVolume(Number(raw)) ?? DEFAULT_PREFERENCES.bgmVolume;
@@ -66,6 +83,18 @@ export function sanitizeStories(input: unknown): StoryRecord[] {
       title: typeof item.title === 'string' ? item.title : '스토리',
       character: typeof item.character === 'string' ? item.character : '스토리',
       createdAt: typeof item.createdAt === 'number' ? item.createdAt : 0,
+      ...(Array.isArray(item.chatMessages) ? {
+        chatMessages: item.chatMessages
+          .filter((message: unknown): message is SavedChatMessage =>
+            typeof message === 'object' && message !== null &&
+            'sender' in message && (message.sender === 'user' || message.sender === 'character') &&
+            'text' in message && typeof message.text === 'string')
+          .map((message: SavedChatMessage) => ({
+            sender: message.sender,
+            text: message.text,
+            showImage: message.showImage === true,
+          })),
+      } : {}),
     }));
 }
 
@@ -85,6 +114,7 @@ export function parsePreferences(raw: string | null): Preferences {
     const parsed = JSON.parse(raw) as Partial<Preferences>;
     return {
       language: parsed.language === 'en' || parsed.language === 'ja' || parsed.language === 'zh' ? parsed.language : 'ko',
+      chatSize: typeof parsed.chatSize === 'number' ? clampChatSize(parsed.chatSize) ?? DEFAULT_PREFERENCES.chatSize : DEFAULT_PREFERENCES.chatSize,
       bgmVolume: clampVolume(Number(parsed.bgmVolume)) ?? DEFAULT_PREFERENCES.bgmVolume,
       sfxVolume: clampVolume(Number(parsed.sfxVolume)) ?? DEFAULT_PREFERENCES.sfxVolume,
       greetMode: parsed.greetMode === true,

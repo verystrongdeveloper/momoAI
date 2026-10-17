@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import GreetModeToggle from './GreetModeToggle';
 import StoryHeader from './StoryHeader';
 import StorySidebar from './StorySidebar';
@@ -8,7 +8,8 @@ import CharacterChat from '@/components/chat/CharacterChat';
 import StoryLibraryList from '@/components/chat/StoryLibraryList';
 import SettingsPanel from './SettingsPanel';
 import AppGuide, { GuideMode } from '@/components/guide/AppGuide';
-import { CHARACTERS, Character } from '@/constants/characters';
+import { avatarOf, CHARACTERS, Character, displayCharacterName } from '@/constants/characters';
+import type { SavedStory } from '@/store/storyLibrary';
 import { useLayout } from '@/hooks/useLayout';
 import { useI18n } from '@/i18n';
 
@@ -20,6 +21,7 @@ const StoryContainer: React.FC = () => {
   const { isCompact } = useLayout();
   const [listPanel, setListPanel] = useState<ListPanel>('characters');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [savedStory, setSavedStory] = useState<SavedStory | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [guide, setGuide] = useState<GuideMode | null>(null);
 
@@ -39,14 +41,17 @@ const StoryContainer: React.FC = () => {
       horizontal={isCompact}
       active={listPanel}
       onOpenCharacterList={() => {
+        setSavedStory(null);
         setListPanel('characters');
         if (isCompact) closeDetail();
       }}
       onOpenLibrary={() => {
+        setSavedStory(null);
         setListPanel('library');
         if (isCompact) closeDetail();
       }}
       onOpenSettings={() => {
+        setSavedStory(null);
         setListPanel('settings');
         if (isCompact) closeDetail();
       }}
@@ -58,8 +63,16 @@ const StoryContainer: React.FC = () => {
   const fullPane = libraryOpen || settingsOpen;
   const fullPaneView = settingsOpen ? (
     <SettingsPanel onOpenTutorial={() => setGuide('tutorial')} onOpenTerms={() => setGuide('terms')} />
+  ) : savedStory ? (
+    <CharacterChat
+      key={savedStory.id}
+      characterName={savedStory.character}
+      displayName={displayCharacterName(savedStory.character, language)}
+      characterImage={avatarOf(savedStory.character)}
+      savedStory={savedStory}
+    />
   ) : (
-    <StoryLibraryList />
+    <StoryLibraryList onOpenStory={setSavedStory} />
   );
 
   const list = (
@@ -105,14 +118,14 @@ const StoryContainer: React.FC = () => {
   return (
     <View style={styles.container}>
       <StoryHeader
-        title={isCompact ? detailTitle : undefined}
-        onBack={isCompact && hasDetail ? closeDetail : undefined}
+        title={libraryOpen && savedStory ? displayCharacterName(savedStory.character, language) : isCompact ? detailTitle : undefined}
+        onBack={libraryOpen && savedStory ? () => setSavedStory(null) : isCompact && hasDetail ? closeDetail : undefined}
       />
 
       {isCompact ? (
         <View style={styles.bodyColumn}>
           {fullPane ? fullPaneView : hasDetail ? detail : list}
-          {(fullPane || !hasDetail) && sidebar}
+          {!savedStory && (fullPane || !hasDetail) && sidebar}
         </View>
       ) : (
         <View style={styles.bodyRow}>
@@ -124,11 +137,19 @@ const StoryContainer: React.FC = () => {
 
       <AppGuide manual={guide} onManualClose={() => setGuide(null)} />
 
-      {globalLoading && (
-        <View style={styles.loadingOverlay}>
+      <Modal
+        visible={globalLoading}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        navigationBarTranslucent
+        onRequestClose={() => undefined}
+      >
+        <View style={styles.loadingOverlay} accessibilityViewIsModal>
           <ActivityIndicator size="large" color="#ffffff" />
         </View>
-      )}
+      </Modal>
     </View>
   );
 };
@@ -182,10 +203,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
   },
 });

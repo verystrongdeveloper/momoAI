@@ -76,6 +76,7 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
   const goHome = () => router.replace('/');
 
   const onAdvance = () => {
+    if (menuOpen) return;
     // 타이핑 중이면 문장만 끝까지 보여주고, 끝난 뒤에 누르면 다음으로 넘어간다.
     if (dialogueRef.current?.finish()) return;
     if (line?.type === 'selection' && (line.options?.length ?? 0) > 0) return;
@@ -296,12 +297,12 @@ const styles = StyleSheet.create({
     zIndex: 16,
   },
   selectionDim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(5, 13, 36, 0.24)',
     zIndex: 4,
   },
   tap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 7,
   },
 });

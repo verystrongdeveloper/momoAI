@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Button,
   FlatList,
   Image,
   ImageSourcePropType,
   Keyboard,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -16,14 +17,18 @@ import { geminiClient, geminiFailureText } from '@/services/geminiClient';
 import { getGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
-import { saveStory } from '@/store/storyLibrary';
+import { saveStory, type SavedStory } from '@/store/storyLibrary';
+import type { SavedChatMessage } from '@/storage/types';
+import { useChatSize } from '@/services/chatSize';
+import { makeChatSizeStyles } from './chatSizeStyles';
 import { useI18n } from '@/i18n';
 
 interface Props {
   characterName: string;
   displayName?: string;
-  characterImage: ImageSourcePropType;
+  characterImage?: ImageSourcePropType;
   setGlobalLoading?: (value: boolean) => void;
+  savedStory?: SavedStory;
 }
 
 interface Chat {
@@ -43,26 +48,38 @@ const splitSentences = (text: string) =>
     .map((s) => s.replace(/\n/g, ' ').trim())
     .filter((s) => s !== '' && !/^(\.){2,}$/.test(s));
 
-const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterImage, setGlobalLoading }) => {
+const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterImage, setGlobalLoading, savedStory }) => {
   const { t } = useI18n();
   const visibleName = displayName ?? characterName;
   const router = useRouter();
+  const chatSize = useChatSize();
+  const sizeStyles = useMemo(() => makeChatSizeStyles(chatSize), [chatSize]);
 
   const apiKey = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
   const hasKey = apiKey.trim().length > 0;
   const [messages, setMessages] = useState<Chat[]>([]);
   const [input, setInput] = useState('');
   const [eventReady, setEventReady] = useState(false);
+  const [replayCount, setReplayCount] = useState(1);
+  const savedMessages = savedStory?.chatMessages;
+  const replaying = !!savedStory && replayCount < (savedMessages?.length ?? 0);
+  const shownMessages = savedStory ? (savedMessages ?? []).slice(0, replayCount) : messages;
 
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<FlatList<Chat>>(null);
   const waitingRef = useRef(false);
 
   useEffect(() => {
+    if (!replaying) return;
+    const timer = setTimeout(() => setReplayCount((count) => count + 1), TYPING_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [replaying, replayCount, savedStory]);
+
+  useEffect(() => {
     // 아이템 렌더 → 레이아웃 계산이 끝난 뒤 스크롤해야 끝까지 내려간다.
     const t = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(t);
-  }, [messages]);
+  }, [messages, replayCount]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => {
@@ -92,7 +109,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
 
   /* 먼저 말 걸기가 켜져 있으면 입장 시 캐릭터가 먼저 말을 건다 */
   useEffect(() => {
-    if (!getGreetMode() || !getGeminiKey().trim()) return;
+    if (savedStory || !getGreetMode() || !getGeminiKey().trim()) return;
 
     let cancelled = false;
     waitingRef.current = true;
@@ -100,9 +117,9 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
       setMessages((prev) => [...prev, { sender: 'typing', text: '···', showImage: true }]);
       try {
         const { triggerLine } = await geminiClient.trigger(characterName);
-        if (!cancelled) waitingRef.current = false;
         await sleep(TYPING_DELAY_MS);
         if (!cancelled) await playReply(triggerLine ?? '');
+        if (!cancelled) waitingRef.current = false;
       } catch (e) {
         console.error('[CharacterChat] trigger 실패:', e);
         if (!cancelled) {
@@ -118,11 +135,11 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterName, hasKey]);
+  }, [characterName, hasKey, savedStory]);
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!hasKey || !text || waitingRef.current) return;
+    if (savedStory || !hasKey || !text || waitingRef.current) return;
 
     waitingRef.current = true;
     setMessages((prev) => [
@@ -135,8 +152,8 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
 
     try {
       const { reply, eventReady: ready } = await geminiClient.chat(characterName, text);
-      waitingRef.current = false;
       await playReply(reply);
+      waitingRef.current = false;
       setEventReady(ready);
     } catch (err) {
       console.error('[CharacterChat] chat 실패:', err);
@@ -148,16 +165,25 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
   };
 
   const handleEventStart = async () => {
+    if (savedStory) {
+      setPendingEvent(savedStory.script);
+      router.push('/event');
+      return;
+    }
+    if (waitingRef.current) return;
+    waitingRef.current = true;
+    const chatSnapshot = messages.filter((message): message is SavedChatMessage => message.sender !== 'typing');
     setGlobalLoading?.(true);
     try {
       const { eventScript } = await geminiClient.createEvent(characterName);
-      saveStory(characterName, eventScript);
+      saveStory(characterName, eventScript, chatSnapshot);
       setPendingEvent(eventScript);
       router.push('/event');
     } catch (e) {
       console.error('[CharacterChat] 이벤트 생성 실패:', e);
       setMessages((prev) => [...prev, { sender: 'character', text: geminiFailureText(e) }]);
     } finally {
+      waitingRef.current = false;
       setGlobalLoading?.(false);
     }
   };
@@ -167,15 +193,15 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
     const isTyping = item.sender === 'typing';
 
     return (
-      <View style={[styles.messageRow, isUser && styles.messageRowRight]}>
+      <View style={[styles.messageRow, sizeStyles.messageRow, isUser && styles.messageRowRight]}>
         {!isUser && (
-          <View style={styles.avatarWrapper}>
-            {item.showImage && <Image source={characterImage} style={styles.avatar} />}
+          <View style={[styles.avatarWrapper, sizeStyles.avatarWrapper]}>
+            {item.showImage && characterImage && <Image source={characterImage} style={[styles.avatar, sizeStyles.avatar]} />}
           </View>
         )}
         <View style={styles.messageColumn}>
-          {!isUser && item.showImage && <Text style={styles.charName}>{visibleName}</Text>}
-          <Text style={[styles.bubble, isUser ? styles.userBubble : styles.charBubble, isTyping && styles.typingBubble]}>
+          {!isUser && item.showImage && <Text style={[styles.charName, sizeStyles.charName]}>{visibleName}</Text>}
+          <Text style={[styles.bubble, isUser ? styles.userBubble : styles.charBubble, isTyping && styles.typingBubble, sizeStyles.bubble]}>
             {item.text}
           </Text>
         </View>
@@ -187,25 +213,32 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
     <View style={styles.container}>
       <FlatList
         ref={listRef}
-        data={messages}
+        data={shownMessages}
+        extraData={chatSize}
         keyExtractor={(_, i) => i.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={savedStory ? <Text style={styles.archiveNotice}>{t('noSavedChat')}</Text> : undefined}
+        onContentSizeChange={() => {
+          if (!savedStory || replaying) listRef.current?.scrollToEnd({ animated: true });
+        }}
       />
 
-      {eventReady && (
+      {(savedStory ? !replaying : eventReady) && (
         <View style={styles.eventContainer}>
-          <Text style={styles.eventLabel}>| {t('bondEvent')} |</Text>
+          <Text style={[styles.eventLabel, sizeStyles.eventLabel]}>| {t('bondEvent')} |</Text>
           <TouchableOpacity style={styles.eventButton} onPress={handleEventStart}>
-            <Text style={styles.eventButtonText}>{t('bondStory', { name: visibleName })}</Text>
+            <Text style={[styles.eventButtonText, sizeStyles.eventButtonText]}>{t('bondStory', { name: visibleName })}</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <View style={styles.inputArea}>
+      {savedStory ? (
+        <Text style={styles.archiveNotice}>{t(replaying ? 'chatReplayHint' : 'savedChatReadOnly')}</Text>
+      ) : <View style={styles.inputArea}>
         <TextInput
           ref={inputRef}
-          style={[styles.input, !hasKey && styles.inputLocked]}
+          style={[styles.input, sizeStyles.input, !hasKey && styles.inputLocked]}
           placeholder={hasKey ? t('messagePlaceholder') : t('messageKeyRequired')}
           value={hasKey ? input : ''}
           editable={hasKey}
@@ -214,7 +247,15 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
           blurOnSubmit={false}
         />
         <Button title={t('send')} onPress={handleSend} disabled={!hasKey} />
-      </View>
+      </View>}
+      {replaying && (
+        <Pressable
+          style={styles.replaySkip}
+          accessibilityRole="button"
+          accessibilityLabel={t('showAllChat')}
+          onPress={() => setReplayCount(savedMessages?.length ?? 0)}
+        />
+      )}
     </View>
   );
 };
@@ -228,6 +269,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 10,
+  },
+  replaySkip: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 1,
+  },
+  archiveNotice: {
+    padding: 12,
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 13,
   },
   messageRow: {
     flexDirection: 'row',

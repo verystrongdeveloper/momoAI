@@ -97,9 +97,10 @@ function tutorialSteps(): Step[] {
     body: (
       <>
         <IconLine name="library-outline" label="책 아이콘" text="이 라이브러리입니다. 만들어진 인연 스토리가 카드로 모입니다." />
-        <Text style={styles.body}>카드를 누르면 그 스토리를 다시 재생합니다.</Text>
+        <Text style={styles.body}>카드를 누르면 저장된 대화가 하나씩 재생됩니다. 화면을 누르면 전체 대화를 바로 볼 수 있습니다. 이 채팅방에서는 메시지를 보낼 수 없고, 인연 스토리로 버튼을 눌러 스토리를 시작합니다.</Text>
         <Text style={styles.body}>카드의 … 메뉴에서 대본을 수정하거나, 텍스트 파일로 추출하거나, 지울 수 있습니다.</Text>
         <Text style={styles.body}>위쪽 프롬프트 복사는 스토리 대본을 쓰는 안내문입니다. 불러오기는 텍스트 대본 파일을 라이브러리에 넣습니다.</Text>
+        <Text style={styles.body}>새로 만들기를 누르면 빈 편집 화면이 열립니다. 대본을 작성하고 저장하면 새 스토리가 라이브러리에 추가됩니다.</Text>
       </>
     ),
   },

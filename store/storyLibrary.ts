@@ -1,5 +1,5 @@
 import { loadStories, saveStories, subscribeStorage } from '@/storage';
-import type { StoryRecord } from '@/storage/types';
+import type { SavedChatMessage, StoryRecord } from '@/storage/types';
 
 export type SavedStory = StoryRecord;
 
@@ -62,13 +62,14 @@ export function importStory(script: string): SavedStory {
 }
 
 /** 생성된 스크립트를 라이브러리에 넣는다. 재생은 그대로 이어진다. */
-export function saveStory(character: string, script: string): SavedStory {
+export function saveStory(character: string, script: string, chatMessages?: SavedChatMessage[]): SavedStory {
   const story: SavedStory = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: titleOf(script, character),
     character,
     script,
     createdAt: Date.now(),
+    ...(chatMessages ? { chatMessages: chatMessages.map((message) => ({ ...message })) } : {}),
   };
   writeStored([story, ...readStored()]);
   return story;

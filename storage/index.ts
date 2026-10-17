@@ -3,9 +3,9 @@ import { loadPreferences, savePreferences } from './preferencesStorage';
 import { readStoryRecords, writeStoryRecords } from './storyStorage';
 import { migrateLegacyStorage } from './migrate';
 import { readInitialSync } from './prime';
-import { AppLanguage, DEFAULT_PREFERENCES, Preferences, StoryRecord, clampVolume } from './types';
+import { AppLanguage, DEFAULT_PREFERENCES, Preferences, StoryRecord, clampChatSize, clampVolume } from './types';
 
-type SettingKey = 'language' | 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen';
+type SettingKey = 'language' | 'chatSize' | 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen';
 
 let synced = readInitialSync() != null;
 
@@ -46,7 +46,7 @@ export function getRememberApiKey() {
   return memory.rememberApiKey;
 }
 
-export function getSetting(key: 'bgmVolume' | 'sfxVolume'): number;
+export function getSetting(key: 'chatSize' | 'bgmVolume' | 'sfxVolume'): number;
 export function getSetting(key: 'language'): AppLanguage;
 export function getSetting(key: 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen'): boolean;
 export function getSetting(key: SettingKey): number | boolean | AppLanguage {
@@ -60,6 +60,7 @@ export function loadStories(): StoryRecord[] {
 async function persistAll() {
   const prefs: Preferences = {
     language: memory.language,
+    chatSize: memory.chatSize,
     bgmVolume: memory.bgmVolume,
     sfxVolume: memory.sfxVolume,
     greetMode: memory.greetMode,
@@ -85,6 +86,11 @@ export function saveSetting(key: SettingKey, value: number | boolean | AppLangua
     if (value !== 'ko' && value !== 'en' && value !== 'ja' && value !== 'zh') return;
     if (value === memory.language) return;
     memory.language = value;
+  } else if (key === 'chatSize') {
+    if (typeof value !== 'number') return;
+    const next = clampChatSize(value);
+    if (next == null || next === memory.chatSize) return;
+    memory.chatSize = next;
   } else if (key === 'bgmVolume' || key === 'sfxVolume') {
     if (typeof value !== 'number') return;
     const next = clampVolume(value);
@@ -122,6 +128,7 @@ async function pullAll() {
   memory = {
     apiKey,
     language: prefs.language,
+    chatSize: prefs.chatSize,
     bgmVolume: prefs.bgmVolume,
     sfxVolume: prefs.sfxVolume,
     greetMode: prefs.greetMode,
