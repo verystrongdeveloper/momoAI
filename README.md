@@ -9,18 +9,18 @@
 ## 한눈에 보기
 
 <p align="center">
-  <img src="docs/screenshots/event.png" alt="MomoStory 인연 이벤트 플레이어 화면" width="860" />
+  <img src="docs/screenshots/character-chat.png" alt="호시노와 대화하고 인연 이벤트를 시작하는 MomoStory 채팅 화면" width="860" />
 </p>
 
-<p align="center"><sub>인연 이벤트 플레이어 — 대화에서 이어진 장면을 배경·표정·BGM과 함께 재생합니다.</sub></p>
+<p align="center"><sub>캐릭터 대화 — 대화가 쌓이면 인연 이벤트를 바로 시작할 수 있습니다.</sub></p>
 
 MomoStory는 캐릭터의 말투와 성격을 반영한 1:1 대화, 그리고 대화 맥락을 바탕으로 전개되는 선택형 인연 이벤트를 제공합니다. 배경·표정·BGM·효과음으로 장면의 분위기까지 함께 즐길 수 있습니다.
 
 <p align="center">
-  <img src="docs/screenshots/chat-example.svg" alt="호시노와의 예시 캐릭터 대화 화면" width="860" />
+  <img src="docs/screenshots/bond-event.png" alt="호시노의 표정과 대사가 표시된 MomoStory 인연 이벤트 플레이어 화면" width="860" />
 </p>
 
-<p align="center"><sub>캐릭터 대화 UI 예시 — 실제 대화 내용은 사용자의 Gemini API 키로 생성됩니다.</sub></p>
+<p align="center"><sub>인연 이벤트 플레이어 — 캐릭터 표정, 배경, 대사와 함께 장면을 재생합니다.</sub></p>
 
 ## 주요 기능
 
