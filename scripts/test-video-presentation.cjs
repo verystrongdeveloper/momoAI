@@ -21,8 +21,16 @@ const { buildVideoTimeline, videoDimensions } = load('services/videoExport/timel
 const { paintVideo } = load('services/videoExport/paint.ts');
 const { sfxMap, expressionMap } = load('constants/eventAssets.ts');
 for (const [folder, map] of [['assets/sound', sfxMap], ['assets/images/expression', expressionMap]]) {
-  assert.deepEqual(Object.keys(map).sort(), fs.readdirSync(path.join(root, folder)).sort());
+  assert.deepEqual(Object.values(map).map(source => path.basename(source)).sort(), fs.readdirSync(path.join(root, folder)).sort());
+  for (const source of Object.values(map)) {
+    if (!source.endsWith('.png') && !source.endsWith('.webp')) continue;
+    const bytes = fs.readFileSync(path.resolve(root, 'constants', source));
+    if (source.endsWith('.png')) assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    else { assert.equal(bytes.subarray(0, 4).toString(), 'RIFF'); assert.equal(bytes.subarray(8, 12).toString(), 'WEBP'); }
+  }
 }
+assert.ok(expressionMap['Headpat.png'].endsWith('Headpat.webp'));
+assert.ok(expressionMap['Question2.png'].endsWith('Question2.webp'));
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`);
 for (let i = 0; i <= 100; i++) { const t = i / 100; near(eventEase(t), 1 - eventEase(1 - t)); }
 for (const [time, offset] of [[0, 0], [0.04, 7.5], [0.08, 15], [0.12, 0], [0.16, -15], [0.24, 15], [0.48, -15], [0.52, -7.5], [0.56, 0], [1, 0]]) {

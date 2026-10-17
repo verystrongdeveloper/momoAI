@@ -166,8 +166,8 @@ export const sfxMap: Record<string, any> = {
 
 /* Expression. 파일이 생기면 여기에 추가한다. */
 export const expressionMap: Record<string, any> = {
-  'Headpat.png': require('../assets/images/expression/Headpat.png'),
-  'Question2.png': require('../assets/images/expression/Question2.png'),
+  'Headpat.png': require('../assets/images/expression/Headpat.webp'),
+  'Question2.png': require('../assets/images/expression/Question2.webp'),
   'question_mark.png': require('../assets/images/expression/question_mark.png'),
   'sweat.png': require('../assets/images/expression/sweat.png'),
 } as const;
