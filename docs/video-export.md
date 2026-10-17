@@ -1,0 +1,64 @@
+# 영상 추출
+
+라이브러리 카드의 `…` → `영상 추출`에서 16:9 또는 9:16을 고르고 MP4 다운로드를 누른다.
+사용자의 대화, API 키, 스토리를 별도 서버에 업로드하지 않고 기기 안에서 생성한다.
+
+- 가로 1280×720 / 세로 720×1280, 24fps, H.264 + AAC MP4.
+- 저장된 채팅 말풍선 → 스토리 순으로 이어진다. 채팅이 없는 저장본은 스토리부터 시작한다.
+- 대사 타이핑과 AUTO 읽기 간격을 유지하고, 선택지는 첫 번째 항목을 강조한 뒤 진행한다.
+- 타이틀 펼침/페이드, 3회 흔들기/슬라이드 복귀, 감정 아이콘 페이드와 명령 구간의 대화창 표시를 반영한다.
+  화자 소속·다음 표시와 선택지 그라데이션/테두리를 포함한다. 영상에는 AUTO 글자를 그리지 않는다.
+  인연스토리 이동 버튼은 채팅 메시지가 모두 나온 후 마지막 전환 구간에만 표시한다.
+- 현재 설정의 채팅 배율, BGM·효과음 볼륨을 사용한다. TTS 음성은 생성하지 않는다.
+- 데스크톱 Chrome·Edge/Windows 프로그램: 먼저 ‘다른 이름으로 저장’ 창에서 파일명과 위치를 선택하고,
+  영상 생성이 끝나면 선택한 파일에 저장한다. TXT 추출도 같은 저장 방식을 쓴다.
+  Brave 등 저장 위치 API가 없는 브라우저에서 Windows 로컬 개발 서버를 사용하면
+  로컬 백엔드가 Windows 저장 창을 연다. 파일은 외부 서버로 전송하지 않는다.
+  PC 영상 추출은 저장 위치를 선택해야 시작하며, 로컬 백엔드도 없는 미지원 환경에서는
+  생성부터 시작하지 않고 지원 환경을 안내한다. TXT 추출은 일반 다운로드로 대체할 수 있다.
+  모바일 웹은 일반 다운로드. Android 10 이상 앱은 `다운로드/MomoStory`에 저장.
+  이전 Android는 시스템 파일 저장 창에서 경로를 고른다. iOS는 시스템 파일 공유/저장 창을 사용한다.
+- 생성 중 진행률과 취소를 지원한다. 완성 파일을 시스템에 저장하는 동안에는 취소할 수 없다.
+- 현재 상한은 10분, 150MiB다. 완료할 때까지 앱/탭을 열어 둔다.
+- H.264 WebCodecs 인코딩을 제공하는 최신 Chrome/Edge/Android System WebView가 필요하다.
+  지원하지 않는 환경에서는 다른 확장자의 파일을 MP4로 위장하지 않고 오류를 안내한다.
+
+## 구현
+
+`utils/parseEventScript.ts`를 기존 플레이어와 영상 타임라인이 공유한다.
+`utils/eventPresentation.ts`에서 재생 타이밍·대화창 표시·화자 구분·폰트 계산을 공유한다.
+효과는 장면별 시작 시각을 기록하므로 짧은 대사 뒤에도 감정 아이콘의 페이드가 이어진다.
+등록된 MP3/WAV 효과음과 감정 아이콘을 플레이어/추출기가 함께 사용한다.
+`services/videoExport/timeline.ts`가 프레임 시각과 음악 구간을 만들고,
+`paint.ts`와 `encode.ts`가 캔버스를 그려 Mediabunny로 MP4에 기록한다.
+소리는 1초 단위로 믹싱하므로 영상 길이만큼의 PCM 버퍼를 한 번에 만들지 않는다.
+네이티브 AAC 인코더가 없을 때만 번들된 WASM AAC 인코더를 사용한다.
+
+Android/iOS는 외부 URL을 로드하지 않는 WebView에서 동일한 인코더를 실행한다.
+네이티브 파일 전송은 192KiB 단위 확인 응답으로 제어한다.
+Android 네이티브 모듈 `MomoVideoDownloads`는 앱 캐시의 MP4만 시스템 다운로드로 복사하며,
+Android 10 이상에서는 추가 저장소 권한 없이 MediaStore를 사용한다.
+Windows 프로그램은 Tauri 공식 dialog/fs 플러그인을 사용하며, 저장 대화상자에서 선택한 파일에만 쓰기를 허용한다.
+APK를 다시 빌드해 설치해야 새 네이티브 모듈이 포함된다. Expo Go에는 포함되지 않는다.
+
+## 개발 및 검증
+
+`npm install`의 postinstall과 Metro 설정 로드 시 네이티브 렌더러를 빌드한다.
+출력 `assets/video-renderer.js.txt`는 생성물이며 Git에 포함하지 않는다.
+인코더를 수정한 상태에서 개발 서버가 이미 실행 중이면 `npm run video:renderer`를 다시 실행한다.
+
+```sh
+npm run test:video
+npm run video:renderer
+node scripts/test-video-export-server.js
+```
+
+마지막 명령 실행 후 `http://127.0.0.1:9917`의 테스트 버튼을 누르면
+합성 테스트 대화로 두 비율의 실제 영상과 PNG를 `tmp/video-export-tests`에 만든다.
+컨테이너 메타데이터, 해상도, H.264/AAC, 재생 길이와 취소를 자동 확인한다.
+
+웹 배포 번들 검증: `npx expo export --platform web --output-dir tmp/video-web-export`.
+Android 네이티브 컴파일 검증: `android/gradlew :app:compileDebugKotlin`.
+
+인코더 API 참고: https://mediabunny.dev/guide/writing-media-files 및
+https://mediabunny.dev/guide/media-sources.

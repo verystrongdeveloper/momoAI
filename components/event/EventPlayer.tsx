@@ -18,6 +18,7 @@ import TextBox from './TextBox';
 import { DialogueHandle } from './EventDialogue';
 import TitleBanner from './TitleBanner';
 import { useI18n } from '@/i18n';
+import { EVENT_TIMING } from '@/utils/eventPresentation';
 
 interface Props {
   script: string;
@@ -28,12 +29,12 @@ interface Expression {
   fadeAnim: Animated.Value;
 }
 
-const TITLE_SHOW_MS = 3000;
-const TITLE_GAP_MS = 1000;
-const EXPRESSION_SHOW_MS = 2000;
+const TITLE_SHOW_MS = EVENT_TIMING.titleShow * 1000;
+const TITLE_GAP_MS = EVENT_TIMING.titleGap * 1000;
+const EXPRESSION_SHOW_MS = EVENT_TIMING.expressionShow * 1000;
 
-const TYPEWRITER_MS = 30;
-const AUTO_READ_MS = 2100;
+const TYPEWRITER_MS = EVENT_TIMING.typewriter * 1000;
+const AUTO_READ_MS = EVENT_TIMING.autoRead * 1000;
 
 /** deleteAll 뒤, endEvent 직전의 나레이션. 검은 화면에 남는 선생의 한 줄. */
 const isEndingCaption = (lines: EventLine[], index: number) => {
@@ -150,10 +151,10 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
 
     if (line.type === 'dialogue' || line.type === 'narration') {
       setLast(line);
-      if (line.soundFile) playSFX(line.soundFile);
       if (isEndingCaption(lines, idx)) stop();
     }
 
+    if (line.soundFile) playSFX(line.soundFile);
     if (line.bg) setBg(line.bg);
     if (line.emotion) {
       if (emoRef.current !== line.emotion) {
@@ -172,9 +173,9 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
       if (image) {
         const fadeAnim = new Animated.Value(0);
         setExpression({ image, fadeAnim });
-        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+        Animated.timing(fadeAnim, { toValue: 1, duration: EVENT_TIMING.expressionReveal * 1000, useNativeDriver: true }).start();
         setTimeout(() => {
-          Animated.timing(fadeAnim, { toValue: 0, duration: 500, useNativeDriver: true }).start(() =>
+          Animated.timing(fadeAnim, { toValue: 0, duration: EVENT_TIMING.expressionFade * 1000, useNativeDriver: true }).start(() =>
             setExpression(null),
           );
         }, EXPRESSION_SHOW_MS);
@@ -188,9 +189,9 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
       const anim: SpriteAnimation = {
         type: raw.includes('slide') ? 'slide' : 'shake',
         axis: raw.includes('x') ? 'x' : 'y',
-        distance: 15,
-        duration: 80,
-        iterations: 3,
+        distance: EVENT_TIMING.motionDistance,
+        duration: EVENT_TIMING.motionStep * 1000,
+        iterations: EVENT_TIMING.motionIterations,
       };
       setAnimation(anim);
       setTimeout(() => setAnimation(null), anim.duration * anim.iterations * 2 + 100);
@@ -205,15 +206,15 @@ const EventPlayer: React.FC<Props> = ({ script }) => {
         case 'deleteEmotion':
           spriteHiddenRef.current = true;
           emoRef.current = null;
-          Animated.timing(emoOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+          Animated.timing(emoOpacity, { toValue: 0, duration: EVENT_TIMING.deleteFade * 1000, useNativeDriver: true }).start(() => {
             setEmo(null);
             nextLine();
           });
           return;
         case 'deleteAll':
           Animated.parallel([
-            Animated.timing(bgOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-            Animated.timing(emoOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+            Animated.timing(bgOpacity, { toValue: 0, duration: EVENT_TIMING.deleteFade * 1000, useNativeDriver: true }),
+            Animated.timing(emoOpacity, { toValue: 0, duration: EVENT_TIMING.deleteFade * 1000, useNativeDriver: true }),
           ]).start(() => {
             setBg(null);
             setEmo(null);

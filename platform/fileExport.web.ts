@@ -1,10 +1,6 @@
-export function exportTextFile(filename: string, contents: string): void {
-  if (typeof document === 'undefined') return;
-  const blob = new Blob([contents], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+import { chooseFileSaveTarget } from './fileSave.web';
+
+export async function exportTextFile(filename: string, contents: string): Promise<void> {
+  const target = await chooseFileSaveTarget(filename, 'text/plain', 'txt');
+  if (target) await target.save(new TextEncoder().encode(contents).buffer);
 }

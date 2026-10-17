@@ -122,7 +122,52 @@ export const musicMap: Record<string, any> = {
 } as const;
 
 /* SFX. 파일이 생기면 여기에 추가한다. */
-export const sfxMap: Record<string, any> = {} as const;
+export const sfxMap: Record<string, any> = {
+  'SE_49mm_01.mp3': require('../assets/sound/SE_49mm_01.mp3'),
+  'SE_Alarm_02.mp3': require('../assets/sound/SE_Alarm_02.mp3'),
+  'SE_Answer_01.mp3': require('../assets/sound/SE_Answer_01.mp3'),
+  'SE_Appear_01a.mp3': require('../assets/sound/SE_Appear_01a.mp3'),
+  'SE_Army_01.mp3': require('../assets/sound/SE_Army_01.mp3'),
+  'SE_Bear_01.mp3': require('../assets/sound/SE_Bear_01.mp3'),
+  'SE_BeepScreen_01.mp3': require('../assets/sound/SE_BeepScreen_01.mp3'),
+  'SE_Beep_01.mp3': require('../assets/sound/SE_Beep_01.mp3'),
+  'SE_BikeBell_01.mp3': require('../assets/sound/SE_BikeBell_01.mp3'),
+  'SE_Bird_01.mp3': require('../assets/sound/SE_Bird_01.mp3'),
+  'SE_Book_02.mp3': require('../assets/sound/SE_Book_02.mp3'),
+  'SE_BoomEffect_02.mp3': require('../assets/sound/SE_BoomEffect_02.mp3'),
+  'SE_BoomFuse_02a.mp3': require('../assets/sound/SE_BoomFuse_02a.mp3'),
+  'SE_Boom_01.mp3': require('../assets/sound/SE_Boom_01.mp3'),
+  'SE_BoxShake_02.mp3': require('../assets/sound/SE_BoxShake_02.mp3'),
+  'SE_Bug_01.mp3': require('../assets/sound/SE_Bug_01.mp3'),
+  'SE_Burning_02.mp3': require('../assets/sound/SE_Burning_02.mp3'),
+  'SE_BushRusting_02b.mp3': require('../assets/sound/SE_BushRusting_02b.mp3'),
+  'SE_CarHorn_01.mp3': require('../assets/sound/SE_CarHorn_01.mp3'),
+  'SE_Cartoon_01.mp3': require('../assets/sound/SE_Cartoon_01.mp3'),
+  'SE_Cartoon_02.mp3': require('../assets/sound/SE_Cartoon_02.mp3'),
+  'SE_Cat_01.mp3': require('../assets/sound/SE_Cat_01.mp3'),
+  'SE_Clap_01.mp3': require('../assets/sound/SE_Clap_01.mp3'),
+  'SE_ClockAlarm_01.mp3': require('../assets/sound/SE_ClockAlarm_01.mp3'),
+  'SE_Clock_02.mp3': require('../assets/sound/SE_Clock_02.mp3'),
+  'SE_Confirm_01.mp3': require('../assets/sound/SE_Confirm_01.mp3'),
+  'SE_Confirm_02.mp3': require('../assets/sound/SE_Confirm_02.mp3'),
+  'SE_Cook_03.mp3': require('../assets/sound/SE_Cook_03.mp3'),
+  'SE_Cricket_01.mp3': require('../assets/sound/SE_Cricket_01.mp3'),
+  'SE_Crow_04.wav': require('../assets/sound/SE_Crow_04.wav'),
+  'SE_Crowd_02.mp3': require('../assets/sound/SE_Crowd_02.mp3'),
+  'SE_Crowd_05.mp3': require('../assets/sound/SE_Crowd_05.mp3'),
+  'SE_Cup_02.mp3': require('../assets/sound/SE_Cup_02.mp3'),
+  'SE_Denied_01.mp3': require('../assets/sound/SE_Denied_01.mp3'),
+  'SE_Dog_01a.mp3': require('../assets/sound/SE_Dog_01a.mp3'),
+  'SE_DoorBell_01.mp3': require('../assets/sound/SE_DoorBell_01.mp3'),
+  'SE_DoorClose_01.mp3': require('../assets/sound/SE_DoorClose_01.mp3'),
+  'SE_DoorSlowOpen_01.mp3': require('../assets/sound/SE_DoorSlowOpen_01.mp3'),
+  'SE_Drill_02.mp3': require('../assets/sound/SE_Drill_02.mp3'),
+} as const;
 
 /* Expression. 파일이 생기면 여기에 추가한다. */
-export const expressionMap: Record<string, any> = {} as const;
+export const expressionMap: Record<string, any> = {
+  'Headpat.png': require('../assets/images/expression/Headpat.png'),
+  'Question2.png': require('../assets/images/expression/Question2.png'),
+  'question_mark.png': require('../assets/images/expression/question_mark.png'),
+  'sweat.png': require('../assets/images/expression/sweat.png'),
+} as const;

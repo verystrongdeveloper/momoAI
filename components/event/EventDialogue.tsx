@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { storyFont, useLayout } from '@/hooks/useLayout';
+import { EVENT_TIMING, parseEventSpeaker } from '@/utils/eventPresentation';
 
 interface Props {
   character: string;
@@ -12,18 +13,13 @@ export interface DialogueHandle {
   finish: () => boolean;
 }
 
-const TYPEWRITER_MS = 30;
+const TYPEWRITER_MS = EVENT_TIMING.typewriter * 1000;
 
 /** "이름(소속)" 형태의 화자 문자열을 분리 */
-const parseSpeaker = (character: string) => {
-  const match = character.match(/^(.*?)\((.*?)\)$/);
-  return match ? { name: match[1], affiliation: match[2] } : { name: character, affiliation: '' };
-};
-
 const EventDialogue = forwardRef<DialogueHandle, Props>(function EventDialogue({ character, text }, ref) {
   const { eventWidth, eventHeight } = useLayout();
   const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
-  const { name, affiliation } = parseSpeaker(character);
+  const { name, affiliation } = parseEventSpeaker(character);
 
   const [shown, setShown] = useState(0);
   const shownRef = useRef(0);

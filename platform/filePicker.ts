@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 
 export async function pickTextFile(): Promise<string | null> {
   const result = await DocumentPicker.getDocumentAsync({
@@ -8,6 +8,6 @@ export async function pickTextFile(): Promise<string | null> {
     multiple: false,
   });
   if (result.canceled || !result.assets?.[0]) return null;
-  const text = await FileSystem.readAsStringAsync(result.assets[0].uri);
+  const text = await new File(result.assets[0].uri).text();
   return text.replace(/^\uFEFF/, '');
 }

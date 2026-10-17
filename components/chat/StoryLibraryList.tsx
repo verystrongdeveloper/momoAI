@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { avatarOf, displayCharacterName } from '@/constants/characters';
 import { useLayout } from '@/hooks/useLayout';
 import StoryAssetPanel from '@/components/chat/StoryAssetPanel';
+import VideoExportModal from './VideoExportModal';
 import { deleteStory, importStory, listStories, SavedStory, subscribeStories, updateStory } from '@/store/storyLibrary';
 import { insertAssetIntoScript, AssetKind } from '@/utils/insertStoryAsset';
 import { copyText } from '@/platform/clipboard';
@@ -44,7 +45,9 @@ export default function StoryLibraryList({ onOpenStory }: { onOpenStory: (story:
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState('');
+  const [videoStory, setVideoStory] = useState<SavedStory | null>(null);
   const selectionRef = useRef({ start: 0, end: 0 });
+  const exportingRef = useRef(false);
 
   useEffect(() => subscribeStories(() => setStories(listStories())), []);
 
@@ -138,6 +141,22 @@ export default function StoryLibraryList({ onOpenStory }: { onOpenStory: (story:
     importStory(script);
     setStories(listStories());
     setListNotice('');
+  };
+
+  const exportStory = async (story: SavedStory) => {
+    if (exportingRef.current) return;
+    exportingRef.current = true;
+    setMenuId(null);
+    setListNotice('');
+    try {
+      await downloadStory(story);
+    } catch (error) {
+      console.error('[StoryLibraryList] 추출 실패:', error);
+      setListNotice(t(error instanceof Error && error.message === 'SAVE_LOCATION_UNSUPPORTED' ? 'fileSaveUnsupported' : 'storyExportFailed'));
+      if (Platform.OS !== 'web') Alert.alert(t('storyExportFailedTitle'), t('storyExportFailed'));
+    } finally {
+      exportingRef.current = false;
+    }
   };
 
   const insertAsset = (kind: AssetKind, file: string) => {
@@ -344,13 +363,13 @@ export default function StoryLibraryList({ onOpenStory }: { onOpenStory: (story:
                             <Text style={styles.menuText}>{t('edit')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
-                            onPress={() => {
-                              setMenuId(null);
-                              void Promise.resolve(downloadStory(story)).catch(() => undefined);
-                            }}
+                            onPress={() => void exportStory(story)}
                             style={styles.menuItem}
                           >
                             <Text style={styles.menuText}>{t('export')}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => { setMenuId(null); setVideoStory(story); }} style={styles.menuItem}>
+                            <Text style={styles.menuText}>{t('exportVideo')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => setConfirmId(story.id)} style={[styles.menuItem, styles.menuItemLast]}>
                             <Text style={styles.menuDelete}>{t('delete')}</Text>
@@ -366,6 +385,7 @@ export default function StoryLibraryList({ onOpenStory }: { onOpenStory: (story:
         )}
         </View>
       </ScrollView>
+      {videoStory && <VideoExportModal story={videoStory} onClose={() => setVideoStory(null)} />}
     </View>
   );
 }

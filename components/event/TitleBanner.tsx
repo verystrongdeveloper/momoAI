@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
 import { useLayout } from '@/hooks/useLayout';
+import { EVENT_TIMING } from '@/utils/eventPresentation';
 
 interface Props {
   title: string;
@@ -18,11 +19,11 @@ const TitleBanner: React.FC<Props> = ({ title, visible }) => {
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: false }),
-        Animated.timing(boxHeight, { toValue: bannerHeight, duration: 500, useNativeDriver: false }),
+        Animated.timing(opacity, { toValue: 1, duration: EVENT_TIMING.titleReveal * 1000, useNativeDriver: false }),
+        Animated.timing(boxHeight, { toValue: bannerHeight, duration: EVENT_TIMING.titleReveal * 1000, useNativeDriver: false }),
       ]).start();
     } else {
-      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: false }).start();
+      Animated.timing(opacity, { toValue: 0, duration: EVENT_TIMING.titleFade * 1000, useNativeDriver: false }).start();
     }
   }, [visible, bannerHeight, opacity, boxHeight]);
 

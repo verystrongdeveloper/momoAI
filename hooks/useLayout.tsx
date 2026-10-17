@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import { eventStoryFont } from '@/utils/eventPresentation';
 
 export const COMPACT_BREAKPOINT = 768;
 
@@ -46,7 +47,5 @@ export function useLayout() {
  * 세로 화면은 가로/세로 비율의 제곱근만큼 줄여, 더 길쭉한 화면일수록 더 작아지게 한다.
  */
 export function storyFont(width: number, height: number, fraction: number, floor: number) {
-  const portrait = width < height && height > 0;
-  const typeScale = portrait ? Math.sqrt(width / height) : 1;
-  return Math.max(Math.round(floor * typeScale), Math.round(height * fraction * typeScale));
+  return eventStoryFont(width, height, fraction, floor);
 }

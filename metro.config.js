@@ -5,6 +5,8 @@ const path = require('path');
 require('./scripts/ensure-backend');
 
 const config = getDefaultConfig(__dirname);
+if (!config.resolver.assetExts.includes('txt')) config.resolver.assetExts.push('txt');
+require('./scripts/build-video-renderer');
 
 // 백엔드 server 폴더만 Expo 번들에서 제외한다.
 // /server\/.*/ 는 Windows에서 server\ 로 바뀌며, 폴더명이 server로 끝나는

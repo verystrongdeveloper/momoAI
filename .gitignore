@@ -65,6 +65,7 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+assets/video-renderer.js.txt
 
 # Android
 android/app/build/

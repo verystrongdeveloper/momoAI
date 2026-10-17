@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import EventDialogue, { DialogueHandle } from './EventDialogue';
 import { EventLine } from '@/types/EventLine';
 import { storyFont, useLayout } from '@/hooks/useLayout';
+import { shownEventDialogue } from '@/utils/eventPresentation';
 
 interface Props {
   currentLine: EventLine | null;
@@ -15,14 +16,7 @@ const TextBox = forwardRef<DialogueHandle, Props>(function TextBox({ currentLine
   const { eventWidth, eventHeight } = useLayout();
   const styles = useMemo(() => makeStyles(eventWidth, eventHeight), [eventWidth, eventHeight]);
 
-  const shown =
-    currentLine?.type === 'narration'
-      ? currentLine
-      : currentLine?.type === 'selection' && currentLine.text
-        ? currentLine
-        : currentLine && ['dialogue', 'selection'].includes(currentLine.type)
-        ? lastSpoken
-        : null;
+  const shown = shownEventDialogue(currentLine, lastSpoken);
 
   if (!shown?.text) return null;
 

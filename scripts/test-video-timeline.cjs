@@ -1,0 +1,105 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+
+function load(file, mocks = {}) {
+  const mod = { exports: {} };
+  const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  new Function('require', 'module', 'exports', code)((id) => {
+    if (Object.hasOwn(mocks, id)) return mocks[id];
+    if (id.startsWith('.')) return load(path.relative(path.join(__dirname, '..'), path.resolve(__dirname, '..', path.dirname(file), `${id}.ts`)), mocks);
+    return require(id);
+  }, mod, mod.exports);
+  return mod.exports;
+}
+
+const parser = load('utils/parseEventScript.ts');
+const { buildVideoTimeline, videoDimensions } = load('services/videoExport/timeline.ts', { '@/utils/parseEventScript': parser });
+const { videoFileName } = load('services/videoExport/types.ts');
+const { decodeBase64 } = load('services/videoExport/base64.ts');
+const { paintVideo, titleAnimationAt } = load('services/videoExport/paint.ts');
+assert.deepEqual(titleAnimationAt(0), { expansion: 0, opacity: 0 });
+assert.deepEqual(titleAnimationAt(0.25), { expansion: 0.5, opacity: 0.5 });
+assert.deepEqual(titleAnimationAt(0.5), { expansion: 1, opacity: 1 });
+assert.deepEqual(titleAnimationAt(2.9), { expansion: 1, opacity: 1 });
+assert.ok(Math.abs(titleAnimationAt(3.15).opacity - 0.5) < 1e-10);
+assert.deepEqual(titleAnimationAt(3.4), { expansion: 1, opacity: 0 });
+for (const length of [0, 1, 2, 3, 8193, 196608]) {
+  const bytes = Buffer.alloc(length);
+  for (let index = 0; index < bytes.length; index++) bytes[index] = index % 256;
+  assert.deepEqual(Buffer.from(decodeBase64(bytes.toString('base64'))), bytes);
+}
+assert.throws(() => decodeBase64('????'), /VIDEO_ENCODE_FAILED/);
+const story = {
+  id: 'test', title: '테스트', character: '호시노', createdAt: 0,
+  chatMessages: [{ sender: 'character', text: '첫 대화', showImage: true }, { sender: 'user', text: '답장' }],
+  script: '타이틀 : 테스트\n호시노 : 안녕! [bg : BG_AbydosCouncilRoom.jpg, emotion : hoshino_smallsmile.png, music : Aira.mp3]\nselection : (1)"첫 번째" (2)(두 번째)\nwaitSecond : 2\n호시노 : 계속해! [music : Aira.mp3]\n호시노 : 다른 음악! [music : Aoharu.mp3]\ndeleteEmotion\n호시노 : 다시 나타나! [emotion : hoshino_smile.png]\ndeleteAll\nnarration : 마지막 문장\nendEvent\n호시노 : 이 대사는 나오면 안 된다.',
+};
+const timeline = buildVideoTimeline(story, 0.4, 0.5);
+assert.deepEqual(timeline.scenes.slice(0, 3).map((scene) => [scene.kind, scene.chatCount]), [['chat', 1], ['chat', 2], ['chat', 2]]);
+assert.deepEqual(timeline.scenes.slice(0, 3).map((scene) => !!scene.showStoryButton), [false, false, true]);
+// Verify rendered text, not just timeline flags, in both export aspect ratios.
+for (const ratio of ['16:9', '9:16']) {
+  const { width, height } = videoDimensions(ratio);
+  const text = [];
+  const rectangles = [];
+  const context = {
+    globalAlpha: 1,
+    save() {}, restore() {}, strokeRect() {}, fillRect(...args) { rectangles.push({ color: this.fillStyle, bounds: args }); }, beginPath() {}, roundRect() {}, fill() {}, rect() {}, clip() {}, drawImage() {},
+    measureText: value => ({ width: value.length * 10 }),
+    fillText: value => text.push(value),
+    createLinearGradient: () => ({ addColorStop() {} }),
+  };
+  const payload = { name: '호시노', chatSize: 1, timeline, labels: { bondEvent: '인연 이벤트', bondStory: '호시노의 인연 스토리로' } };
+  for (const scene of timeline.scenes) {
+    text.length = 0;
+    paintVideo(context, payload, scene, 0, new Map(), width, height);
+    assert.equal(text.includes('AUTO'), false);
+    assert.equal(text.includes(payload.labels.bondStory), !!scene.showStoryButton);
+    assert.equal(text.includes('| 인연 이벤트 |'), !!scene.showStoryButton);
+  }
+  const titleScene = timeline.scenes.find(scene => scene.line?.type === '타이틀');
+  const bannerHeights = [];
+  for (const time of [0, 0.25, 0.5, 3.15, 3.4]) {
+    text.length = 0; rectangles.length = 0; context.globalAlpha = 1;
+    paintVideo(context, payload, titleScene, time, new Map(), width, height);
+    const banner = rectangles.find(rectangle => rectangle.color === '#fff');
+    bannerHeights.push(banner?.bounds[3] ?? 0);
+    assert.equal(text.includes(titleScene.line.text), time > 0 && time < 3.3);
+  }
+  assert.equal(bannerHeights[0], 0);
+  assert.equal(bannerHeights[1], bannerHeights[2] / 2);
+  assert.equal(bannerHeights[3], bannerHeights[2]);
+  assert.equal(bannerHeights[4], 0);
+  const single = buildVideoTimeline({ ...story, chatMessages: [story.chatMessages[0]] }, 0, 0);
+  assert.equal(!!single.scenes[0].showStoryButton, false);
+  assert.equal(single.scenes[1].showStoryButton, true);
+}
+assert.equal(timeline.scenes.find((scene) => scene.line?.commandType === 'waitSecond').duration, 2);
+const selection = timeline.scenes.find((scene) => scene.line?.type === 'selection');
+assert.deepEqual(selection.line.options, ['첫 번째', '두 번째']);
+assert.ok(selection.duration >= 3.6);
+const afterSelection = timeline.scenes[timeline.scenes.indexOf(selection) + 1];
+assert.equal(afterSelection.start, selection.start + selection.duration);
+assert.equal(timeline.scenes.at(-1).line.type, 'narration');
+assert.equal(timeline.scenes.at(-1).emotion, undefined);
+assert.equal(timeline.scenes.at(-1).background, undefined);
+assert.equal(timeline.audio.length, 2);
+assert.equal(timeline.audio[0].key, 'Aira.mp3');
+assert.equal(timeline.audio[0].end, timeline.audio[1].start);
+assert.equal(timeline.audio[1].end, timeline.scenes.at(-1).start);
+for (let index = 0; index < timeline.scenes.length; index++) {
+  const scene = timeline.scenes[index];
+  assert.ok(Number.isFinite(scene.duration) && scene.duration > 0);
+  if (index > 0) assert.equal(scene.start, timeline.scenes[index - 1].start + timeline.scenes[index - 1].duration);
+}
+assert.equal(timeline.duration, timeline.scenes.at(-1).start + timeline.scenes.at(-1).duration);
+assert.equal(buildVideoTimeline({ ...story, chatMessages: undefined }, 0, 0).scenes[0].kind, 'story');
+assert.throws(() => buildVideoTimeline({ ...story, script: '', chatMessages: [] }, 1, 1), /EMPTY_VIDEO/);
+assert.deepEqual(videoDimensions('16:9'), { width: 1280, height: 720 });
+assert.deepEqual(videoDimensions('9:16'), { width: 720, height: 1280 });
+assert.equal(videoFileName('가/나:다?', '9:16'), '가 나 다_9x16.mp4');
+console.log('PASS timeline: chat-to-story continuity, automatic choices, command timing, music transitions, ending, missing history, dimensions, filenames');
