@@ -258,7 +258,7 @@ export default function AppGuide({
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 50,
     backgroundColor: 'rgba(36, 32, 40, 0.45)',
     alignItems: 'center',
@@ -269,6 +269,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 640,
     maxHeight: '88%',
+    flexShrink: 1,
     backgroundColor: '#fff',
     borderRadius: 18,
     overflow: 'hidden',
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 0,
     flexShrink: 1,
+    minHeight: 0,
     maxHeight: 460,
   },
   scrollContent: {

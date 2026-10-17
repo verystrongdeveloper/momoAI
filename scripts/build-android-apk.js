@@ -5,7 +5,8 @@ const { execFileSync, spawnSync } = require('child_process');
 
 const root = path.join(__dirname, '..');
 const androidDir = path.join(root, 'android');
-const apk = path.join(androidDir, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
+const appBuildDir = process.env.MOMO_ANDROID_BUILD_DIR || path.join(androidDir, 'app', 'build');
+const apk = path.join(appBuildDir, 'outputs', 'apk', 'release', 'app-release.apk');
 const jdkFallback = 'C:\\Program Files\\Java\\jdk-17';
 const sdkFallback = 'E:\\Android\\Sdk';
 
