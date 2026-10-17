@@ -6,6 +6,7 @@ import {
   OLD_VOLUME,
   PREFERENCES_KEY,
   WEB_API_KEY,
+  WEB_OPENAI_API_KEY,
   parsePreferences,
   DEFAULT_PREFERENCES,
   parseStories,
@@ -20,19 +21,18 @@ export function readInitialSync(): StorageSnapshot | null {
     if (localStorage.getItem(MIGRATION_FLAG) === '1') {
       const prefs = parsePreferences(localStorage.getItem(PREFERENCES_KEY));
       const apiKey = prefs.rememberApiKey ? (localStorage.getItem(WEB_API_KEY) ?? '').trim() : '';
-      return { apiKey, ...prefs, stories: [] };
+      const openAiApiKey = prefs.rememberOpenAiApiKey ? (localStorage.getItem(WEB_OPENAI_API_KEY) ?? '').trim() : '';
+      return { apiKey, openAiApiKey, ...prefs, stories: [] };
     }
 
     const apiKey = (localStorage.getItem(OLD_API_KEY) ?? '').trim();
     return {
+      ...DEFAULT_PREFERENCES,
       apiKey,
-      language: 'ko',
+      openAiApiKey: '',
       rememberApiKey: apiKey.length > 0,
       bgmVolume: parseVolume(localStorage.getItem(OLD_VOLUME)),
-      sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: localStorage.getItem(OLD_GREET) === '1',
-      termsAccepted: false,
-      tutorialSeen: false,
       stories: parseStories(localStorage.getItem(OLD_STORIES)) ?? [],
     };
   } catch {

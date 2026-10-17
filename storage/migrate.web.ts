@@ -43,12 +43,11 @@ export async function migrateLegacyStorage(): Promise<boolean> {
     const apiKey = (oldKeyRaw ?? '').trim();
     const rememberApiKey = apiKey.length > 0;
     const prefs = {
+      ...DEFAULT_PREFERENCES,
       bgmVolume: parseVolume(oldVolumeRaw),
       sfxVolume: DEFAULT_PREFERENCES.sfxVolume,
       greetMode: oldGreetRaw === '1',
       rememberApiKey,
-      termsAccepted: false,
-      tutorialSeen: false,
     };
 
     if (rememberApiKey) await saveApiKey(apiKey);

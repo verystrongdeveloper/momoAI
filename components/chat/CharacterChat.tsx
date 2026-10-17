@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { geminiClient, geminiFailureText } from '@/services/geminiClient';
-import { getGeminiKey, subscribeGeminiKey } from '@/services/geminiKey';
+import { getCurrentAIIdentity, isCurrentAIConfigured, subscribeAISettings } from '@/services/aiSettings';
 import { getGreetMode } from '@/services/greetMode';
 import { setPendingEvent } from '@/store/eventStore';
 import { saveStory } from '@/store/storyLibrary';
@@ -48,8 +48,8 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
   const visibleName = displayName ?? characterName;
   const router = useRouter();
 
-  const apiKey = useSyncExternalStore(subscribeGeminiKey, getGeminiKey, () => '');
-  const hasKey = apiKey.trim().length > 0;
+  const hasKey = useSyncExternalStore(subscribeAISettings, isCurrentAIConfigured, () => false);
+  const aiIdentity = useSyncExternalStore(subscribeAISettings, getCurrentAIIdentity, () => 'gemini:');
   const [messages, setMessages] = useState<Chat[]>([]);
   const [input, setInput] = useState('');
   const [eventReady, setEventReady] = useState(false);
@@ -70,6 +70,10 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
     });
     return () => show.remove();
   }, []);
+
+  useEffect(() => {
+    setEventReady(false);
+  }, [aiIdentity]);
 
   const removeTyping = (prev: Chat[]) => prev.filter((m) => m.sender !== 'typing');
 
@@ -92,7 +96,7 @@ const CharacterChat: React.FC<Props> = ({ characterName, displayName, characterI
 
   /* 먼저 말 걸기가 켜져 있으면 입장 시 캐릭터가 먼저 말을 건다 */
   useEffect(() => {
-    if (!getGreetMode() || !getGeminiKey().trim()) return;
+    if (!getGreetMode() || !isCurrentAIConfigured()) return;
 
     let cancelled = false;
     waitingRef.current = true;

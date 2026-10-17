@@ -8,6 +8,7 @@ const translations: Record<AppLanguage, Dictionary> = {
   ko: {
     language: '언어', settings: '설정', sound: '사운드', bgm: 'BGM 볼륨', sfx: '효과음 볼륨', volumeHint: '스토리 안에서 바꾼 볼륨과 같습니다.',
     guide: '안내', howToUse: '사용 방법', terms: '이용 약관',
+    aiProvider: 'AI 제공자', openAiApiKey: 'OpenAI Compatible API 키', baseUrl: 'Base URL', openAiBaseUrlHint: '웹에서는 HTTPS 공개 API 주소를 사용하세요. 로컬 서버는 직접 호출 환경에서 사용할 수 있습니다.', modelId: '모델 ID', modelIdPlaceholder: '예: gpt-4o-mini',
     apiKey: 'Gemini API 키', apiKeyPlaceholder: '본인 키를 입력하세요', save: '저장', rememberKey: 'API 키 기억하기', keySaved: '이 기기에만 저장됩니다. 다른 사람과 공유하지 마세요.', keySession: '이번 실행에서만 사용합니다.', keyRequired: '대화와 스토리 생성에 이 키를 사용합니다.',
     greetFirst: '먼저 말 걸기', greetOn: '방에 들어가면 먼저 말을 겁니다.', greetOff: '꺼 두면 먼저 말을 걸지 않습니다.', selectCharacter: '대화할 상대를 선택하세요.',
     messagePlaceholder: '메시지를 입력하세요', messageKeyRequired: '설정에서 API 키를 입력해 주세요', send: '보내기', bondEvent: '인연 이벤트', bondStory: '{name}의 인연 스토리로',
@@ -20,6 +21,7 @@ const translations: Record<AppLanguage, Dictionary> = {
   en: {
     language: 'Language', settings: 'Settings', sound: 'Sound', bgm: 'BGM volume', sfx: 'Sound effects volume', volumeHint: 'Matches the volume used in stories.',
     guide: 'Help', howToUse: 'How to use', terms: 'Terms of use',
+    aiProvider: 'AI provider', openAiApiKey: 'OpenAI Compatible API key', baseUrl: 'Base URL', openAiBaseUrlHint: 'Use an HTTPS public API URL on web. Local servers work with direct connections.', modelId: 'Model ID', modelIdPlaceholder: 'For example, gpt-4o-mini',
     apiKey: 'Gemini API key', apiKeyPlaceholder: 'Enter your API key', save: 'Save', rememberKey: 'Remember API key', keySaved: 'Saved only on this device. Do not share it.', keySession: 'Used only for this session.', keyRequired: 'This key is used for chat and story generation.',
     greetFirst: 'Start the conversation', greetOn: 'The character speaks first when you enter.', greetOff: 'Characters will not speak first.', selectCharacter: 'Choose someone to chat with.',
     messagePlaceholder: 'Type a message', messageKeyRequired: 'Enter an API key in Settings', send: 'Send', bondEvent: 'Bond event', bondStory: "{name}'s bond story",
@@ -32,6 +34,7 @@ const translations: Record<AppLanguage, Dictionary> = {
   ja: {
     language: '言語', settings: '設定', sound: 'サウンド', bgm: 'BGM音量', sfx: '効果音の音量', volumeHint: 'ストーリー内の音量設定と共通です。',
     guide: 'ガイド', howToUse: '使い方', terms: '利用規約',
+    aiProvider: 'AI プロバイダー', openAiApiKey: 'OpenAI Compatible API キー', baseUrl: 'Base URL', openAiBaseUrlHint: 'Web では HTTPS の公開 API アドレスを使用してください。ローカルサーバーは直接接続で利用できます。', modelId: 'モデル ID', modelIdPlaceholder: '例: gpt-4o-mini',
     apiKey: 'Gemini API キー', apiKeyPlaceholder: 'API キーを入力', save: '保存', rememberKey: 'API キーを記憶する', keySaved: 'この端末にのみ保存されます。共有しないでください。', keySession: '今回の実行中のみ使用します。', keyRequired: 'チャットとストーリー生成にこのキーを使います。',
     greetFirst: '先に話しかける', greetOn: '入室時にキャラクターから話しかけます。', greetOff: 'キャラクターから先に話しかけません。', selectCharacter: '会話する相手を選んでください。',
     messagePlaceholder: 'メッセージを入力', messageKeyRequired: '設定で API キーを入力してください', send: '送信', bondEvent: '絆イベント', bondStory: '{name}の絆ストーリーへ',
@@ -44,6 +47,7 @@ const translations: Record<AppLanguage, Dictionary> = {
   zh: {
     language: '语言', settings: '设置', sound: '声音', bgm: '背景音乐音量', sfx: '音效音量', volumeHint: '与故事中的音量设置相同。',
     guide: '帮助', howToUse: '使用方法', terms: '使用条款',
+    aiProvider: 'AI 提供方', openAiApiKey: 'OpenAI Compatible API 密钥', baseUrl: 'Base URL', openAiBaseUrlHint: '网页端请使用 HTTPS 公共 API 地址。本地服务器可通过直接连接使用。', modelId: '模型 ID', modelIdPlaceholder: '例如：gpt-4o-mini',
     apiKey: 'Gemini API 密钥', apiKeyPlaceholder: '输入您的 API 密钥', save: '保存', rememberKey: '记住 API 密钥', keySaved: '仅保存在此设备上，请勿分享。', keySession: '仅在本次运行中使用。', keyRequired: '此密钥用于聊天和生成故事。',
     greetFirst: '主动开场', greetOn: '进入时角色会先开口。', greetOff: '角色不会主动开口。', selectCharacter: '请选择聊天对象。',
     messagePlaceholder: '输入消息', messageKeyRequired: '请在设置中输入 API 密钥', send: '发送', bondEvent: '羁绊事件', bondStory: '进入{name}的羁绊故事',

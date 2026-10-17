@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   GestureResponderEvent,
   KeyboardAvoidingView,
@@ -11,10 +11,12 @@ import {
   View,
 } from 'react-native';
 import GeminiKeyField from './GeminiKeyField';
+import OpenAiCompatibleField from './OpenAiCompatibleField';
 import { getBgmVolume, setBgmVolume, subscribeBgmVolume } from '@/services/bgmVolume';
 import { getSfxVolume, setSfxVolume, subscribeSfxVolume } from '@/services/sfxVolume';
 import { APP_LANGUAGES, setAppLanguage } from '@/services/appLanguage';
 import { useI18n } from '@/i18n';
+import { getAIProvider, setAIProvider, subscribeAISettings } from '@/services/aiSettings';
 
 const clamp = (value: number) => {
   if (!Number.isFinite(value)) return null;
@@ -80,6 +82,7 @@ export default function SettingsPanel({
   onOpenTerms: () => void;
 }) {
   const { language, t } = useI18n();
+  const aiProvider = useSyncExternalStore(subscribeAISettings, getAIProvider, () => 'gemini');
   const [volume, setVolume] = useState(getBgmVolume);
   const [sfx, setSfx] = useState(getSfxVolume);
   const scrollRef = useRef<ScrollView>(null);
@@ -132,8 +135,27 @@ export default function SettingsPanel({
         <Text style={styles.hint}>{t('volumeHint')}</Text>
       </View>
 
+      <View style={styles.card}>
+        <Text style={styles.label}>{t('aiProvider')}</Text>
+        <View style={styles.languageRow}>
+          {(['gemini', 'openai-compatible'] as const).map((provider) => (
+            <TouchableOpacity
+              key={provider}
+              style={[styles.languageButton, aiProvider === provider && styles.languageButtonActive]}
+              onPress={() => setAIProvider(provider)}
+            >
+              <Text style={[styles.languageButtonText, aiProvider === provider && styles.languageButtonTextActive]}>
+                {provider === 'gemini' ? 'Gemini' : 'OpenAI Compatible'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       <View style={styles.keyWrap} onLayout={(event) => setKeyOffset(event.nativeEvent.layout.y)}>
-        <GeminiKeyField onFocus={revealApiKey} />
+        {aiProvider === 'gemini'
+          ? <GeminiKeyField onFocus={revealApiKey} />
+          : <OpenAiCompatibleField onFocus={revealApiKey} />}
       </View>
 
       <View style={styles.card}>

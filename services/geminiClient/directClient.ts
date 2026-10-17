@@ -3,6 +3,8 @@ import { buildEventPromptPro } from '../../shared/prompts/promptBuilderPro';
 import { buildSelectionPrompt } from '../../shared/prompts/selectionPromptBuilder';
 import { getAvailableCharacters, hasStoryAssets, keepAssetSpeakers } from '../../shared/prompts/characterList';
 import { getGeminiKey } from '@/services/geminiKey';
+import { getAIProvider, getOpenAiCompatibleConfig } from '@/services/aiSettings';
+import { sendOpenAiCompatible } from '@/services/openAiCompatible';
 import { dialogKey, sendWithFallback, userApiKey } from './rest';
 
 type DialogPair = { user: string; ai: string };
@@ -16,12 +18,38 @@ const TRIGGER_MESSAGE = `
 const SELECTOR_SYSTEM = '너는 스토리 기획자다. 캐릭터처럼 말하지 않는다. 요청한 JSON만 출력한다. 대사·거절·설명 금지.';
 const EVENT_WRITER_SYSTEM = '너는 블루 아카이브 인연 스토리 스크립트 작성기다. 캐릭터처럼 대답하지 말고, 요청한 출력 형식 그대로 스크립트만 작성한다.';
 
-function readKey(): string {
-  return userApiKey(getGeminiKey());
+type RequestConfig =
+  | { provider: 'gemini'; apiKey: string }
+  | { provider: 'openai-compatible'; apiKey: string; baseUrl: string; model: string };
+
+function readConfig(): RequestConfig {
+  if (getAIProvider() === 'gemini') return { provider: 'gemini', apiKey: userApiKey(getGeminiKey()) };
+  const config = getOpenAiCompatibleConfig();
+  if (!config.apiKey.trim()) throw new Error('OpenAI Compatible API 키를 입력하세요.');
+  return { provider: 'openai-compatible', ...config };
 }
 
-function pushLog(character: string, apiKey: string, pair: DialogPair): boolean {
-  const slot = dialogKey(character, apiKey);
+function configKey(config: RequestConfig): string {
+  return config.provider === 'gemini'
+    ? config.apiKey
+    : `${config.provider}:${config.apiKey}:${config.baseUrl}:${config.model}`;
+}
+
+function send(
+  character: string,
+  sessionKey: string,
+  message: string,
+  systemInstruction: string | undefined,
+  config: RequestConfig,
+): Promise<string> {
+  if (config.provider === 'gemini') {
+    return sendWithFallback(character, sessionKey, message, systemInstruction, config.apiKey);
+  }
+  return sendOpenAiCompatible(character, sessionKey, message, systemInstruction, config);
+}
+
+function pushLog(character: string, key: string, pair: DialogPair): boolean {
+  const slot = dialogKey(character, key);
   const log = chatLogs.get(slot) ?? [];
   log.push(pair);
   if (log.length > 3) log.shift();
@@ -31,28 +59,28 @@ function pushLog(character: string, apiKey: string, pair: DialogPair): boolean {
 
 export const directClient = {
   async trigger(character: string) {
-    const apiKey = readKey();
+    const config = readConfig();
     if (!character) throw new Error('character 누락');
-    const triggerLine = await sendWithFallback(character, '', TRIGGER_MESSAGE, undefined, apiKey);
-    pushLog(character, apiKey, { user: '(트리거)', ai: triggerLine });
+    const triggerLine = await send(character, '', TRIGGER_MESSAGE, undefined, config);
+    pushLog(character, configKey(config), { user: '(트리거)', ai: triggerLine });
     return { triggerLine };
   },
 
   async chat(character: string, message: string) {
-    const apiKey = readKey();
+    const config = readConfig();
     if (!character || !message) throw new Error('character 또는 message 누락');
-    const reply = await sendWithFallback(character, '', message, undefined, apiKey);
-    const eventReady = pushLog(character, apiKey, { user: message, ai: reply });
+    const reply = await send(character, '', message, undefined, config);
+    const eventReady = pushLog(character, configKey(config), { user: message, ai: reply });
     return { reply, eventReady };
   },
 
   async createEvent(character: string) {
-    const apiKey = readKey();
+    const config = readConfig();
     if (!character) throw new Error('character 누락');
-    const dialogHistory = chatLogs.get(dialogKey(character, apiKey)) ?? [];
+    const dialogHistory = chatLogs.get(dialogKey(character, configKey(config))) ?? [];
     if (dialogHistory.length !== 3) throw new Error('dialogHistory 부족(3쌍 필요)');
 
-    const rawSelText = await sendWithFallback(character, 'select', buildSelectionPrompt(dialogHistory), SELECTOR_SYSTEM, apiKey);
+    const rawSelText = await send(character, 'select', buildSelectionPrompt(dialogHistory), SELECTOR_SYSTEM, config);
     const jsonMatch = rawSelText.match(/\{[\s\S]*}/);
     let selection: { characters?: { name?: string }[]; direction?: string };
     if (!jsonMatch) {
@@ -78,7 +106,7 @@ export const directClient = {
 
     const eventPrompt = buildEventPromptPro(character, dialogHistory, allCharsWithEmotions, selection.direction ?? '');
     const script = keepAssetSpeakers(
-      (await sendWithFallback(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, apiKey)).trim(),
+      (await send(character, 'event', eventPrompt, EVENT_WRITER_SYSTEM, config)).trim(),
       getAvailableCharacters(),
     );
     return { eventScript: script };

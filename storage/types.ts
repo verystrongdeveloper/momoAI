@@ -1,4 +1,5 @@
 export type AppLanguage = 'ko' | 'en' | 'ja' | 'zh';
+export type AIProvider = 'gemini' | 'openai-compatible';
 
 export type Preferences = {
   language: AppLanguage;
@@ -6,6 +7,10 @@ export type Preferences = {
   sfxVolume: number;
   greetMode: boolean;
   rememberApiKey: boolean;
+  aiProvider: AIProvider;
+  rememberOpenAiApiKey: boolean;
+  openAiBaseUrl: string;
+  openAiModel: string;
   termsAccepted: boolean;
   tutorialSeen: boolean;
 };
@@ -20,6 +25,7 @@ export type StoryRecord = {
 
 export type StorageSnapshot = Preferences & {
   apiKey: string;
+  openAiApiKey: string;
   stories: StoryRecord[];
 };
 
@@ -29,6 +35,10 @@ export const DEFAULT_PREFERENCES: Preferences = {
   sfxVolume: 0.5,
   greetMode: false,
   rememberApiKey: false,
+  aiProvider: 'gemini',
+  rememberOpenAiApiKey: false,
+  openAiBaseUrl: 'https://api.openai.com/v1',
+  openAiModel: '',
   termsAccepted: false,
   tutorialSeen: false,
 };
@@ -36,7 +46,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
 export const MIGRATION_FLAG = 'momo.migration.v1';
 export const PREFERENCES_KEY = 'momo.preferences';
 export const WEB_API_KEY = 'momo.secure.apiKey';
+export const WEB_OPENAI_API_KEY = 'momo.secure.openaiApiKey';
 export const NATIVE_API_KEY = 'momo.geminiApiKey';
+export const NATIVE_OPENAI_API_KEY = 'momo.openaiCompatibleApiKey';
 export const NATIVE_PREFERENCES_KEY = 'momo.preferences';
 export const NATIVE_STORIES_KEY = 'momo.stories';
 
@@ -89,6 +101,12 @@ export function parsePreferences(raw: string | null): Preferences {
       sfxVolume: clampVolume(Number(parsed.sfxVolume)) ?? DEFAULT_PREFERENCES.sfxVolume,
       greetMode: parsed.greetMode === true,
       rememberApiKey: parsed.rememberApiKey === true,
+      aiProvider: parsed.aiProvider === 'openai-compatible' ? 'openai-compatible' : 'gemini',
+      rememberOpenAiApiKey: parsed.rememberOpenAiApiKey === true,
+      openAiBaseUrl: typeof parsed.openAiBaseUrl === 'string' && parsed.openAiBaseUrl.trim()
+        ? parsed.openAiBaseUrl.trim()
+        : DEFAULT_PREFERENCES.openAiBaseUrl,
+      openAiModel: typeof parsed.openAiModel === 'string' ? parsed.openAiModel.trim() : '',
       termsAccepted: parsed.termsAccepted === true,
       tutorialSeen: parsed.tutorialSeen === true,
     };
