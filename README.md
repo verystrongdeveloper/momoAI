@@ -16,6 +16,12 @@
 
 MomoStory는 캐릭터의 말투와 성격을 반영한 1:1 대화, 그리고 대화 맥락을 바탕으로 전개되는 선택형 인연 이벤트를 제공합니다. 배경·표정·BGM·효과음으로 장면의 분위기까지 함께 즐길 수 있습니다.
 
+<p align="center">
+  <img src="docs/screenshots/chat-example.svg" alt="호시노와의 예시 캐릭터 대화 화면" width="860" />
+</p>
+
+<p align="center"><sub>캐릭터 대화 UI 예시 — 실제 대화 내용은 사용자의 Gemini API 키로 생성됩니다.</sub></p>
+
 ## 주요 기능
 
 | 기능 | 설명 |
