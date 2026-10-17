@@ -1,11 +1,18 @@
-import { clearApiKey, loadApiKey, saveApiKey as writeApiKey } from './secureStorage';
+import {
+  clearApiKey,
+  clearOpenAiApiKey,
+  loadApiKey,
+  loadOpenAiApiKey,
+  saveApiKey as writeApiKey,
+  saveOpenAiApiKey as writeOpenAiApiKey,
+} from './secureStorage';
 import { loadPreferences, savePreferences } from './preferencesStorage';
 import { readStoryRecords, writeStoryRecords } from './storyStorage';
 import { migrateLegacyStorage } from './migrate';
 import { readInitialSync } from './prime';
-import { AppLanguage, DEFAULT_PREFERENCES, Preferences, StoryRecord, clampVolume } from './types';
+import { AIProvider, AppLanguage, DEFAULT_PREFERENCES, Preferences, StoryRecord, clampVolume } from './types';
 
-type SettingKey = 'language' | 'bgmVolume' | 'sfxVolume' | 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen';
+type SettingKey = keyof Preferences;
 
 let synced = readInitialSync() != null;
 
@@ -13,8 +20,9 @@ export function isStorageSynced() {
   return synced;
 }
 
-let memory: Preferences & { apiKey: string; stories: StoryRecord[] } = {
+let memory: Preferences & { apiKey: string; openAiApiKey: string; stories: StoryRecord[] } = {
   apiKey: '',
+  openAiApiKey: '',
   ...DEFAULT_PREFERENCES,
   stories: [],
 };
@@ -42,14 +50,20 @@ export function getApiKey() {
   return memory.apiKey.trim();
 }
 
+export function getOpenAiApiKey() {
+  return memory.openAiApiKey.trim();
+}
+
 export function getRememberApiKey() {
   return memory.rememberApiKey;
 }
 
 export function getSetting(key: 'bgmVolume' | 'sfxVolume'): number;
 export function getSetting(key: 'language'): AppLanguage;
-export function getSetting(key: 'greetMode' | 'rememberApiKey' | 'termsAccepted' | 'tutorialSeen'): boolean;
-export function getSetting(key: SettingKey): number | boolean | AppLanguage {
+export function getSetting(key: 'aiProvider'): AIProvider;
+export function getSetting(key: 'openAiBaseUrl' | 'openAiModel'): string;
+export function getSetting(key: 'greetMode' | 'rememberApiKey' | 'rememberOpenAiApiKey' | 'termsAccepted' | 'tutorialSeen'): boolean;
+export function getSetting(key: SettingKey): number | boolean | string | AppLanguage | AIProvider {
   return memory[key];
 }
 
@@ -64,11 +78,18 @@ async function persistAll() {
     sfxVolume: memory.sfxVolume,
     greetMode: memory.greetMode,
     rememberApiKey: memory.rememberApiKey,
+    aiProvider: memory.aiProvider,
+    rememberOpenAiApiKey: memory.rememberOpenAiApiKey,
+    openAiBaseUrl: memory.openAiBaseUrl,
+    openAiModel: memory.openAiModel,
     termsAccepted: memory.termsAccepted,
     tutorialSeen: memory.tutorialSeen,
   };
   const keyTask = memory.rememberApiKey && memory.apiKey ? writeApiKey(memory.apiKey) : clearApiKey();
-  await Promise.all([keyTask, savePreferences(prefs), writeStoryRecords(memory.stories)]);
+  const openAiKeyTask = memory.rememberOpenAiApiKey && memory.openAiApiKey
+    ? writeOpenAiApiKey(memory.openAiApiKey)
+    : clearOpenAiApiKey();
+  await Promise.all([keyTask, openAiKeyTask, savePreferences(prefs), writeStoryRecords(memory.stories)]);
 }
 
 /** remember가 켜져 있을 때만 키를 기기에 남긴다. 꺼져 있으면 이번 실행 메모리만 유지한다. */
@@ -80,7 +101,22 @@ export function saveApiKey(key: string, remember = memory.rememberApiKey) {
   if (hydrated) void persistAll().catch(() => undefined);
 }
 
-export function saveSetting(key: SettingKey, value: number | boolean | AppLanguage) {
+export function saveOpenAiCompatibleSettings(settings: {
+  apiKey: string;
+  rememberApiKey: boolean;
+  baseUrl: string;
+  model: string;
+}) {
+  memory.openAiApiKey = settings.apiKey.trim();
+  memory.rememberOpenAiApiKey = settings.rememberApiKey;
+  memory.openAiBaseUrl = settings.baseUrl.trim() || DEFAULT_PREFERENCES.openAiBaseUrl;
+  memory.openAiModel = settings.model.trim();
+  dirty = true;
+  emit();
+  if (hydrated) void persistAll().catch(() => undefined);
+}
+
+export function saveSetting(key: SettingKey, value: Preferences[SettingKey]) {
   if (key === 'language') {
     if (value !== 'ko' && value !== 'en' && value !== 'ja' && value !== 'zh') return;
     if (value === memory.language) return;
@@ -90,9 +126,19 @@ export function saveSetting(key: SettingKey, value: number | boolean | AppLangua
     const next = clampVolume(value);
     if (next == null || next === memory[key]) return;
     memory[key] = next;
+  } else if (key === 'aiProvider') {
+    if (value !== 'gemini' && value !== 'openai-compatible') return;
+    if (value === memory.aiProvider) return;
+    memory.aiProvider = value;
+  } else if (key === 'openAiBaseUrl' || key === 'openAiModel') {
+    if (typeof value !== 'string') return;
+    const next = value.trim();
+    if (next === memory[key]) return;
+    memory[key] = next;
   } else if (
     key === 'greetMode' ||
     key === 'rememberApiKey' ||
+    key === 'rememberOpenAiApiKey' ||
     key === 'termsAccepted' ||
     key === 'tutorialSeen'
   ) {
@@ -117,19 +163,10 @@ export function saveStories(stories: StoryRecord[]) {
 async function pullAll() {
   const prefs = await loadPreferences();
   const apiKey = prefs.rememberApiKey ? (await loadApiKey()).trim() : '';
+  const openAiApiKey = prefs.rememberOpenAiApiKey ? (await loadOpenAiApiKey()).trim() : '';
   const stories = await readStoryRecords();
   if (dirty) return;
-  memory = {
-    apiKey,
-    language: prefs.language,
-    bgmVolume: prefs.bgmVolume,
-    sfxVolume: prefs.sfxVolume,
-    greetMode: prefs.greetMode,
-    rememberApiKey: prefs.rememberApiKey,
-    termsAccepted: prefs.termsAccepted,
-    tutorialSeen: prefs.tutorialSeen,
-    stories,
-  };
+  memory = { ...prefs, apiKey, openAiApiKey, stories };
 }
 
 export function hydrateStorage() {

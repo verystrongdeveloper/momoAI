@@ -46,21 +46,19 @@ function tutorialSteps(): Step[] {
     ),
   },
   {
-    title: 'Gemini API 키 발급',
+    title: 'AI 제공자 설정',
     body: (
       <>
-        <Text style={styles.body}>대화와 스토리 생성에는 본인 Google 계정의 Gemini API 키가 필요합니다.</Text>
-        <Text style={styles.stepLine}>1. 아래 버튼으로 Google AI Studio를 엽니다.</Text>
-        <Text style={styles.stepLine}>2. Google 계정으로 로그인합니다.</Text>
-        <Text style={styles.stepLine}>3. 「API 키 만들기」를 누릅니다.</Text>
-        <Text style={styles.stepLine}>4. 나온 키를 복사합니다.</Text>
+        <Text style={styles.body}>설정에서 Gemini 또는 OpenAI Compatible 모드를 고른 뒤, 선택한 제공자의 API 설정을 입력합니다.</Text>
+        <Text style={styles.stepLine}>Gemini: 아래 버튼으로 Google AI Studio를 열고 API 키를 발급합니다.</Text>
+        <Text style={styles.stepLine}>OpenAI Compatible: 제공자가 발급한 API 키, Base URL, 모델 ID를 준비합니다.</Text>
         <TouchableOpacity style={styles.linkBtn} onPress={openAiStudio}>
           <Text style={styles.linkText}>Google AI Studio 열기</Text>
         </TouchableOpacity>
         <Text selectable style={styles.url}>
           {AI_STUDIO_URL}
         </Text>
-        <Text style={styles.note}>키는 비밀번호와 같습니다. 다른 사람에게 보내거나 채팅에 붙여 넣지 마세요. 사용량은 본인 Google 계정 기준으로 계산됩니다.</Text>
+        <Text style={styles.note}>키는 비밀번호와 같습니다. 다른 사람에게 보내거나 채팅에 붙여 넣지 마세요. 사용량은 선택한 AI 제공자 계정 기준으로 계산됩니다.</Text>
       </>
     ),
   },
@@ -69,7 +67,7 @@ function tutorialSteps(): Step[] {
     body: (
       <>
         <IconLine name="settings-outline" label="톱니바퀴" text="를 누릅니다. 좁은 화면에서는 아래쪽 탭에 있습니다." />
-        <Text style={styles.body}>Gemini API 키 칸에 붙여 넣고 저장을 누릅니다.</Text>
+        <Text style={styles.body}>선택한 제공자의 API 키를 입력합니다. OpenAI Compatible 모드에서는 Base URL과 모델 ID도 입력하고 저장합니다.</Text>
         <Text style={styles.body}>API 키 기억하기를 켜면 다음에도 이 기기에 남습니다. 끄면 이번 실행에서만 쓰입니다.</Text>
       </>
     ),
@@ -188,7 +186,7 @@ export default function AppGuide({
             </Text>
             <Text style={styles.section}>API 키와 대화</Text>
             <Text style={styles.body}>
-              Gemini API 키는 이용자가 직접 발급해 입력합니다. 키 기억하기를 켜면 이 기기에만 저장됩니다. 대화와 스토리 생성 내용은 그 키를 통해 Google Gemini로 전달됩니다.
+              API 키는 이용자가 선택한 제공자에서 발급해 입력합니다. 키 기억하기를 켜면 해당 키는 이 기기에만 저장됩니다. 대화와 스토리 생성 내용은 선택한 AI 제공자에게 전달됩니다.
             </Text>
             <Text style={styles.section}>생성된 내용</Text>
             <Text style={styles.body}>AI가 만든 대사와 스토리는 공식 설정과 다를 수 있습니다.</Text>

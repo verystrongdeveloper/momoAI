@@ -47,7 +47,7 @@ MomoStory는 캐릭터의 말투와 성격을 반영한 1:1 대화, 그리고 �
 
 - Node.js 18 이상
 - npm
-- Gemini API 키
+- Gemini API 키 또는 OpenAI Compatible 제공자의 API 키·Base URL·모델 ID
 
 ### 설치 및 실행
 
@@ -58,7 +58,7 @@ npm install
 npx expo start
 ```
 
-브라우저·Android 에뮬레이터·Expo Go 중 원하는 환경에서 실행할 수 있습니다. 앱을 연 뒤 **설정**에서 본인의 Gemini API 키를 입력하면 대화를 시작할 수 있습니다.
+브라우저·Android 에뮬레이터·Expo Go 중 원하는 환경에서 실행할 수 있습니다. 앱의 **설정**에서 Gemini 또는 OpenAI Compatible 모드를 고르고 해당 API 설정을 입력하면 대화를 시작할 수 있습니다.
 
 ### 배포용 빌드
 
@@ -88,7 +88,7 @@ src-tauri/           Windows 데스크톱 패키지
 
 - React Native · Expo · Expo Router · TypeScript
 - Tauri · Rust (Windows 데스크톱 패키지)
-- Gemini API
+- Gemini API · OpenAI Compatible Chat Completions API
 - GitHub Actions (Windows EXE / Android APK 릴리스)
 
 ## 지원 캐릭터
